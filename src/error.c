@@ -7,9 +7,6 @@ void report_error(ExitCode exit_code, const char *filename)
 {
     switch (exit_code)
     {
-    case EXIT_SUCCESS_CODE:
-        // No error, do nothing
-        break;
     case EXIT_FILE_NOT_FOUND:
         fprintf(stderr, "Error: File %s.as not found.\n", filename);
         break;
