@@ -8,7 +8,7 @@
 #ifndef ASSEMBLER_H
 #define ASSEMBLER_H
 
-#include "constants.h"
+#include "../include/constants.h"
 
 /***
  * Assembles the given source file (with .as extension) into machine code.

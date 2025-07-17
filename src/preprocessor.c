@@ -1,241 +1,245 @@
 /**
  * @file preprocessor.c
+ * @brief Handles macro preprocessing for the assembler project.
  *
- * Implements the preprocessor logic:
- * 1. Reads the source file with .as extension.
- * 2. Expands macros defined in the source file.
- *
+ * This module reads a `.as` source file, processes macro definitions,
+ * expands macro calls, and generates a corresponding `.am` file with
+ * all macros expanded in-place.
  */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include "preprocessor.h"
-#include "constants.h"
+#include "../include/preprocessor.h"
+#include "../include/constants.h"
 
-/* Defines Macro struct */
-typedef struct
-{
-    char name[MAX_MACRO_NAME_LENGTH];
-    char *lines[MAX_MACRO_LINES];
-    char line_count;
+/**
+ * @struct Macro
+ * @brief Represents a macro and its body lines.
+ */
+typedef struct {
+    char name[MAX_MACRO_NAME_LENGTH]; /**< Macro name */
+    char *lines[MAX_MACRO_LINES];     /**< Lines of macro body */
+    int line_count;                   /**< Number of lines stored */
 } Macro;
 
-static Macro macro_table[MAX_MACROS];
-static int macro_count = 0;
-
-/* Utils functions */
+static Macro macro_table[MAX_MACROS]; /**< Global macro table */
+static int macro_count = 0;           /**< Count of stored macros */
 
 /**
- * @brief Utility: Trim leading and trailing whitespace from a string.
- * @param line The line to be trimmed.
+ * @brief Extracts the first word from a given line.
  *
- * This function modifies the input string in place.
- * It removes leading and trailing whitespace characters (spaces, tabs, etc.)
- */
-static void trim_whitespace(char *line)
-{
-    char *end;
-    while (isspace((unsigned char)*line))
-        line++;
-    if (*line == 0) /* line with all spaces */
-        return;
-
-    end = line + strlen(line) - 1;
-    while (end > line && isspace((unsigned char)*end))
-        end--;
-    *(end + 1) = '\0'; /* null terminate the string */
-}
-
-/**
- * @brief Utility: Get the first word from a line.
- * Extracts the first word from a line and stores it in the destination string.
- * This function assumes that dest has enough space to hold the first word.
- * It will null-terminate the string after extarcting the first word of a line.
- * @param line The line from which to extract the first word.
- * @param dest The destination string where the first word will be stored.
+ * Skips leading whitespace and copies characters until the first space
+ * or tab is encountered. Used to detect keywords or macro calls.
  *
+ * @param line The input line to parse.
+ * @param dest Destination buffer to store the extracted word.
  */
-static void get_first_word(const char *line, char *dest)
-{
-    int i = 0;
-    while (line[i] && !isspace((unsigned char)line[i]) && i < MAX_MACRO_NAME_LENGTH - 1)
-    {
-        dest[i] = line[i];
+static void get_first_word(const char *line, char *dest) {
+    int i = 0, j = 0;
+
+    while (line[i] && isspace((unsigned char)line[i]))
         i++;
-    }
-    dest[i] = '\0'; /* Null-terminate the string */
+
+    while (line[i] && !isspace((unsigned char)line[i]) && j < MAX_MACRO_NAME_LENGTH - 1)
+        dest[j++] = line[i++];
+
+    dest[j] = '\0';
 }
 
 /**
- * @brief Utility: Find macro name in macro_table.
- * Searches for a macro by its name in the macro table.
- * @param name The name of the macro to search for.
- * @return The index of the macro in the macro table if found, otherwise -1 if not found.
+ * @brief Searches for a macro in the macro table.
+ *
+ * @param name The name of the macro to find.
+ * @return Index of the macro in the table if found, -1 otherwise.
  */
-static int find_macro(const char *name)
-{
+static int find_macro(const char *name) {
     int i;
-    for (i = 0; i < macro_count; i++)
-    {
+    for (i = 0; i < macro_count; i++) {
         if (strcmp(macro_table[i].name, name) == 0)
-            return i; /* Return the index of the macro if found */
+            return i;
     }
-    return -1; /* Return -1 if not found */
+    return -1;
 }
 
 /**
- * @brief Utility: Add a new macro to the macro table.
- * Adds a new macro with the given name to the macro table.
- * If the macro already exists or the table is full, it returns FALSE.
- * @param name The name of the macro to be added.
- * @return TRUE if the macro was added successfully,
- *         FALSE otherwise.
+ * @brief Registers a new macro name in the macro table.
+ *
+ * @param name The name of the macro to add.
+ * @return TRUE if successfully added, FALSE if already exists or table is full.
  */
-static BOOL add_macro(const char *name)
-{
+static BOOL add_macro(const char *name) {
     if (macro_count >= MAX_MACROS || find_macro(name) != -1)
-        return FALSE; /* Macro table is full or macro already exists */
+        return FALSE;
 
     strcpy(macro_table[macro_count].name, name);
-    macro_table[macro_count].line_count = 0; /* Initialize line count to 0 */
-
-    ++macro_count; /* Increment macro count */
-    return TRUE;   /* Successfully added the macro */
+    macro_table[macro_count].line_count = 0;
+    macro_count++;
+    return TRUE;
 }
 
 /**
- * @brief Utility: Add a line to macro body.
- * Adds a line to the body of an existing macro.
- * @param name The name of the macro to which the line will be added.
- * @param line The line to be added to the macro.
- * @return TRUE if the line was added successfully,
- *         FALSE if the macro does not exist or the line limit is reached.
+ * @brief Adds a line to a macro body in the table.
+ *
+ * Copies the line into dynamically allocated memory,
+ * appending a newline if not present.
+ *
+ * @param name Name of the macro to add the line to.
+ * @param line The line content.
+ * @return TRUE on success, FALSE on failure or overflow.
  */
-static BOOL add_line_to_macro(const char *name, const char *line)
-{
+static BOOL add_line_to_macro(const char *name, const char *line) {
     int i = find_macro(name);
     char *stored_line;
+    size_t len;
 
     if (i == -1 || macro_table[i].line_count >= MAX_MACRO_LINES)
-        return FALSE; /* Macro not found or line limit reached */
+        return FALSE;
 
-    stored_line = (char *)malloc(strlen(line) + 1);
+    len = strlen(line);
+    stored_line = (char *)malloc(len + 2);
     if (!stored_line)
-        return FALSE; /* Memory allocation failed */
+        return FALSE;
 
     strcpy(stored_line, line);
+
+    if (len == 0 || stored_line[len - 1] != '\n') {
+        stored_line[len] = '\n';
+        stored_line[len + 1] = '\0';
+    } else {
+        stored_line[len] = '\0';
+    }
+
     macro_table[i].lines[macro_table[i].line_count++] = stored_line;
-    return TRUE; /* Successfully added the line to the macro */
+    return TRUE;
 }
 
-static void write_macro_body(FILE *am_file, const char *name)
-{
+/**
+ * @brief Writes a macro's body to the output `.am` file.
+ *
+ * Strips leading whitespace from each line and ensures lines end with `\n`.
+ *
+ * @param am_file The output file pointer.
+ * @param name The macro name to write.
+ */
+static void write_macro_body(FILE *am_file, const char *name) {
     int i = find_macro(name), j;
-    if (i == -1)
-        return; /* Macro not found */
+    char *line;
+    size_t len;
 
-    for (int j = 0; j < macro_table[i].line_count; ++j)
-    {
-        fputs(macro_table[i].lines[j], am_file);
+    if (i == -1)
+        return;
+
+    for (j = 0; j < macro_table[i].line_count; j++) {
+        line = macro_table[i].lines[j];
+
+        while (*line && isspace((unsigned char)*line))
+            line++;
+
+        fputs(line, am_file);
+
+        len = strlen(line);
+        if (len == 0 || line[len - 1] != '\n')
+            fputc('\n', am_file);
     }
 }
 
 /**
- * Runs the preprocessor on the given source file (with .as extension).
- *
- * Reads 'filename.as', expands macros, and writes the result to 'filename.am'.
- *
- * @param filename The base name of the source file to be preprocessed (without .as extension).
- * @return EXIT_SUCCESS_CODE if successful,
- *         or a relevent error code if an error occurs.
+ * @brief Frees all allocated memory used by macros.
  */
-ExitCode preprocessor(const char *filename)
-{
-    /* array to store files names string */
+static void free_macro_table() {
+    int i, j;
+    for (i = 0; i < macro_count; i++) {
+        for (j = 0; j < macro_table[i].line_count; j++)
+            free(macro_table[i].lines[j]);
+    }
+    macro_count = 0;
+}
+
+/**
+ * @brief Main entry point for the preprocessor.
+ *
+ * Reads a `.as` file, expands any macro usages, and outputs the
+ * result to a `.am` file in the same directory.
+ *
+ * @param filename Base name of the file (no extension).
+ * @return One of the predefined ExitCode values indicating success or error.
+ */
+ExitCode preprocess(const char *filename) {
     char as_filename[MAX_FILE_NAME_LENGTH];
     char am_filename[MAX_FILE_NAME_LENGTH];
-
     FILE *as_file, *am_file;
-
     char line[MAX_LINE_LENGTH];
     char first_word[MAX_MACRO_NAME_LENGTH];
-
-    BOOL in_macro = FALSE; /* Flag to indicate if we are inside a macro definition */
-
+    BOOL in_macro = FALSE;
     char current_macro_name[MAX_MACRO_NAME_LENGTH];
 
-    /* Construct the file names */
     sprintf(as_filename, "%s.as", filename);
     sprintf(am_filename, "%s.am", filename);
 
-    /* Open the source file for reading the .as file */
     as_file = fopen(as_filename, "r");
     if (!as_file)
         return EXIT_FILE_NOT_FOUND;
 
-    /* Open the output file for writing the .am file */
     am_file = fopen(am_filename, "w");
-    if (!am_file)
-    {
+    if (!am_file) {
         fclose(as_file);
         return EXIT_WRITE_ERROR;
     }
 
-    while (fgets(line, MAX_LINE_LENGTH, as_file))
-    {
-        strcpy(first_word, ""); /* Reset first word*/
+    while (fgets(line, MAX_LINE_LENGTH, as_file)) {
+        if (strspn(line, " \t\r\n") == strlen(line))
+            continue;
 
+        strcpy(first_word, "");
         get_first_word(line, first_word);
-        trim_whitespace(line); /* Trim whitespace from the line */
 
-        if (!in_macro)
-        {
-            if (strcmp(first_word, "mcro") == 0)
-            {
-                /* Begin macro */
-                sscanf(line, "mcro %31s", current_macro_name);
-                if (!add_macro(current_macro_name))
-                {
-                    fclose(as_file);
-                    fclose(am_file);
-                    return EXIT_MACRO_SYNTAX_ERROR; /* Macro syntax error */
-                }
-                in_macro = TRUE; /* Set the flag to indicate we are inside a macro */
-                continue;        /* Skip to the next line */
-            }
-
-            if (find_macro(first_word) != -1)
-            {
-                /* If the first word is a macro, expand it */
-                write_macro_body(am_file, first_word);
-                continue; /* Skip to the next line */
-            }
-
-            fputs(line, am_file); /* Write the line to the output file */
-        }
-        else
-        {
-            if (strcmp(first_word, "mcroend") == 0)
-            {
-                /* End macro */
-                in_macro = FALSE; /* Reset the flag */
-                continue;         /* Skip to the next line */
-            }
-
-            if (!add_line_to_macro(current_macro_name, line))
-            {
+        if (!in_macro && strcmp(first_word, "mcro") == 0) {
+            if (sscanf(line, "mcro %31s", current_macro_name) != 1) {
                 fclose(as_file);
                 fclose(am_file);
-                return EXIT_MACRO_SYNTAX_ERROR; /* Error adding line to macro */
+                return EXIT_MACRO_SYNTAX_ERROR;
             }
+
+            if (!add_macro(current_macro_name)) {
+                fclose(as_file);
+                fclose(am_file);
+                return EXIT_MACRO_SYNTAX_ERROR;
+            }
+
+            in_macro = TRUE;
+            continue;
+        }
+
+        if (in_macro) {
+            if (strcmp(first_word, "mcroend") == 0) {
+                in_macro = FALSE;
+                continue;
+            }
+
+            if (!add_line_to_macro(current_macro_name, line)) {
+                fclose(as_file);
+                fclose(am_file);
+                return EXIT_MACRO_SYNTAX_ERROR;
+            }
+
+            continue;
+        }
+
+        if (find_macro(first_word) != -1) {
+            write_macro_body(am_file, first_word);
+        } else {
+            char *ptr = line;
+            while (*ptr && isspace((unsigned char)*ptr))
+                ptr++;
+
+            fputs(ptr, am_file);
         }
     }
 
-    /* Close open files */
     fclose(as_file);
     fclose(am_file);
-
+    free_macro_table();
     return EXIT_SUCCESS_CODE;
 }

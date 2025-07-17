@@ -1,7 +1,7 @@
 /* error.c */
 
 #include <stdio.h>
-#include "error.h"
+#include "../include/error.h"
 
 void report_error(ExitCode exit_code, const char *filename)
 {

@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../src/preprocessor.h"
+#include "../include/preprocessor.h"
 #include "../include/constants.h"
 
 #define TEST_INPUT "tests/test1"
@@ -13,6 +13,8 @@ int compare_files(const char *file1, const char *file2)
     FILE *f1 = fopen(file1, "r");
     FILE *f2 = fopen(file2, "r");
     char line1[100], line2[100];
+
+    int result;
 
     if (!f1 || !f2)
     {
@@ -30,7 +32,7 @@ int compare_files(const char *file1, const char *file2)
         }
     }
 
-    int result = (feof(f1) && feof(f2));
+    result = (feof(f1) && feof(f2));
     fclose(f1);
     fclose(f2);
     return result;

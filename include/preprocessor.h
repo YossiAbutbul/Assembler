@@ -22,6 +22,6 @@
  * @return EXIT_SUCCESS_CODE if successful,
  *         or a relevent error code if an error occurs.
  */
-ExitCode preprocessor(const char *filename);
+ExitCode preprocess(const char *filename);
 
 #endif
