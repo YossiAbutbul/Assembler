@@ -7,6 +7,10 @@
 #ifndef CONSTANTS_H
 #define CONSTANTS_H
 
+/* Global Variables: */
+#define MAX_LINE_LENGTH 81       /* Adds room for null-terminator */
+#define MAX_FILE_NAME_LENGTH 100 /* Maximum length for file names */
+
 /* Define a Boolean type*/
 typedef enum
 {
