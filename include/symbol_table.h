@@ -60,7 +60,7 @@ BOOL add_symbol(const char *name, int address, SymbolType type);
  *
  * @param name The name of the symbol to mark as entry.
  * @return TRUE if the symbol was found and marked as entry,
- *         FALSE if the symbol does not exist or is already marked as entry.
+ *         FALSE if the symbol does not exist.
  */
 BOOL mark_symbol_as_entry(const char *name);
 
@@ -73,9 +73,12 @@ BOOL mark_symbol_as_entry(const char *name);
 const Symbol *get_symbol(const char *name);
 
 /**
- * @brief Update all DATA symbols' addresses by adding to their addresses the current instruction counter (ICF).
+ * @brief Updates the addresses of all DATA symbols in the symbol table.
  *
- * @param icf The final instruction counter value to add to DATA symbols' addresses.
+ * This function adjusts the addresses of DATA symbols by adding the instruction count final (ICF)
+ * from the first pass to their addresses, allowing for correct memory allocation.
+ *
+ * @param icf The instruction count from the first pass.
  */
 void update_data_symbols(int icf);
 

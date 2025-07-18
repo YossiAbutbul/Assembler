@@ -5,9 +5,9 @@
 #include "../include/preprocessor.h"
 #include "../include/constants.h"
 
-#define TEST_INPUT "tests/test1"
-#define EXPECTED_OUTPUT_FILE "tests/expected_res/expected1.am"
-#define GENERATED_OUTPUT_FILE "tests/test1.am"
+#define TEST_INPUT "tests/test1_preprocess"
+#define EXPECTED_OUTPUT_FILE "tests/expected_res/expected1_preprocess.am"
+#define GENERATED_OUTPUT_FILE "tests/test1_preprocess.am"
 
 #define LINE_BUF_SIZE 256
 
@@ -33,8 +33,10 @@ int compare_files(const char *file1, const char *file2)
     if (!f1 || !f2)
     {
         printf("Error: Could not open one of the files.\n");
-        if (f1) fclose(f1);
-        if (f2) fclose(f2);
+        if (f1)
+            fclose(f1);
+        if (f2)
+            fclose(f2);
         return 0;
     }
 
@@ -71,17 +73,18 @@ int compare_files(const char *file1, const char *file2)
     return result;
 }
 
-
 int main(void)
 {
     printf("Running preprocessor unit test...\n");
 
-    if (preprocess(TEST_INPUT) != EXIT_SUCCESS_CODE) {
+    if (preprocess(TEST_INPUT) != EXIT_SUCCESS_CODE)
+    {
         printf("Test failed: Preprocessor returned an error.\n");
         return 1;
     }
 
-    if (!compare_files(EXPECTED_OUTPUT_FILE, GENERATED_OUTPUT_FILE)) {
+    if (!compare_files(EXPECTED_OUTPUT_FILE, GENERATED_OUTPUT_FILE))
+    {
         printf("Test failed: Output .am file did not match expected output.\n");
         return 1;
     }
