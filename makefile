@@ -5,9 +5,16 @@ BUILD_DIR = build
 TEST_SRC = tests/test_preprocessor.c
 PREPROCESSOR_SRC = src/preprocessor.c
 
+# Detect Windows and use .exe extension
+ifeq ($(OS),Windows_NT)
+	EXE_EXT = .exe
+else
+	EXE_EXT =
+endif
+
 TEST_OBJ = $(BUILD_DIR)/test_preprocessor.o
 PREPROCESSOR_OBJ = $(BUILD_DIR)/preprocessor.o
-EXEC = $(BUILD_DIR)/preprocessor_test
+EXEC = $(BUILD_DIR)/preprocessor_test$(EXE_EXT)
 
 .PHONY: all clean run_test
 
@@ -26,4 +33,4 @@ run_test: $(EXEC)
 	./$(EXEC)
 
 clean:
-	rm -f $(BUILD_DIR)/*.o $(EXEC) tests/*.am
+	rm -f $(BUILD_DIR)/*.o $(BUILD_DIR)/preprocessor_test* tests/*.am
