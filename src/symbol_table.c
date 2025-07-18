@@ -139,3 +139,21 @@ void free_symbol_table()
     }
     symbol_table_head = NULL; /* Reset the head of the symbol table */
 }
+
+/**
+ * @brief Print the symbol table to the console.
+ *
+ * @note This function is primarily for debugging purposes.
+ */
+void print_symbol_table()
+{
+    Symbol *cur = symbol_table_head;
+    printf("Symbol Table:\n");
+    printf(" -----------------------------\n");
+    while (cur != NULL)
+    {
+        printf("Name: %-31s | Addr: %4d | Type: %d | ENTRY: %d | EXTERN : %d\n",
+               cur->name, cur->address, cur->type, cur->is_entry, cur->is_external);
+        cur = cur->next; /* Move to the next symbol */
+    }
+}
