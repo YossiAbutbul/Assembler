@@ -1,0 +1,21 @@
+# Object files
+*.o
+
+# Output binaries
+build/
+
+# Preprocessed .am and output files
+*.am
+*.ob
+*.ext
+*.ent
+
+# Logs and temp
+*.log
+*.tmp
+
+# VSCode settings (optional if you're using it)
+.vscode/
+
+# Backup files
+*~
