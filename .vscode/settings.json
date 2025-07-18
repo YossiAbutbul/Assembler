@@ -3,6 +3,7 @@
     "files.associations": {
         "constants.h": "c",
         "stdlib.h": "c",
-        "string.h": "c"
+        "string.h": "c",
+        "preprocessor.h": "c"
     }
 }
