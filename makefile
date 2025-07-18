@@ -32,5 +32,10 @@ $(BUILD_DIR)/preprocessor.o: $(PREPROCESSOR_SRC)
 run_test: $(EXEC)
 	./$(EXEC)
 
+run_test_symbol_table:
+	$(CC) -Iinclude -o build/test_symbol_table tests/test_symbol_table.c src/symbol_table.c -ansi -pedantic -Wall -Werror -m32
+	./build/test_symbol_table
+
+
 clean:
 	rm -f $(BUILD_DIR)/*.o $(BUILD_DIR)/preprocessor_test* tests/*.am

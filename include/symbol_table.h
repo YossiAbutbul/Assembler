@@ -18,8 +18,7 @@ typedef enum
     SYMBOL_DATA,
     SYMBOL_EXTERNAL,
     SYMBOL_ENTRY
-},
-    SymbolType;
+} SymbolType;
 
 /**
  * @file symbol_table.h
