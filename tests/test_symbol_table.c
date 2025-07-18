@@ -56,5 +56,5 @@ int main(void) {
 
     free_symbol_table();
 
-    return EXIT_SUCCESS;
+    return EXIT_SUCCESS_CODE;
 }
