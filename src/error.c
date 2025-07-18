@@ -1,4 +1,7 @@
-/* error.c */
+/**
+ * @file error.c
+ * @brief Implements error handling functions for the assembler project.
+ */
 
 #include <stdio.h>
 #include "../include/error.h"

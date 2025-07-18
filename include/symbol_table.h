@@ -22,7 +22,12 @@ typedef enum
     SymbolType;
 
 /**
- * @brief A single symbol entry in the symbol table.
+ * @file symbol_table.h
+ * @brief Contains the definition of the symbol table and its management functions.
+ */
+
+/**
+ * @brief Represents a symbol in the symbol table.
  */
 typedef struct Symbol
 {

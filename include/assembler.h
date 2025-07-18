@@ -1,8 +1,6 @@
 /**
  * @file assembler.h
- *
- * An assembler interface for converting assembly language source files (.as files) into machine code output.
- *
+ * @brief An assembler interface for converting assembly language source files (.as files) into machine code output.
  */
 
 #ifndef ASSEMBLER_H

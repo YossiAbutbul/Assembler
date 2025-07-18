@@ -1,19 +1,21 @@
-/* main.c
- * ToDo: add documentation for the main.c file.
+/**
+ * @file main.c
+ * @author Yossi Abutbul
+ * ToDo: add propper documentation.
  */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include "../include/assembler.h"
 #include "../include/error.h"
-
+#include "../include/constants.h"
 
 int main(int argc, char *argv[])
 {
     int i;
     ExitCode result;
 
-    if (argc < 2)
+    if (argc < MIN_ARGC)
     {
         printf("Usage: %s file1 [file2 ...]\n", argv[0]);
         return EXIT_GENERAL_ERROR;

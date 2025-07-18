@@ -1,7 +1,6 @@
 /**
  * @file preprocessor.h
- *
- * Responsible for handling macro expansion from .as files to .am files
+ * @brief Header file for the preprocessor module of the assembler.
  */
 
 #ifndef PREPROCESSOR_H

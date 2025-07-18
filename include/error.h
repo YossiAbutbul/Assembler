@@ -1,4 +1,7 @@
-/* error.h */
+/**
+ * @file error.h
+ * @brief Contains error handling functions for the assembler project.
+ */
 
 #ifndef ERROR_H
 #define ERROR_H
