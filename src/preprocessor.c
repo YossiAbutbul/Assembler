@@ -274,5 +274,7 @@ ExitCode preprocess(const char *filename)
     fclose(as_file);
     fclose(am_file);
     free_macro_table();
+    /*ToDo: Check if needs to free the macro table or keep it in order 
+    to check if macro name is not a reserved word */
     return EXIT_SUCCESS_CODE;
 }

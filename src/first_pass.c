@@ -18,11 +18,13 @@ int IC = BASE_IC_ADDRESS; /* Instruction counter */
 int DC = 0; /* Data counter */
 BOOL err_found = FALSE; /* Flag to indicate if an error was found */
 
+
 /* === Internal Helper Prototypes functions === */
 static void process_line(const char *line, const char *filename, int line_num);
 static void handle_extern_directive(const char *line, const char *filename, int line_num);
 static void handle_entry_directive(const char *line, const char *filename, int line_num);
 static void handle_data_directive(const char *label, const char *directive, const char *line, const char *filename, int lineno);
+
 
 /**
  * @brief Preforms the first pass on the given .am source file.
@@ -133,10 +135,10 @@ static void process_line(const char *line, const char *filename, int line_num)
 
     /* Step 3 - Handle Directives */
     if (strcmp(first_token, ".data") == 0 || strcmp(first_token, ".string") == 0 || strcmp(first_token, ".mat") == 0){
-        /* ToDo: implement handle_entry_directive function. */
+        handle_data_directive(has_label ? label : NULL, first_token, rest, filename, line_num);
     }
     else if (strcmp(first_token, ".entry") == 0){
-        /* ToDo: implement handle_entry_directive function. */
+        handle_entry_directive(rest, filename, line_num);
     }
     else if (strcmp(first_token, ".extern") == 0){
         if (has_label){
@@ -144,7 +146,7 @@ static void process_line(const char *line, const char *filename, int line_num)
             err_found = TRUE;
             return; /* Skip processing this line */
         }
-        /* TODO: implement handle_extern_directive function. */
+        handle_extern_directive(rest, filename, line_num)
     }
 
     /* Step 4 - Handle Instructions */
@@ -263,7 +265,7 @@ static void handle_entry_directive(const char *line, const char *filename, int l
 
 static void handle_data_directive(const char *label, const char *directive, const char *line, const char *filename, int lineno){
     
-    if (label != NULL && label[0] != '/0'){
+    if (label != NULL && label[0] != '\0'){
 
         /* Validates the label. */
         if (!is_valid_label(label)){
@@ -296,7 +298,7 @@ static void handle_data_directive(const char *label, const char *directive, cons
     }
 
     else{
-        print_line_error(filename, line_num, ERROR_INVALID_DIRECTIVE)
+        print_line_error(filename, line_num, ERROR_INVALID_DIRECTIVE);
         err_found = TRUE;
     }
 }
