@@ -18,9 +18,11 @@ int IC = BASE_IC_ADDRESS; /* Instruction counter */
 int DC = 0; /* Data counter */
 BOOL err_found = FALSE; /* Flag to indicate if an error was found */
 
-/* === Internal Helper Prototype function === */
+/* === Internal Helper Prototypes functions === */
 static void process_line(const char *line, const char *filename, int line_num);
 static void handle_extern_directive(const char *line, const char *filename, int line_num);
+static void handle_entry_directive(const char *line, const char *filename, int line_num);
+static void handle_data_directive(const char *label, const char *directive, const char *line, const char *filename, int lineno);
 
 /**
  * @brief Preforms the first pass on the given .am source file.
@@ -71,6 +73,8 @@ void first_pass(FILE *am_file, const char *filename)
         update_data_symbols(IC); 
     }
 }
+
+/* === Internal Helper functions === */
 
 /**
  * @brief Preforms the first pass on the given .am source file.
@@ -196,4 +200,103 @@ static void handle_extern_directive(const char *line, const char *filename, int 
     }
     /* Add the label to the symbol table as an external symbol. */
     add_symbol(label, 0, SYMBOL_EXTERNAL);
+}
+
+/**
+* @brief Handles the ".entry" directive during the first pass.
+*
+* This function extracts the label after the ".entry" directive and validates it.
+* The label is not added to the symbol table in the first pass, instead it is
+* marked using the `mark_symbol_as_entry` function during the second pass.
+*
+* However, the label name is still stored and validates for syntax duplication 
+* in order to catch ".entry" on a label that's also defined as ".extern".
+*
+* Errors are reported if:
+* - No operand is found after ".entry".
+* - The label is invalid or already defined.
+*
+* @param line       The line content after the ".entry" directive.
+* @param filename   Pointer to the file name of the source file (for error reporting).
+* @param line_num   The current line number in the source file.
+*/
+static void handle_entry_directive(const char *line, const char *filename, int line_num){
+    char label[MAX_LABEL_LENGTH + 1];
+
+    /* Skip leading whitespace. */
+    while (isspace((unsigned char)*line)) 
+        line++;
+
+    /* Checks if the next token can be extracted. */
+    if (!get_next_token(line, label)){
+        print_line_error(filename, line_num, ERROR_SYNTAX);
+        err_found = TRUE;
+        return; /* Skip processing this line. */
+    }
+
+    /* Validate the label. */
+    if (!is_valid_label(label)){
+        print_line_error(filename, line_num, ERROR_INVALID_LABEL);
+        err_found = TRUE;
+        return; /* Skip processing this line. */
+    }
+}
+
+/**
+* @brief Handles "."data", ".string", and ".mat" directives during the first pass.
+*
+* This function parses and validates the operand(s) after a data-related directive.
+* For a valid labels, it adds the symbol to the symbol table as a "SYMBOL_DATA" type,
+* and updates the data counter (DC) accordingly.
+*
+* Errors are reported if:
+* - Invalid lable.
+* - Duplicate label.
+* - Syntax issues (bad numbers, strings or matrix).
+*
+* @param label     Optional label for the directive (can be NULL ot "" if none).
+* @param directive The directive type (e.g., ".data", ".string", ".mat
+* @param line      The rest of the line after the directive.
+* @param filename  Pointer to the file name of the source file (for error reporting).
+* @param line_num  Pointer to the current line number in the source file.
+*/
+
+static void handle_data_directive(const char *label, const char *directive, const char *line, const char *filename, int lineno){
+    
+    if (label != NULL && label[0] != '/0'){
+
+        /* Validates the label. */
+        if (!is_valid_label(label)){
+            print_line_error(filename, lineno, ERROR_INVALID_LABEL);
+            err_found = TRUE;
+            return; /* Skip processing this line */
+        }
+
+        /* Check if the label already exists in the symbol table. */
+        if (is_label_defined(label)){
+            print_line_error(filename, lineno, ERROR_DUPLICATE_LABEL);
+            err_found = TRUE;
+            return; /* Skip processing this line */
+        }
+
+        /* Adds the symbol to the symbol_table. */
+        add_symbol(label, DC, SYMBOL_DATA);
+    }
+
+    if (strcmp(directive, ".data") == 0){
+        /* TODO: implement parse_data_values(line, &DC);*/
+    }
+
+    else if (strcmp(directive, ".string") == 0){
+         /* TODO: implement parse_string_value(line, &DC); */
+    }
+
+    else if (strcmp(directive, ".mat") == 0){
+         /* TODO: implement parse_matrix(line, &DC); */
+    }
+
+    else{
+        print_line_error(filename, line_num, ERROR_INVALID_DIRECTIVE)
+        err_found = TRUE;
+    }
 }
