@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "symbol_table.h"
+#include "error.h"
 #include "constants.h"
 
 

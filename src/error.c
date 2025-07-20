@@ -20,24 +20,26 @@ void report_error(ExitCode exit_code, const char *filename)
         fprintf(stderr, "Error: File %s.as not found.\n", filename);
         break;
     case EXIT_MACRO_SYNTAX_ERROR:
-        fprintf(stderr, "Error: Macro syntax error in file %s.as.\n", filename);
+        fprintf(stderr, "Error: Macro syntax error in file %s.\n", filename);
         break;
     case EXIT_FIRST_PASS_ERROR:
-        fprintf(stderr, "Error: First pass error in file %s.as.\n", filename);
+        fprintf(stderr, "Error: First pass error in file %s.\n", filename);
         break;
     case EXIT_SECOND_PASS_ERROR:
-        fprintf(stderr, "Error: Second pass error in file %s.as.\n", filename);
+        fprintf(stderr, "Error: Second pass error in file %s.\n", filename);
         break;
     case EXIT_WRITE_ERROR:
-        fprintf(stderr, "Failed writing output files for %s.as.\n", filename);
+        fprintf(stderr, "Error: Failed writing output files for %s.\n", filename);
         break;
+    
     default:
-        fprintf(stderr, "Error: General error occurred while processing %s.as\n", filename);
+        fprintf(stderr, "Error: General error occurred while processing %s.\n", filename);
     }
 }
 
 /**
  * @brief Prints a line-level error message with the line number and type.
+ *
  * @param filename Pointer to the file name where the error occurred.
  * @param line_number The line number where the error occurred.
  * @param err_type The type of error that occurred.
@@ -56,9 +58,10 @@ void print_line_error(const char *filename, int line_number, ErrorType err_type)
         "Undefined symbol",
         "Entry not defined",
         "External conflict",
+        "Memory allocation failed",
         "General error"};
 
-    int err_cnt = (int)(sizeof(error_messages) / sizeof(error_messages[0]))
+    int err_cnt = (int)(sizeof(error_messages) / sizeof(error_messages[0]));
 
         if (err_type < 0 || err_type >= err_cnt)
     {

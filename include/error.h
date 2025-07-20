@@ -33,7 +33,8 @@ typedef enum
     ERR_INVALID_OPERAND,
     ERR_UNDEFINED_SYMBOL,
     ERR_ENTRY_NOT_DEFINED,
-    ERR_EXTERNAL_CONFLICT,
+    ERR_EXTERN_CONFLICT,
+    ERR_MEMORY_ALLOCATION,
     ERR_GENRAL
 } ErrorType;
 
@@ -51,6 +52,6 @@ void report_error(ExitCode exit_code, const char *filename);
  * @param line_number The line number where the error occurred.
  * @param err_type The type of error that occurred.
  */
-void print_line_error(const char *filename, int line_number, ErrorType err_type)
+void print_line_error(const char *filename, int line_number, ErrorType err_type);
 
 #endif

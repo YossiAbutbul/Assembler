@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "symbol_table.h"
+#include "../include/error.h"
 
 static Symbol *symbol_table_head = NULL; /* Pointer to the head of the symbol table linked list */
 
@@ -57,9 +58,8 @@ BOOL add_symbol(const char *name, int address, SymbolType type)
     new_symbol = (Symbol *)malloc(sizeof(Symbol));
     if (new_symbol == NULL)
     {
-        fprintf(stderr, "Memory allocation failed in adding new symbol.\n");
-        exit(EXIT_GENERAL_ERROR);
-        /*ToDo: make an error function to handke errorr printing correctly and exiting code */
+        print_line_error("symbol_table", -1, ERR_MEMORY_ALLOCATION);
+        return FALSE; /* Memory allocation failed */
     }
 
     strncpy(new_symbol->name, name, MAX_SYMBOL_NAME_LENGTH - 1);

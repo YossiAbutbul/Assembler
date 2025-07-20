@@ -11,8 +11,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include "../include/error.h"
 #include "../include/preprocessor.h"
 #include "../include/constants.h"
+
 
 /**
  * @struct Macro
@@ -194,12 +196,16 @@ ExitCode preprocess(const char *filename)
 
     as_file = fopen(as_filename, "r");
     if (!as_file)
+    {
+        report_error(EXIT_FILE_NOT_FOUND, as_filename);
         return EXIT_FILE_NOT_FOUND;
+    }
 
     am_file = fopen(am_filename, "w");
     if (!am_file)
     {
         fclose(as_file);
+        report_error(EXIT_WRITE_ERROR, am_filename);
         return EXIT_WRITE_ERROR;
     }
 
@@ -224,6 +230,7 @@ ExitCode preprocess(const char *filename)
             {
                 fclose(as_file);
                 fclose(am_file);
+                report_error(EXIT_MACRO_SYNTAX_ERROR, as_filename);
                 return EXIT_MACRO_SYNTAX_ERROR;
             }
 
@@ -243,6 +250,7 @@ ExitCode preprocess(const char *filename)
             {
                 fclose(as_file);
                 fclose(am_file);
+                report_error(EXIT_MACRO_SYNTAX_ERROR, as_filename);
                 return EXIT_MACRO_SYNTAX_ERROR;
             }
 
