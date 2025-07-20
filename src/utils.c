@@ -130,29 +130,135 @@ BOOL extract_label(const char *line, char *label_out){
         label_out[j] = '\0';    /* Null-terminate the label */
         return TRUE;            /* Valid label found */
     }
+
     return FALSE; /* No valid label found */
 }
 
+/**
+ * @brief Skips a label (and ':') in a line and returns a pointer to the rest of the line.
+ *
+ * @param label Pointer to the label string to check.
+ * @return Pointer to the rest of the line after the label.
+ */
+char *skip_label(const char *line)
+{
+    const char *p = line;
+
+    /* Skip leading whitespace */
+    while (isspace((unsigned char)*p)) {
+        p++; 
+    }
+
+    /* Skip label characters */
+    while (*p && *p != ':') {
+        p++; 
+    }
+    /* Skip the ':' character */
+    if (*p == ':') {
+        p++; 
+    }
+    /* Skip any whitespace after the label */
+    while (isspace((unsigned char)*p)) {
+        p++; 
+    }
+    return (char *)p; /* Return pointer to the rest of the line */
+}
 
 /**
- * @brief Check if a string starts with a given prefix.
+ * @brief Check if a label is valid according to assembler rules:
+ * - Must start with a letter.
+ * - Contain only alphanumeric characters
+ * - Not be a reserved word.
  *
- * @param str Pointer to the string to check.
- * @param prefix Pointer to the prefix to match.
- * @return TRUE if the string starts with the prefix, FALSE otherwise.
+ * @param label Pointer to the label string to check.
+ * @return TRUE if the label is valid, FALSE otherwise.
  */
-BOOL starts_with(const char *str, const char *prefix)
-{
-    size_t len_prefix, len_str; /* used size_t in order to be always positive */
+ BOOL is_valid_label(const char *label){
+    int i, len;
+    
+    /* Check if a label starts with a letter. */
+    if (!label || !isalpha((unsigned char)label[0]))
+        return FALSE; 
 
-    if (!str || !prefix)
+    len = strlen(label);
+
+    /* Checks the label length. */
+    if (len > MAX_LABEL_LENGTH)
         return FALSE;
 
-    len_prefix = strlen(prefix);
-    len_str = strlen(str);
+    /* Check if the label contains only alphanumeric characters. */
+    for (i = 1; i < label[i] != '\0'; i++){
+        if (!isalnum((unsigned char)label[i]))
+            return FALSE; 
+    }
 
-    if (len_str < len_prefix)
-        return FALSE; /* str is shorter than prefix */
+    /* Check if the label is a reserved word. */
+    if (is_reserved_word(label))
+        return FALSE;
 
-    return (strncmp(str, prefix, len_prefix) == 0) ? TRUE : FALSE; /* Compare the beginning of str with prefix. if not equal means there is no match with the prefix. */
+    return TRUE; /* Valid label. */
+}
+
+/* === Tokenization === */
+
+BOOL get_next_token(const char *src, char *token_out){
+    int i = 0, j = 0;
+    
+    if (!src || !token_out)
+        return FALSE;
+
+    /* Skip leading whitespace. */
+    while (isspace((unsigned char)src[i])){
+        i++;
+    }
+
+    /* Check if we reached the end of the string. */
+    if (src[i] == '\0'){
+        return FALSE;           /* No more tokens available */
+    }
+
+    /* Copy token until space or null. */
+    while (src[i] && !isspace((unsigned char)src[i]) && j < MAX_LINE_LENGTH){
+        token_out[j++] = src[i++];
+    }
+
+    token_out[j] = '\0';    /* Null-terminate the token */
+    return TRUE;            /* Token successfully extracted */
+}
+
+BOOL is_reserved_word(const char *word) {
+    int i;
+
+    /* === Instruction Reserved Names === */
+    const char *instructions[] = {
+        "mov", "cmp", "add", "sub", "lea",
+        "clr", "not", "inc", "dec", "jmp",
+        "bne", "jsr", "red", "prn", "rts", "stop"
+    }
+
+    /* === Register Reserved Names === */
+    const char *registers[] = {
+        "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7"
+    };
+
+    /* === Directives Reserved Names === */
+    const char *directives[] = {
+        ".data", ".string", ".mat", ".entry", ".extern"
+    };
+
+    for (i = 0; i < sizeof(instructions)/sizeof(instructions[0]); i++) {
+        if (strcmp(word, instructions[i]) == 0) 
+            return TRUE; /* Found a reserved instruction. */
+    }
+
+    for (i = 0; i < sizeof(registers)/sizeof(registers[0]); i++) {
+        if (strcmp(word, registers[i]) == 0) 
+            return TRUE; /* Found a reserved register. */
+    }
+
+    for (i = 0; i < sizeof(directives)/sizeof(directives[0]); i++) {
+        if (strcmp(word, directives[i]) == 0) 
+            return TRUE; /* Found a reserved directive. */
+    }
+    return FALSE; /* Not a reserved word */
 }

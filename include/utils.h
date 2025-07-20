@@ -64,7 +64,7 @@ char *skip_label(const char *line);
  */
 BOOL is_valid_label(const char *label);
 
-/* === Label Parsing Utilities === */
+/* === Tokenization === */
 
 /**
  * @brief Get the next token from a line.
@@ -75,11 +75,12 @@ BOOL is_valid_label(const char *label);
  */
 BOOL get_next_token(const char *src, char *token_out);
 
+/* === Reserved Words === */
+
 /**
- * @brief Check if a string starts with a given prefix.
+ * @brief Check if a word is a reserved word in the assembler.
  *
- * @param str Pointer to the string to check.
- * @param prefix Pointer to the prefix to match.
- * @return TRUE if the string starts with the prefix, FALSE otherwise.
+ * @param word Pointer to the word to check.
+ * @return TRUE if the word is a reserved word, FALSE otherwise.
  */
-BOOL starts_with(const char *str, const char *prefix);
+BOOL is_reserved_word(const char *word);
