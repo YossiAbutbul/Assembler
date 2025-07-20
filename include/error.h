@@ -22,24 +22,36 @@ typedef enum
 
 /** @brief Error types for the assembler */
 typedef enum {
+    /* === label and Syntax Erros === */
     ERROR_INVALID_LABEL,
+    ERROR_LABEL_SYNTAX,
+    ERROR_DUPLICATE_LABEL,
+    
+    /* === Instruction and Directive Errors === */
     ERROR_UNKNOWN_INSTRUCTION,
     ERROR_INVALID_DIRECTIVE,
-    ERROR_DUPLICATE_LABEL,
-    ERROR_SYNTAX,
+    
+    /* === Operand Errors === */
     ERROR_TOO_MANY_OPERANDS,
     ERROR_TOO_FEW_OPERANDS,
     ERROR_INVALID_OPERAND,
+    ERROR_INVALID_MATRIX,
+    ERROR_DATA_OUT_OF_RANGE,
+
+    /* === Symbol and Entry Errors === */
+    
     ERROR_UNDEFINED_SYMBOL,
     ERROR_ENTRY_NOT_DEFINED,
+    ERROR_LABEL_ON_EXTERN, 
     ERROR_EXTERNAL_CONFLICT,
-    ERROR_MEMORY_ALLOCATION_FAILED,
-    ERROR_LABEL_ON_EXTERN,           
-    ERROR_INVALID_MATRIX,            
-    ERROR_DATA_OUT_OF_RANGE,         
-    ERROR_STRING_TOO_LONG,           
-    ERROR_LABEL_SYNTAX,              
-    ERROR_GENERAL
+
+    /* === Special Cases === */
+    ERROR_STRING_TOO_LONG,
+    ERROR_MEMORY_ALLOCATION_FAILED,             
+    
+    /* === General Errors === */
+    ERROR_SYNTAX,             
+    ERROR_GENERAL        
 } ErrorType;
 
 
