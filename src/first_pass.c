@@ -20,6 +20,7 @@ BOOL err_found = FALSE; /* Flag to indicate if an error was found */
 
 /* === Internal Helper Prototype function === */
 static void process_line(const char *line, const char *filename, int line_num);
+static void handle_extern_directive(const char *line, const char *filename, int line_num);
 
 /**
  * @brief Preforms the first pass on the given .am source file.
@@ -150,4 +151,49 @@ static void process_line(const char *line, const char *filename, int line_num)
         err_found = TRUE;
         return; /* Skip processing this line */
     }      
+}
+
+/**
+* @brief Handles the "".extern" directive in the first pass.
+*
+* This function parses the operand after ".extern", validates it is a legal label,
+* and adds it to the symbol table with the type SYMBOL_EXTERNAL type and address 0 (ToDo: Check the addres).
+* 
+* Errors are reported if:
+* - No Operand is found.
+* - The label is unvalid or already defined.
+*
+* @param line       The line content after the ".extern" directive.
+* @param filename   Pointer to the file name of the source file (for error reporting).
+* @param line_num   The current line number in the source file.
+*/
+static void handle_extern_directive(const char *line, const char *filename, int line_num)
+{
+    char label[MAX_LABEL_LENGTH + 1];
+
+    /* Skip leading whitespace. */
+    while (isspace(*line)) line++; 
+
+    /* Checks if the next token can be extracted. */
+    if (!get_next_token(line, label)){
+        print_line_error(filename, line_num, ERROR_SYNTAX);
+        err_found = TRUE;
+        return; /* Skip processing this line. */
+    }
+
+    /* Validate the label. */
+    if (!is_valid_label(label)){
+        print_line_error(filename, line_num, ERROR_INVALID_LABEL);
+        err_found = TRUE;
+        return; /* Skip processing this line. */
+    }
+
+    /* Check if the label already exists in the symbol table. */
+    if (is_label_defined(label)){
+        print_line_error(filename, line_num, ERROR_DUPLICATE_LABEL);
+        err_found = TRUE;
+        return; /* Skip processing this line. */
+    }
+    /* Add the label to the symbol table as an external symbol. */
+    add_symbol(label, 0, SYMBOL_EXTERNAL);
 }

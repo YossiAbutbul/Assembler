@@ -201,6 +201,13 @@ char *skip_label(const char *line)
 
 /* === Tokenization === */
 
+/**
+ * @brief Get the next token from a line.
+ *
+ * @param src Pointer to the source input line.
+ * @param token_out Pointer to a buffer where the extracted token will be stored.
+ * @return TRUE if a token was successfully extracted, FALSE if no more tokens are available.
+ */
 BOOL get_next_token(const char *src, char *token_out){
     int i = 0, j = 0;
     
