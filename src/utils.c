@@ -5,8 +5,8 @@
 
 #include <string.h>
 #include <ctype.h>
-#include "utils.h"
-#include "constants.h"
+#include "../include/utils.h"
+#include "../include/constants.h"
 
 /**
  * @brief Trim leading and trailing whitespace from a string in-place.

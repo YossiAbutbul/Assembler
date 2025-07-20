@@ -47,19 +47,26 @@ void report_error(ExitCode exit_code, const char *filename)
 void print_line_error(const char *filename, int line_number, ErrorType err_type)
 {
     const char *error_messages[] = {
-        "Invalid label",
-        "Unknown instruction",
-        "Invalid directive",
-        "Duplicate label",
-        "Syntax error",
-        "Too many operands",
-        "Too few operands",
-        "Invalid operand",
-        "Undefined symbol",
-        "Entry not defined",
-        "External conflict",
-        "Memory allocation failed",
-        "General error"};
+    "Invalid label",
+    "Unknown instruction",
+    "Invalid directive",
+    "Duplicate label",
+    "Syntax error",
+    "Too many operands",
+    "Too few operands",
+    "Invalid operand",
+    "Undefined symbol",
+    "Entry not defined",
+    "External conflict",
+    "Memory allocation failed",
+    "Label cannot be used on .extern",
+    "Invalid matrix syntax",
+    "Data value out of range",
+    "String too long",
+    "Label must start with a letter",
+    "General error"
+    };
+
 
     int err_cnt = (int)(sizeof(error_messages) / sizeof(error_messages[0]));
 
