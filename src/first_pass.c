@@ -31,11 +31,11 @@ static void process_line(const char *line, const char *filename, int line_num);
  * - Validate syntax and operand legality.
  * - Print errors if any are found.
  *
- * @param am_file Open file pointer to the .am source file (after macro expansion).
- * @param filename Name of the source file (for error reporting).
+ * @param am_file Pointer to the .am source file (after macro expansion).
+ * @param filename Pointer to the source file (for error reporting).
  * @return TRUE if the first pass was successful, FALSE otherwise.
  */
-void firs_pass(FILE am_file, const char *filename)
+void first_pass(FILE *am_file, const char *filename)
 {
     char line[MAX_LINE_LENGTH];
     int line_num = 0;
@@ -54,7 +54,7 @@ void firs_pass(FILE am_file, const char *filename)
             print_line_error(filename, line_num, ERROR_SYNTAX);
             err_found = TRUE;
             /* Skips the rest of the line */
-            while (!feof(am_files) && fgetc(am_file) != '\n')
+            while (!feof(am_file) && fgetc(am_file) != '\n')
                 continue;
             
         }

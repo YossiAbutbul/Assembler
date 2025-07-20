@@ -1,8 +1,8 @@
 /**
- * @file main.c
- * @author Yossi Abutbul
- * ToDo: add propper documentation.
- */
+* @file main.c
+* @author Yossi Abutbul
+* ToDo: add propper documentation.
+*/
 
 #include <stdio.h>
 #include <stdlib.h>
