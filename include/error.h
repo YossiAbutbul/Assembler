@@ -43,11 +43,13 @@ typedef enum
  * @param exit_code The exit code indicating the type of error.
  * @param filename The filename associated with the error (without .as extension).
  */
-
 void report_error(ExitCode exit_code, const char *filename);
 
 /**
- *
+ * @brief Prints a line-level error message with the line number and type.
+ * @param filename Pointer to the file name where the error occurred.
+ * @param line_number The line number where the error occurred.
+ * @param err_type The type of error that occurred.
  */
 void print_line_error(const char *filename, int line_number, ErrorType err_type)
 
