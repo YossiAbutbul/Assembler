@@ -90,3 +90,49 @@ void parse_data_values(const char *line, const char *filename, int line_num)
 
     free(copy);
 }
+
+void parse_string_value(const char *line, const char *filename, int line_num)
+{
+    const char *start, *end;
+    int i, len;
+
+    if (!line)
+        return;
+
+    /* Skip leading whitespaces */
+    while (isspace((unsigned char)*line))
+        line++;
+
+    /* Checks if starts with '"' (after the ".string"). */
+    if (*line != '"')
+    {
+        print_line_error(filename, line_num, ERROR_SYNTAX);
+        error_found = TRUE;
+        return;
+    }
+
+    /* Skips the opening quote */
+    start = ++line;
+
+    /* Find the closing quote */
+    end = strchr(start, '"');
+
+    /* If no closing quote */
+    if (!end)
+    {
+        print_line_error(filename, line_num, ERROR_SYNTAX);
+        error_found = TRUE;
+        return;
+    }
+
+    len = end - start;
+
+    for (i = 0; i < len; i++)
+    {
+        /*ToDo: Store start[i] into the data image */
+        DC++;
+    }
+
+    DC++;
+    /*todo: update to supports 0-127ascii value in strings */
+}
