@@ -5,6 +5,7 @@
         "stdlib.h": "c",
         "string.h": "c",
         "preprocessor.h": "c",
-        "error.h": "c"
+        "error.h": "c",
+        "data_parser.h": "c"
     }
 }
