@@ -26,6 +26,25 @@
  */
 void parse_data_values(const char *line, const char *filename, int line_num);
 
+/**
+ * @brief Parses a ".string" directive and stores its characters into the data image.
+ *
+ * This function expects the input line to begin with quoted string (e.g. "shalom").
+ * Each character (including spaces and punctuation) is stored as one word in memory,
+ * followed by a null terminator, with one word allocated per character.
+ *
+ * On success, its increments the data counter (DC) by the string length + 1.
+ *
+ * Errors are reported if:
+ * - The string is missing or not properly quoted.
+ * - Empty string without quotes.
+ *
+ * @param line      Pointer to the line content after the  ".string" directive.
+ * @param filename  Pointer to the source file (for error reporting).
+ * @param line_num  The current line number (for error reporting).
+ *
+ * ToDo: make sure if supports .string "ab" cd" -> the string is ab" cd.
+ */
 void parse_string_value(const char *line, const char *filename, int line_num);
 
 void parse_matrix(const char *line, const char *filename, int line_num);
