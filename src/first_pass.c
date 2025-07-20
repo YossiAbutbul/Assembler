@@ -21,4 +21,9 @@ BOOL run_first_pass(const char *s_file, int *icf, int dcf)
 
     /* Open the source file. */
     fp = fopen(s_file, "r");
+
+    if (!fp)
+    {
+        /* code */
+    }
 }
