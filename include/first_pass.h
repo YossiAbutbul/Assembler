@@ -8,6 +8,8 @@
 
 #include "constants.h"
 
+#define BASE_IC_ADDRESS 100 /* Base address for instruction count */
+
 /**
  * @brief Runs the first pass of the assembler on the given source file.
  * This function processes the source file to build the symbol table,

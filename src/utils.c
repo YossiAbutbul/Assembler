@@ -94,9 +94,16 @@ BOOL is_comment(const char *line)
     return FALSE; /* Line is empty or contains only whitespace */
 }
 
+/**
+ * @brief Check if a string starts with a given prefix.
+ *
+ * @param str Pointer to the string to check.
+ * @param prefix Pointer to the prefix to match.
+ * @return TRUE if the string starts with the prefix, FALSE otherwise.
+ */
 BOOL starts_with(const char *str, const char *prefix)
 {
-    size_t len_prefix, len_str;
+    size_t len_prefix, len_str; /* used size_t in order to be always positive */
 
     if (!str || !prefix)
         return FALSE;

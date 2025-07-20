@@ -18,7 +18,8 @@
  * @struct Macro
  * @brief Represents a macro and its body lines.
  */
-typedef struct {
+typedef struct
+{
     char name[MAX_MACRO_NAME_LENGTH]; /**< Macro name */
     char *lines[MAX_MACRO_LINES];     /**< Lines of macro body */
     int line_count;                   /**< Number of lines stored */
@@ -36,7 +37,8 @@ static int macro_count = 0;           /**< Count of stored macros */
  * @param line The input line to parse.
  * @param dest Destination buffer to store the extracted word.
  */
-static void get_first_word(const char *line, char *dest) {
+static void get_first_word(const char *line, char *dest)
+{
     int i = 0, j = 0;
 
     while (line[i] && isspace((unsigned char)line[i]))
@@ -54,9 +56,11 @@ static void get_first_word(const char *line, char *dest) {
  * @param name The name of the macro to find.
  * @return Index of the macro in the table if found, -1 otherwise.
  */
-static int find_macro(const char *name) {
+static int find_macro(const char *name)
+{
     int i;
-    for (i = 0; i < macro_count; i++) {
+    for (i = 0; i < macro_count; i++)
+    {
         if (strcmp(macro_table[i].name, name) == 0)
             return i;
     }
@@ -69,7 +73,8 @@ static int find_macro(const char *name) {
  * @param name The name of the macro to add.
  * @return TRUE if successfully added, FALSE if already exists or table is full.
  */
-static BOOL add_macro(const char *name) {
+static BOOL add_macro(const char *name)
+{
     if (macro_count >= MAX_MACROS || find_macro(name) != -1)
         return FALSE;
 
@@ -89,10 +94,11 @@ static BOOL add_macro(const char *name) {
  * @param line The line content.
  * @return TRUE on success, FALSE on failure or overflow.
  */
-static BOOL add_line_to_macro(const char *name, const char *line) {
+static BOOL add_line_to_macro(const char *name, const char *line)
+{
     int i = find_macro(name);
     char *stored_line;
-    size_t len;
+    size_t len; /* used size_t in order to be always positive */
 
     if (i == -1 || macro_table[i].line_count >= MAX_MACRO_LINES)
         return FALSE;
@@ -104,10 +110,13 @@ static BOOL add_line_to_macro(const char *name, const char *line) {
 
     strcpy(stored_line, line);
 
-    if (len == 0 || stored_line[len - 1] != '\n') {
+    if (len == 0 || stored_line[len - 1] != '\n')
+    {
         stored_line[len] = '\n';
         stored_line[len + 1] = '\0';
-    } else {
+    }
+    else
+    {
         stored_line[len] = '\0';
     }
 
@@ -123,15 +132,17 @@ static BOOL add_line_to_macro(const char *name, const char *line) {
  * @param am_file The output file pointer.
  * @param name The macro name to write.
  */
-static void write_macro_body(FILE *am_file, const char *name) {
+static void write_macro_body(FILE *am_file, const char *name)
+{
     int i = find_macro(name), j;
     char *line;
-    size_t len;
+    size_t len; /* used size_t in order to be always positive */
 
     if (i == -1)
         return;
 
-    for (j = 0; j < macro_table[i].line_count; j++) {
+    for (j = 0; j < macro_table[i].line_count; j++)
+    {
         line = macro_table[i].lines[j];
 
         while (*line && isspace((unsigned char)*line))
@@ -148,9 +159,11 @@ static void write_macro_body(FILE *am_file, const char *name) {
 /**
  * @brief Frees all allocated memory used by macros.
  */
-static void free_macro_table() {
+static void free_macro_table()
+{
     int i, j;
-    for (i = 0; i < macro_count; i++) {
+    for (i = 0; i < macro_count; i++)
+    {
         for (j = 0; j < macro_table[i].line_count; j++)
             free(macro_table[i].lines[j]);
     }
@@ -166,7 +179,8 @@ static void free_macro_table() {
  * @param filename Base name of the file (no extension).
  * @return One of the predefined ExitCode values indicating success or error.
  */
-ExitCode preprocess(const char *filename) {
+ExitCode preprocess(const char *filename)
+{
     char as_filename[MAX_FILE_NAME_LENGTH];
     char am_filename[MAX_FILE_NAME_LENGTH];
     FILE *as_file, *am_file;
@@ -183,26 +197,31 @@ ExitCode preprocess(const char *filename) {
         return EXIT_FILE_NOT_FOUND;
 
     am_file = fopen(am_filename, "w");
-    if (!am_file) {
+    if (!am_file)
+    {
         fclose(as_file);
         return EXIT_WRITE_ERROR;
     }
 
-    while (fgets(line, MAX_LINE_LENGTH, as_file)) {
+    while (fgets(line, MAX_LINE_LENGTH, as_file))
+    {
         if (strspn(line, " \t\r\n") == strlen(line))
             continue;
 
         strcpy(first_word, "");
         get_first_word(line, first_word);
 
-        if (!in_macro && strcmp(first_word, "mcro") == 0) {
-            if (sscanf(line, "mcro %31s", current_macro_name) != 1) {
+        if (!in_macro && strcmp(first_word, "mcro") == 0)
+        {
+            if (sscanf(line, "mcro %31s", current_macro_name) != 1)
+            {
                 fclose(as_file);
                 fclose(am_file);
                 return EXIT_MACRO_SYNTAX_ERROR;
             }
 
-            if (!add_macro(current_macro_name)) {
+            if (!add_macro(current_macro_name))
+            {
                 fclose(as_file);
                 fclose(am_file);
                 return EXIT_MACRO_SYNTAX_ERROR;
@@ -212,13 +231,16 @@ ExitCode preprocess(const char *filename) {
             continue;
         }
 
-        if (in_macro) {
-            if (strcmp(first_word, "mcroend") == 0) {
+        if (in_macro)
+        {
+            if (strcmp(first_word, "mcroend") == 0)
+            {
                 in_macro = FALSE;
                 continue;
             }
 
-            if (!add_line_to_macro(current_macro_name, line)) {
+            if (!add_line_to_macro(current_macro_name, line))
+            {
                 fclose(as_file);
                 fclose(am_file);
                 return EXIT_MACRO_SYNTAX_ERROR;
@@ -227,9 +249,12 @@ ExitCode preprocess(const char *filename) {
             continue;
         }
 
-        if (find_macro(first_word) != -1) {
+        if (find_macro(first_word) != -1)
+        {
             write_macro_body(am_file, first_word);
-        } else {
+        }
+        else
+        {
             char *ptr = line;
             while (*ptr && isspace((unsigned char)*ptr))
                 ptr++;
