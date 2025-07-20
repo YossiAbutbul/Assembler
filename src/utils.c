@@ -226,6 +226,12 @@ BOOL get_next_token(const char *src, char *token_out){
     return TRUE;            /* Token successfully extracted */
 }
 
+/**
+ * @brief Check if a word is a reserved word in the assembler.
+ *
+ * @param word Pointer to the word to check.
+ * @return TRUE if the word is a reserved word, FALSE otherwise.
+ */
 BOOL is_reserved_word(const char *word) {
     int i;
 
