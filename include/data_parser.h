@@ -29,11 +29,13 @@ void parse_data_values(const char *line, const char *filename, int line_num);
 /**
  * @brief Parses a ".string" directive and stores its characters into the data image.
  *
- * This function expects the input line to begin with quoted string (e.g. "shalom").
- * Each character (including spaces and punctuation) is stored as one word in memory,
- * followed by a null terminator, with one word allocated per character.
+ * This function processes a string kiteral enclosed in double quotes. The string is
+ * interoreted as sequence of printable ASCII characters, with each character stored
+ * as one word in the data segemet. A null-terminator is appended to indocates the
+ * end of the string.
  *
- * On success, its increments the data counter (DC) by the string length + 1.
+ * The parser extracts all characters between the first and last double quote on the line.
+ * Quotes withing the string are allowed and treated as regular characters.
  *
  * Errors are reported if:
  * - The string is missing or not properly quoted.

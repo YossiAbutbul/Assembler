@@ -134,5 +134,5 @@ void parse_string_value(const char *line, const char *filename, int line_num)
     }
 
     DC++;
-    /*todo: update to supports 0-127ascii value in strings */
+    /*todo: update to supports 0-127 ascii value in strings */
 }
