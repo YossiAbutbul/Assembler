@@ -50,6 +50,12 @@ void parse_data_values(const char *line, const char *filename, int line_num);
  */
 void parse_string_value(const char *line, const char *filename, int line_num);
 
+/**
+ * @brief Parses a ".mat" directive, extracts matrix dimentions and values,
+ * and stores them into the data image.
+ *
+ *
+ */
 void parse_matrix(const char *line, const char *filename, int line_num);
 
 #endif
