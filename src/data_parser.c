@@ -94,16 +94,17 @@ void parse_data_values(const char *line, const char *filename, int line_num)
 void parse_string_value(const char *line, const char *filename, int line_num)
 {
     const char *start, *end;
-    int i, len;
+    const char p;
+    unsigned char ch;
 
     if (!line)
         return;
 
-    /* Skip leading whitespaces */
-    while (isspace((unsigned char)*line))
+    /* Skip leading whitespaces. */
+    while (isspace((unsigned char)) * line)
         line++;
 
-    /* Checks if starts with '"' (after the ".string"). */
+    /* Checks if a line starts with a quote */
     if (*line != '"')
     {
         print_line_error(filename, line_num, ERROR_SYNTAX);
@@ -111,13 +112,11 @@ void parse_string_value(const char *line, const char *filename, int line_num)
         return;
     }
 
-    /* Skips the opening quote */
-    start = ++line;
+    /* Skip opening quote */
+    start = line + 1;
 
-    /* Find the closing quote */
-    end = strchr(start, '"');
-
-    /* If no closing quote */
+    /* Find last quote (search from the end of the start string) */
+    end = strrchr(start, '"');
     if (!end)
     {
         print_line_error(filename, line_num, ERROR_SYNTAX);
@@ -125,14 +124,34 @@ void parse_string_value(const char *line, const char *filename, int line_num)
         return;
     }
 
-    len = end - start;
-
-    for (i = 0; i < len; i++)
+    /* Scan characters between start and end */
+    for (p = start; p < end; p++)
     {
-        /*ToDo: Store start[i] into the data image */
-        DC++;
+        ch = (unsigned char)*p;
+        if (ch > 127)
+        {
+            print_line_error(filename, line_num, ERROR_DATA_OUT_OF_RANGE);
+            error_found = TRUE;
+        }
+        else
+        {
+            /* ToDo: store ch in data image */
+            DC++;
+        }
     }
-
+    /* Append null terminator */
     DC++;
-    /*todo: update to supports 0-127 ascii value in strings */
+
+    /* Check for extra characters after the closing quote */
+    p = end + 1;
+    while (*p != '\0')
+    {
+        if (!isspace((unsigned char)*p))
+        {
+            print_line_error(filename, line_num, ERROR_SYNTAX);
+            error_found = TRUE;
+            return;
+        }
+        p++;
+    }
 }
