@@ -23,7 +23,7 @@ BOOL store_data(int value, const char *filename, int line_num);
  * @brief Retrieves a stored data value at a given index.
  *
  * @param index Index in the data image array.
- * @return The stored value, or 0 if index is out of bounds. //Todo: rething the 0 return
+ * @return The stored value, or 0 if index is out of bounds. //Todo: rething the 0 return.
  */
 int get_data_at(int index);
 
