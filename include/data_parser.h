@@ -54,7 +54,28 @@ void parse_string_value(const char *line, const char *filename, int line_num);
  * @brief Parses a ".mat" directive, extracts matrix dimentions and values,
  * and stores them into the data image.
  *
+ * The matrix format must follow the pattern:
+ * - [rows][cols] val1, val2, ..., valN
  *
+ * - The opening '[' must appear immediately aftee the directive name
+ *   (no space between .mat and '[').
+ * - Whitespace is permited only inside the brackets.
+ * - The number of values must not exceed rows x cols.
+ * - If fewer values are provided, the remaining elements are implicitly initialized to zero.
+ * - Matrix values are stored row by row (left to right, top to bottom).
+ *
+ * Each valid value and dimenion increamets the data counter 'DC'.
+ * The dimensions themselves occupy two words in the data image.
+ *
+ * Errors are reported if:
+ * - Missing or malformed bracket structure.
+ * - Non-numeric or invalid dimensions.
+ * - Invalid operands.
+ * - Too many values are provided.
+ *
+ * @param line      Pointer to the string following the ".mat" directive (starting with '[').
+ * @param filename  filename  Pointer to the source file (for error reporting).
+ * @param line_num  The current line number (for error reporting).
  */
 void parse_matrix(const char *line, const char *filename, int line_num);
 
