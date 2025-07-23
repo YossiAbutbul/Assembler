@@ -6,6 +6,7 @@
         "string.h": "c",
         "preprocessor.h": "c",
         "error.h": "c",
-        "data_parser.h": "c"
+        "data_parser.h": "c",
+        "first_pass.h": "c"
     }
 }

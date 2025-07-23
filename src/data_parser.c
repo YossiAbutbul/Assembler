@@ -5,9 +5,7 @@
 #include "../include/data_parser.h"
 #include "../include/error.h"
 #include "../include/constants.h"
-
-extern int DC;
-extern BOOL error_found;
+#include "../include/first_pass.h"
 
 /**
  * @brief Parses the opernad list of a ".data" directive.
@@ -41,7 +39,7 @@ void parse_data_values(const char *line, const char *filename, int line_num)
     if (!copy)
     {
         print_line_error(filename, line_num, ERROR_MEMORY_ALLOCATION_FAILED);
-        error_found = TRUE;
+        err_found = TRUE;
         return;
     }
 
@@ -66,7 +64,7 @@ void parse_data_values(const char *line, const char *filename, int line_num)
         if (strlen(token) == 0)
         {
             print_line_error(filename, line_num, ERROR_SYNTAX);
-            error_found = TRUE;
+            err_found = TRUE;
             /* Moves to the next token in the comma seprated list. */
             token = strtok(NULL, ",");
             continue;
@@ -77,7 +75,7 @@ void parse_data_values(const char *line, const char *filename, int line_num)
         if (*ptr != '\0')
         {
             print_line_error(filename, line_num, ERROR_INVALID_OPERAND);
-            error_found = TRUE;
+            err_found = TRUE;
         }
         else
         {
@@ -108,7 +106,7 @@ void parse_string_value(const char *line, const char *filename, int line_num)
     if (*line != '"')
     {
         print_line_error(filename, line_num, ERROR_SYNTAX);
-        error_found = TRUE;
+        err_found = TRUE;
         return;
     }
 
@@ -120,7 +118,7 @@ void parse_string_value(const char *line, const char *filename, int line_num)
     if (!end)
     {
         print_line_error(filename, line_num, ERROR_SYNTAX);
-        error_found = TRUE;
+        err_found = TRUE;
         return;
     }
 
@@ -131,7 +129,7 @@ void parse_string_value(const char *line, const char *filename, int line_num)
         if (ch > 127)
         {
             print_line_error(filename, line_num, ERROR_DATA_OUT_OF_RANGE);
-            error_found = TRUE;
+            err_found = TRUE;
         }
         else
         {
@@ -149,7 +147,7 @@ void parse_string_value(const char *line, const char *filename, int line_num)
         if (!isspace((unsigned char)*p))
         {
             print_line_error(filename, line_num, ERROR_SYNTAX);
-            error_found = TRUE;
+            err_found = TRUE;
             return;
         }
         p++;
@@ -202,7 +200,7 @@ void parse_matrix(const char *line, const char *filename, int line_num)
     if (!copy)
     {
         print_line_error(filename, line_num, ERROR_MEMORY_ALLOCATION_FAILED);
-        error_found = TRUE;
+        err_found = TRUE;
         return;
     }
 
@@ -214,7 +212,7 @@ void parse_matrix(const char *line, const char *filename, int line_num)
     if (*copy != '[')
     {
         print_line_error(filename, line_num, ERROR_INVALID_MATRIX);
-        error_found = TRUE;
+        err_found = TRUE;
         free(copy);
         return;
     }
@@ -227,7 +225,7 @@ void parse_matrix(const char *line, const char *filename, int line_num)
     if (!p_mid)
     {
         print_line_error(filename, line_num, ERROR_INVALID_MATRIX);
-        error_found = TRUE;
+        err_found = TRUE;
         free(copy);
         return;
     }
@@ -245,7 +243,7 @@ void parse_matrix(const char *line, const char *filename, int line_num)
     if (*endptr != '\0' || rows < 0)
     {
         print_line_error(filename, line_num, ERROR_INVALID_MATRIX);
-        error_found = TRUE;
+        err_found = TRUE;
         free(copy);
         return;
     }
@@ -255,7 +253,7 @@ void parse_matrix(const char *line, const char *filename, int line_num)
     if (*(p_mid + 1) != '[')
     {
         print_line_error(filename, line_num, ERROR_INVALID_MATRIX);
-        error_found = TRUE;
+        err_found = TRUE;
         free(copy);
         return;
     }
@@ -265,7 +263,7 @@ void parse_matrix(const char *line, const char *filename, int line_num)
     if (!p_end)
     {
         print_line_error(filename, line_num, ERROR_INVALID_MATRIX);
-        error_found = TRUE;
+        err_found = TRUE;
         free(copy);
         return;
     }
@@ -285,7 +283,7 @@ void parse_matrix(const char *line, const char *filename, int line_num)
         if (*endptr != '\0')
     {
         print_line_error(filename, line_num, ERROR_INVALID_MATRIX);
-        error_found = TRUE;
+        err_found = TRUE;
         free(copy);
         return;
     }
@@ -314,7 +312,7 @@ void parse_matrix(const char *line, const char *filename, int line_num)
             if (*token == '\0')
             {
                 print_line_error(filename, line_num, ERROR_SYNTAX);
-                error_found = TRUE;
+                err_found = TRUE;
             }
             else
             {
@@ -323,7 +321,7 @@ void parse_matrix(const char *line, const char *filename, int line_num)
                 if (*endptr != '\0')
                 {
                     print_line_error(filename, line_num, ERROR_INVALID_OPERAND);
-                    error_found = TRUE;
+                    err_found = TRUE;
                 }
                 else
                 {
@@ -351,7 +349,7 @@ void parse_matrix(const char *line, const char *filename, int line_num)
     if (actual_values > exp_vals)
     {
         print_line_error(filename, line_num, ERROR_TOO_MANY_OPERANDS);
-        error_found = TRUE;
+        err_found = TRUE;
     }
 
     /* Add space for dimensions */

@@ -12,6 +12,7 @@
 #define MAX_LABEL_LENGTH 31      /* Maximum length for labels */
 #define MAX_FILE_NAME_LENGTH 290 /* Maximum length for file names */
 #define BASE_IC_ADDRESS 100      /* Initial value for the instruction counter */
+#define MAX_DATA_IMAGE_SIZE 1000 /* Generous limit for image size */
 
 /* Define a Boolean type*/
 typedef enum
