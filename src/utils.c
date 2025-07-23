@@ -22,10 +22,9 @@ void trim_whitespace(char *str)
 {
     char *start, *end;
 
+    /* Check for null or empty strings */
     if (!str || *str == '\0')
-    {
         return;
-    }
 
     start = str;
     /* Trim leading whitespaces */
@@ -66,9 +65,11 @@ BOOL is_whitespace(const char *str)
 {
     int i;
 
+    /* Checks for null pointer */
     if (!str)
         return TRUE;
 
+    /* Iterate through each character */
     for (i = 0; str[i] != '\0'; i++)
     {
         if (!isspace((unsigned char)str[i]))
@@ -87,6 +88,7 @@ BOOL is_comment(const char *line)
 {
     int i;
 
+    /* Checks for null pointer */
     if (!line)
         return FALSE;
 
@@ -99,6 +101,7 @@ BOOL is_comment(const char *line)
 
     return FALSE; /* Line is empty or contains only whitespace */
 }
+
 /* === Label Extraction and Validation === */
 
 /**
@@ -113,6 +116,7 @@ BOOL extract_label(const char *line, char *label_out)
 {
     int i = 0, j = 0;
 
+    /* Checks for null pointers */
     if (!line || !label_out)
         return FALSE;
 
@@ -130,6 +134,7 @@ BOOL extract_label(const char *line, char *label_out)
         label_out[j++] = line[i++];
     }
 
+    /* Check if we found a valid label ending with ':' */
     if (line[i] == ':' && j > 0)
     {
         label_out[j] = '\0'; /* Null-terminate the label */
@@ -155,12 +160,12 @@ char *skip_label(const char *line)
         p++;
     }
 
-    /* Skip label characters */
+    /* Skip label characters until ':' */
     while (*p && *p != ':')
     {
         p++;
     }
-    /* Skip the ':' character */
+    /* Skip the ':' character if found */
     if (*p == ':')
     {
         p++;
@@ -197,7 +202,7 @@ BOOL is_valid_label(const char *label)
         return FALSE;
 
     /* Check if the label contains only alphanumeric characters. */
-    for (i = 1; i < len != '\0'; i++)
+    for (i = 1; i < len && label[i] != '\0'; i++)
     {
         if (!isalnum((unsigned char)label[i]))
             return FALSE;
@@ -223,6 +228,7 @@ BOOL get_next_token(const char *src, char *token_out)
 {
     int i = 0, j = 0;
 
+    /* Checks for null pointers */
     if (!src || !token_out)
         return FALSE;
 
@@ -272,22 +278,54 @@ BOOL is_reserved_word(const char *word)
     const char *directives[] = {
         ".data", ".string", ".mat", ".entry", ".extern"};
 
+    /*  Check against instruction names */
     for (i = 0; i < sizeof(instructions) / sizeof(instructions[0]); i++)
     {
         if (strcmp(word, instructions[i]) == 0)
             return TRUE; /* Found a reserved instruction. */
     }
 
+    /* Check against register names */
     for (i = 0; i < sizeof(registers) / sizeof(registers[0]); i++)
     {
         if (strcmp(word, registers[i]) == 0)
             return TRUE; /* Found a reserved register. */
     }
 
+    /* Check against directive names */
     for (i = 0; i < sizeof(directives) / sizeof(directives[0]); i++)
     {
         if (strcmp(word, directives[i]) == 0)
             return TRUE; /* Found a reserved directive. */
     }
     return FALSE; /* Not a reserved word */
+}
+
+/**
+ * @brief Check if a word is a valid instruction name.
+ *
+ * This function checks if the given word matches any of the valid instruction names.
+ *
+ * @note I created such a function because of the frequency with which I use it.
+ * @param word Pointer to the word to check.
+ * @return TRUE if the word is a valid instruction, FALSE otherwise.
+ */
+BOOL is_instruction(const char *word)
+{
+    int i;
+
+    /* Array of all valid instruction names */
+    const char *instructions[] = {
+        "mov", "cmp", "add", "sub", "lea",
+        "clr", "not", "inc", "dec", "jmp",
+        "bne", "jsr", "red", "prn", "rts", "stop"};
+
+    /* Check if a word matches any instruction*/
+    for (i = 0; i < sizeof(instructions) / sizeof(instructions[0]); i++)
+    {
+        if (strcmp(word, instructions[i]) == 0)
+            return TRUE; /* Found a reserved instruction. */
+    }
+
+    return FALSE; /* Not a valid instruction name */
 }

@@ -46,7 +46,6 @@ void parse_data_values(const char *line, const char *filename, int line_num);
  * @param line      Pointer to the line content after the  ".string" directive.
  * @param filename  Pointer to the source file (for error reporting).
  * @param line_num  The current line number (for error reporting).
- *
  */
 void parse_string_value(const char *line, const char *filename, int line_num);
 

@@ -15,9 +15,11 @@
 #include "../include/constants.h"
 #include "../include/data_parser.h"
 
+/* Initalize IC and DC */
 int IC = BASE_IC_ADDRESS; /* Instruction counter */
 int DC = 0;               /* Data counter */
-BOOL err_found = FALSE;   /* Flag to indicate if an error was found */
+/* Initalize ERR flag */
+BOOL err_found = FALSE; /* Flag to indicate if an error was found */
 
 /* === Internal Helper Prototypes functions === */
 static void process_line(const char *line, const char *filename, int line_num);
@@ -48,6 +50,7 @@ void first_pass(FILE *am_file, const char *filename)
     DC = 0;               /* Reset data counter */
     err_found = FALSE;    /* Reset error flag */
 
+    /* Process each line in the file */
     while (fgets(line, sizeof(line), am_file))
     {
         line_num++;
@@ -61,8 +64,10 @@ void first_pass(FILE *am_file, const char *filename)
             while (!feof(am_file) && fgetc(am_file) != '\n')
                 continue;
         }
-        trim_whitespace(line); /* Trim leading and trailing whitespace */
+        /* Trim leading and trailing whitespace */
+        trim_whitespace(line);
 
+        /* Skips empty lines and comments */
         if (is_whitespace(line) || is_comment(line))
             continue; /* Skip empty lines and comments */
 
@@ -108,6 +113,7 @@ static void process_line(const char *line, const char *filename, int line_num)
     {
         has_label = TRUE;
 
+        /* Validate the extracted label */
         if (!is_valid_label(label))
         {
             print_line_error(filename, line_num, ERROR_INVALID_LABEL);
@@ -115,6 +121,7 @@ static void process_line(const char *line, const char *filename, int line_num)
             return; /* Skip processing this line */
         }
 
+        /* Check for duplicate label definition */
         if (is_label_defined(label))
         {
             print_line_error(filename, line_num, ERROR_DUPLICATE_LABEL);
@@ -145,6 +152,7 @@ static void process_line(const char *line, const char *filename, int line_num)
     }
     else if (strcmp(first_token, ".extern") == 0)
     {
+        /* Labels cannot be defined on .extern lines */
         if (has_label)
         {
             print_line_error(filename, line_num, ERROR_LABEL_ON_EXTERN);
@@ -158,7 +166,14 @@ static void process_line(const char *line, const char *filename, int line_num)
     else if (is_instruction(first_token))
     {
         /* TODO: implement handle_instruction function. */
+        /* For now, just increment IC to account for the instruction */
+        if (has_label)
+            add_symbol(label, IC, SYMBOL_CODE);
+
+        /* Temporarily incremet IC by 1, will be calculated later (Todo)*/
+        IC++;
     }
+    /* Step 7 - Handle Unknown Instructions/Directives */
     else
     {
         print_line_error(filename, line_num, ERROR_UNKNOWN_INSTRUCTION);
@@ -212,6 +227,7 @@ static void handle_extern_directive(const char *line, const char *filename, int 
         err_found = TRUE;
         return; /* Skip processing this line. */
     }
+
     /* Add the label to the symbol table as an external symbol. */
     add_symbol(label, 0, SYMBOL_EXTERNAL);
 }
@@ -257,6 +273,7 @@ static void handle_entry_directive(const char *line, const char *filename, int l
         err_found = TRUE;
         return; /* Skip processing this line. */
     }
+    /* Note: the actual marking as entry will be on the second pass, for now just validate */
 }
 
 /**
@@ -280,7 +297,7 @@ static void handle_entry_directive(const char *line, const char *filename, int l
 
 static void handle_data_directive(const char *label, const char *directive, const char *line, const char *filename, int lineno)
 {
-
+    /* Handle label if exsist */
     if (label != NULL && label[0] != '\0')
     {
 
@@ -304,19 +321,20 @@ static void handle_data_directive(const char *label, const char *directive, cons
         add_symbol(label, DC, SYMBOL_DATA);
     }
 
+    /* Parse the directive based on its type */
     if (strcmp(directive, ".data") == 0)
     {
-        /* TODO: implement parse_data_values(line, &DC);*/
+        parse_data_values(line, filename, line_num);
     }
 
     else if (strcmp(directive, ".string") == 0)
     {
-        /* TODO: implement parse_string_value(line, &DC); */
+        parse_string_value(line, filename, line_num);
     }
 
     else if (strcmp(directive, ".mat") == 0)
     {
-        /* TODO: implement parse_matrix(line, &DC); */
+        parse_matrix(line, filename, line_num);
     }
 
     else
