@@ -151,7 +151,7 @@ static void process_line(const char *line, const char *filename, int line_num)
             err_found = TRUE;
             return; /* Skip processing this line */
         }
-        handle_extern_directive(rest, filename, line_num)
+        handle_extern_directive(rest, filename, line_num);
     }
 
     /* Step 4 - Handle Instructions */

@@ -92,7 +92,7 @@ void parse_data_values(const char *line, const char *filename, int line_num)
 void parse_string_value(const char *line, const char *filename, int line_num)
 {
     const char *start, *end;
-    const char p;
+    const char *p;
     unsigned char ch;
 
     if (!line)
@@ -277,10 +277,10 @@ void parse_matrix(const char *line, const char *filename, int line_num)
 
     /* Converts the string pointed to by p_start into an integer,
     using base 10 (this is the cols value of the matrix) */
-    cols = (int)strtol(p_start, &endptr, 10)
+    cols = (int)strtol(p_start, &endptr, 10);
 
-        /* Checks if there are leftover characters after the number or cols < 0 */
-        if (*endptr != '\0')
+    /* Checks if there are leftover characters after the number or cols < 0 */
+    if (*endptr != '\0')
     {
         print_line_error(filename, line_num, ERROR_INVALID_MATRIX);
         err_found = TRUE;
@@ -288,7 +288,7 @@ void parse_matrix(const char *line, const char *filename, int line_num)
         return;
     }
 
-    /* Calculte the expected numbers in the matrix */
+    /* Calculate the expected numbers in the matrix */
     exp_vals = rows * cols;
 
     /* Skip to start of value list */

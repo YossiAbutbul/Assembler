@@ -69,7 +69,8 @@ BOOL is_whitespace(const char *str)
     if (!str)
         return TRUE;
 
-    for (i = 0; str[i] != '\0'; i++){
+    for (i = 0; str[i] != '\0'; i++)
+    {
         if (!isspace((unsigned char)str[i]))
             return FALSE; /* Found a non-whitespace character. */
     }
@@ -90,8 +91,9 @@ BOOL is_comment(const char *line)
         return FALSE;
 
     /* Skip leading whitespaces */
-    for (i = 0; line[i] != '\0'; i++){
-        if (!isspace((unsigned char)line[i]))
+    for (i = 0; line[i] != '\0'; i++)
+    {
+        if (!issapce((unsigned char)line[i]))
             return (line[i] == ';') ? TRUE : FALSE;
     }
 
@@ -104,31 +106,34 @@ BOOL is_comment(const char *line)
  *
  * @param line Pointer to the line to extract the label from.
  * @param label_out Pointer to a buffer where the extracted label will be stored.
- * @return TRUE if a label found and valid syntax (ends with ':'), 
+ * @return TRUE if a label found and valid syntax (ends with ':'),
  *         FALSE otherwise.
  */
-BOOL extract_label(const char *line, char *label_out){
+BOOL extract_label(const char *line, char *label_out)
+{
     int i = 0, j = 0;
-    
+
     if (!line || !label_out)
         return FALSE;
 
     /* Skip leading whitespace. */
     while (isspace((unsigned char)line[i]))
         i++;
-    
+
     /* Check if the label starts with a letter. */
-    if(!isalpha((unsigned char)line[i]))
+    if (!isalpha((unsigned char)line[i]))
         return FALSE;
-    
+
     /* Copy the label until we hit a ':' */
-    while (line[i] && !issapce((unsigned char)line[i]) && line[i] != ':' && j < MAX_LABEL_LENGTH){
+    while (line[i] && !issapce((unsigned char)line[i]) && line[i] != ':' && j < MAX_LABEL_LENGTH)
+    {
         label_out[j++] = line[i++];
     }
 
-    if (line[i] == ':' && j > 0) {
-        label_out[j] = '\0';    /* Null-terminate the label */
-        return TRUE;            /* Valid label found */
+    if (line[i] == ':' && j > 0)
+    {
+        label_out[j] = '\0'; /* Null-terminate the label */
+        return TRUE;         /* Valid label found */
     }
 
     return FALSE; /* No valid label found */
@@ -145,21 +150,25 @@ char *skip_label(const char *line)
     const char *p = line;
 
     /* Skip leading whitespace */
-    while (isspace((unsigned char)*p)) {
-        p++; 
+    while (isspace((unsigned char)*p))
+    {
+        p++;
     }
 
     /* Skip label characters */
-    while (*p && *p != ':') {
-        p++; 
+    while (*p && *p != ':')
+    {
+        p++;
     }
     /* Skip the ':' character */
-    if (*p == ':') {
-        p++; 
+    if (*p == ':')
+    {
+        p++;
     }
     /* Skip any whitespace after the label */
-    while (isspace((unsigned char)*p)) {
-        p++; 
+    while (isspace((unsigned char)*p))
+    {
+        p++;
     }
     return (char *)p; /* Return pointer to the rest of the line */
 }
@@ -173,12 +182,13 @@ char *skip_label(const char *line)
  * @param label Pointer to the label string to check.
  * @return TRUE if the label is valid, FALSE otherwise.
  */
- BOOL is_valid_label(const char *label){
+BOOL is_valid_label(const char *label)
+{
     int i, len;
-    
+
     /* Check if a label starts with a letter. */
     if (!label || !isalpha((unsigned char)label[0]))
-        return FALSE; 
+        return FALSE;
 
     len = strlen(label);
 
@@ -187,9 +197,10 @@ char *skip_label(const char *line)
         return FALSE;
 
     /* Check if the label contains only alphanumeric characters. */
-    for (i = 1; i < label[i] != '\0'; i++){
+    for (i = 1; i < len != '\0'; i++)
+    {
         if (!isalnum((unsigned char)label[i]))
-            return FALSE; 
+            return FALSE;
     }
 
     /* Check if the label is a reserved word. */
@@ -208,29 +219,33 @@ char *skip_label(const char *line)
  * @param token_out Pointer to a buffer where the extracted token will be stored.
  * @return TRUE if a token was successfully extracted, FALSE if no more tokens are available.
  */
-BOOL get_next_token(const char *src, char *token_out){
+BOOL get_next_token(const char *src, char *token_out)
+{
     int i = 0, j = 0;
-    
+
     if (!src || !token_out)
         return FALSE;
 
     /* Skip leading whitespace. */
-    while (isspace((unsigned char)src[i])){
+    while (isspace((unsigned char)src[i]))
+    {
         i++;
     }
 
     /* Check if we reached the end of the string. */
-    if (src[i] == '\0'){
-        return FALSE;           /* No more tokens available */
+    if (src[i] == '\0')
+    {
+        return FALSE; /* No more tokens available */
     }
 
     /* Copy token until space or null. */
-    while (src[i] && !isspace((unsigned char)src[i]) && j < MAX_LINE_LENGTH){
+    while (src[i] && !isspace((unsigned char)src[i]) && j < MAX_LINE_LENGTH)
+    {
         token_out[j++] = src[i++];
     }
 
-    token_out[j] = '\0';    /* Null-terminate the token */
-    return TRUE;            /* Token successfully extracted */
+    token_out[j] = '\0'; /* Null-terminate the token */
+    return TRUE;         /* Token successfully extracted */
 }
 
 /**
@@ -239,38 +254,39 @@ BOOL get_next_token(const char *src, char *token_out){
  * @param word Pointer to the word to check.
  * @return TRUE if the word is a reserved word, FALSE otherwise.
  */
-BOOL is_reserved_word(const char *word) {
+BOOL is_reserved_word(const char *word)
+{
     int i;
 
     /* === Instruction Reserved Names === */
     const char *instructions[] = {
         "mov", "cmp", "add", "sub", "lea",
         "clr", "not", "inc", "dec", "jmp",
-        "bne", "jsr", "red", "prn", "rts", "stop"
-    }
+        "bne", "jsr", "red", "prn", "rts", "stop"};
 
     /* === Register Reserved Names === */
-    const char *registers[] = {
-        "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7"
-    };
+    const char *
+        registers[] = {"r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7"};
 
     /* === Directives Reserved Names === */
     const char *directives[] = {
-        ".data", ".string", ".mat", ".entry", ".extern"
-    };
+        ".data", ".string", ".mat", ".entry", ".extern"};
 
-    for (i = 0; i < sizeof(instructions)/sizeof(instructions[0]); i++) {
-        if (strcmp(word, instructions[i]) == 0) 
+    for (i = 0; i < sizeof(instructions) / sizeof(instructions[0]); i++)
+    {
+        if (strcmp(word, instructions[i]) == 0)
             return TRUE; /* Found a reserved instruction. */
     }
 
-    for (i = 0; i < sizeof(registers)/sizeof(registers[0]); i++) {
-        if (strcmp(word, registers[i]) == 0) 
+    for (i = 0; i < sizeof(registers) / sizeof(registers[0]); i++)
+    {
+        if (strcmp(word, registers[i]) == 0)
             return TRUE; /* Found a reserved register. */
     }
 
-    for (i = 0; i < sizeof(directives)/sizeof(directives[0]); i++) {
-        if (strcmp(word, directives[i]) == 0) 
+    for (i = 0; i < sizeof(directives) / sizeof(directives[0]); i++)
+    {
+        if (strcmp(word, directives[i]) == 0)
             return TRUE; /* Found a reserved directive. */
     }
     return FALSE; /* Not a reserved word */
