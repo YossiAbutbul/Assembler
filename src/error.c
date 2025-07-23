@@ -31,7 +31,7 @@ void report_error(ExitCode exit_code, const char *filename)
     case EXIT_WRITE_ERROR:
         fprintf(stderr, "Error: Failed writing output files for %s.\n", filename);
         break;
-    
+
     default:
         fprintf(stderr, "Error: General error occurred while processing %s.\n", filename);
     }
@@ -47,30 +47,29 @@ void report_error(ExitCode exit_code, const char *filename)
 void print_line_error(const char *filename, int line_number, ErrorType err_type)
 {
     const char *error_messages[] = {
-    /*  0 */ "Invalid label",
-    /*  1 */ "Unknown instruction",
-    /*  2 */ "Invalid directive",
-    /*  3 */ "Duplicate label",
-    /*  4 */ "Syntax error",
-    /*  5 */ "Too many operands",
-    /*  6 */ "Too few operands",
-    /*  7 */ "Invalid operand",
-    /*  8 */ "Undefined symbol",
-    /*  9 */ "Entry not defined",
-    /* 10 */ "External conflict",
-    /* 11 */ "Memory allocation failed",
-    /* 12 */ "Label cannot be used on .extern",
-    /* 13 */ "Invalid matrix syntax",
-    /* 14 */ "Data value out of range",
-    /* 15 */ "String too long",
-    /* 16 */ "Label must start with a letter",
-    /* 17 */ "General error"
-};
-
+        /*  0 */ "Invalid label",
+        /*  1 */ "Unknown instruction",
+        /*  2 */ "Invalid directive",
+        /*  3 */ "Duplicate label",
+        /*  4 */ "Syntax error",
+        /*  5 */ "Too many operands",
+        /*  6 */ "Too few operands",
+        /*  7 */ "Invalid operand",
+        /*  8 */ "Undefined symbol",
+        /*  9 */ "Entry not defined",
+        /* 10 */ "External conflict",
+        /* 11 */ "Memory allocation failed",
+        /* 12 */ "Label cannot be used on .extern",
+        /* 13 */ "Invalid matrix syntax",
+        /* 14 */ "Data value out of range",
+        /* 15 */ "String too long",
+        /* 16 */ "Label must start with a letter",
+        /* 17 */ "General error",
+        /* 18 */ "Data image overflow"};
 
     size_t err_cnt = (sizeof(error_messages) / sizeof(error_messages[0]));
 
-        if ((int)err_type < 0 || (size_t)err_type >= err_cnt)
+    if ((int)err_type < 0 || (size_t)err_type >= err_cnt)
     {
         fprintf(stderr, "Error: Unknown error type %d in file %s at line %d.\n", (int)err_type, filename, line_number);
     }

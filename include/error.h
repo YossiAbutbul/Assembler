@@ -51,7 +51,8 @@ typedef enum
 
     /* === General Errors === */
     ERROR_SYNTAX,
-    ERROR_GENERAL
+    ERROR_GENERAL,
+    ERROR_DATA_IMAGE_OVERFLOW
 } ErrorType;
 
 /**
