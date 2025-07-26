@@ -1,6 +1,6 @@
 /**
  * @file data_image.c
- * @brief implemmet basic data image functions.
+ * @brief Implementation of basic data image functions.
  *
  * The data image stores all data values from .data, .string, and .mat directives.
  * It uses dynamic memory allocation to efficiently manage varying amounts of data.
@@ -57,6 +57,15 @@ void init_data_image()
     data_image.capacity = INITIAL_DATA_CAPACITY;
 }
 
+/**
+ * @brief Expand the data image capacity when needed.
+ *
+ * This function doubles the capacity of the data image
+ * when the current capacity is exceeded.
+ *
+ * @param filename Pointer to filename
+ */
+
 BOOL store_data(int value, const char *filename, int line_num)
 {
     /* Check for data overflow */
@@ -71,12 +80,3 @@ BOOL store_data(int value, const char *filename, int line_num)
     data_image[DC++] = value;
     return TRUE;
 }
-
-int get_data_at(int index)
-{
-    if (index >= 0 && index < DC)
-        return data_image[index];
-    return 0;
-}
-
-int get_data_size() return DC;
