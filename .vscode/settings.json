@@ -8,6 +8,7 @@
         "error.h": "c",
         "data_parser.h": "c",
         "first_pass.h": "c",
-        "data_image.h": "c"
+        "data_image.h": "c",
+        "cstdlib": "c"
     }
 }

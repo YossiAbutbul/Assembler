@@ -6,17 +6,38 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "symbol_table.h"
+
+#include "../include/symbol_table.h"
 #include "../include/error.h"
 
-static Symbol *symbol_table_head = NULL; /* Pointer to the head of the symbol table linked list */
+/* Global pointer to the head of the symbol table linked list */
+static Symbol *symbol_table_head = NULL;
 
 /**
  * @brief Initializes the symbol table.
+ *
+ * This function sets up the symbol table for use by clearing any existing
+ * symbols and preparing for new symbol additions.
+ * @note This function will be called at the start of processing each source file.
  */
 void init_symbol_table()
 {
-    symbol_table_head = NULL; /* Initialize the symbol table to an empty state */
+    /* Initialize the symbol table to an empty state */
+    symbol_table_head = NULL;
+}
+
+/**
+ * @brief Check if a label is already defined in the symbol table.
+ *
+ * This function checks wether a label already exists in the symbol
+ * table without returning the actual symbol.
+ *
+ * @param name The name of the label to check.
+ * @return TRUE if the label exist, FALSE otherwise.
+ */
+BOOL is_label_defined(const char *name)
+{
+    return (find_symbol(name) != NULL);
 }
 
 /**
@@ -28,6 +49,8 @@ void init_symbol_table()
 static Symbol *find_symbol(const char *name)
 {
     Symbol *current = symbol_table_head;
+
+    /* Pass on the linked list looking for the symbol */
     while (current != NULL)
     {
         if (strcmp(current->name, name) == 0)
@@ -41,27 +64,33 @@ static Symbol *find_symbol(const char *name)
 /**
  * @brief Adds a new symbol to the symbol table.
  *
- * @param name Symbol name.
- * @param address Memory address (IC / DC).
- * @param type The type of the symbol (CODE, DATA, EXTERNAL, ENTRY).
- * @return TRUE if added successfully,
- *         FALSE if already exists or table is full.
+ * THis function creates a new symbol entry and adds it to the beginning
+ * of the symbol table linked list. It preforms validation to ensure
+ * no duplicate symbol are added.
+ *
+ * @param name      Symbol name.
+ * @param address   Memory address (IC / DC).
+ * @param type      The type of the symbol (CODE, DATA, EXTERNAL, ENTRY).
+ * @return TRUE if added successfully, FALSE if already exists or memory allocation failed.
  */
 BOOL add_symbol(const char *name, int address, SymbolType type)
 {
     Symbol *existing_symbol = find_symbol(name);
     Symbol *new_symbol;
 
+    /* Check if symbol already exists */
     if (existing_symbol != NULL)
-        return FALSE; /* Symbol already exists */
+        return FALSE;
 
+    /* Allocate memory for new symbol */
     new_symbol = (Symbol *)malloc(sizeof(Symbol));
     if (new_symbol == NULL)
     {
-        print_line_error("symbol_table", -1, ERR_MEMORY_ALLOCATION);
-        return FALSE; /* Memory allocation failed */
+        print_line_error("symbol_table", -1, ERROR_MEMORY_ALLOCATION_FAILED);
+        return FALSE;
     }
 
+    /* Initaalize the new symbol */
     strncpy(new_symbol->name, name, MAX_SYMBOL_NAME_LENGTH - 1);
     new_symbol->name[MAX_SYMBOL_NAME_LENGTH - 1] = '\0'; /* Ensure null-termination */
     new_symbol->address = address;
@@ -71,11 +100,15 @@ BOOL add_symbol(const char *name, int address, SymbolType type)
     new_symbol->next = symbol_table_head;                               /* Insert at the beginning of the linked list */
     symbol_table_head = new_symbol;                                     /* Update the head of the linked list */
 
-    return TRUE; /* Symbol added successfully */
+    /* Symbol added successfully */
+    return TRUE;
 }
 
 /**
  * @brief Marks an existing symbol as .entry.
+ *
+ * This function finds a symbol in the symbol table and marks it as an
+ * entry point that can be refernced from other files.
  *
  * @param name The name of the symbol to mark as entry.
  * @return TRUE if the symbol was found and marked as entry,
@@ -84,22 +117,29 @@ BOOL add_symbol(const char *name, int address, SymbolType type)
 BOOL mark_symbol_as_entry(const char *name)
 {
     Symbol *symbol = find_symbol(name);
+
+    /* Check if the symbol exists */
     if (symbol == NULL)
         return FALSE;
 
-    symbol->is_entry = TRUE; /* Mark the symbol as entry */
-    return TRUE;             /* Successfully marked as entry */
+    /* Mark the symbol as entry */
+    symbol->is_entry = TRUE;
+    return TRUE;
 }
 
 /**
  * @brief Pull a symbol from the symbol table by name.
+ *
+ * This function provides read-only access to symbols in the symbol table.
+ * @note The returned pointer should not be used to modify the symbol.
  *
  * @param name The name of the symbol to retrieve.
  * @return const Symbol* Pointer to the symbol if found, NULL otherwise.
  */
 const Symbol *get_symbol(const char *name)
 {
-    return find_symbol(name); /* Return the const symbol pointer if found, NULL otherwise */
+    /* Return the const symbol pointer if found, NULL otherwise. */
+    return find_symbol(name);
 }
 
 /**
@@ -107,49 +147,68 @@ const Symbol *get_symbol(const char *name)
  *
  * This function adjusts the addresses of DATA symbols by adding the instruction count final (ICF)
  * from the first pass to their addresses, allowing for correct memory allocation.
+ * This is necessary because data is placed after instructions in the final memory layout.
  *
  * @param icf The instruction count from the first pass.
  */
 void update_data_symbols(int icf)
 {
     Symbol *cur = symbol_table_head;
+
+    /* Pass all the symbols in the table */
     while (cur != NULL)
     {
+        /* Update addresses of DATA symbols only */
         if (cur->type == SYMBOL_DATA)
         {
-            cur->address += icf; /* Update the address of DATA symbols */
+            /* Update the address of DATA symbols */
+            cur->address += icf;
         }
-        cur = cur->next; /* Move to the next symbol */
+        /* Move to the next symbol */
+        cur = cur->next;
     }
 }
 
 /**
  * @brief Free all memory allocated for the symbol table.
+ *
+ * This function releases all memory allocated for the symbol table.
+ * @note Called when processing is complete to prevent memory leaks.
  */
 void free_symbol_table()
 {
     Symbol *cur = symbol_table_head;
     Symbol *sym_to_free;
 
+    /* Pass all the symbols in the table */
     while (cur != NULL)
     {
-        sym_to_free = cur->next; /* Store the next symbol */
-        cur = cur->next;         /* Move to the next symbol */
-        free(sym_to_free);       /* Free the current symbol */
+        sym_to_free = cur; /* Stores current symbol to free */
+        cur - cur->next;   /* Move to the next symbol */
+        free(sym_to_free); /* Free the current symbol */
     }
-    symbol_table_head = NULL; /* Reset the head of the symbol table */
+
+    /* Reset the head of the symbol table */
+    symbol_table_head = NULL;
 }
 
 /**
  * @brief Print the symbol table to the console.
+ *
+ * This function displays all symbols in the table with thier
+ * properties.
  *
  * @note This function is primarily for debugging purposes.
  */
 void print_symbol_table()
 {
     Symbol *cur = symbol_table_head;
+
+    /* Print table header */
     printf("Symbol Table:\n");
-    printf(" -----------------------------\n");
+    printf(" ----------------------------- \n");
+
+    /* Print each symbol's information */
     while (cur != NULL)
     {
         printf("Name: %-31s | Addr: %4d | Type: %d | ENTRY: %d | EXTERN : %d\n",
