@@ -380,7 +380,7 @@ void parse_matrix(const char *line, const char *filename, int line_num)
                     if (!store_data(val, filename, line_num))
                     {
                         free(copy);
-                        return
+                        return;
                     }
                     DC++;
                 }
@@ -398,7 +398,7 @@ void parse_matrix(const char *line, const char *filename, int line_num)
             /* Store 0 in the data image */
             if (!store_data(0, filename, line_num))
             {
-                free(copt);
+                free(copy);
                 return;
             }
             DC++;

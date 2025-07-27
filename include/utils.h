@@ -1,5 +1,5 @@
 /**
- * @file first_pass.h
+ * @file utils.h
  * @brief Header file for utility functions used in the assembler.
  */
 
@@ -40,7 +40,7 @@ BOOL is_comment(const char *line);
  *
  * @param line Pointer to the line to extract the label from.
  * @param label_out Pointer to a buffer where the extracted label will be stored.
- * @return TRUE if a label found and valid syntax (ends with ':'), 
+ * @return TRUE if a label found and valid syntax (ends with ':'),
  *         FALSE otherwise.
  */
 BOOL extract_label(const char *line, char *label_out);
@@ -84,3 +84,14 @@ BOOL get_next_token(const char *src, char *token_out);
  * @return TRUE if the word is a reserved word, FALSE otherwise.
  */
 BOOL is_reserved_word(const char *word);
+
+/**
+ * @brief Check if a word is a valid instruction name.
+ *
+ * This function checks if the given word matches any of the valid instruction names.
+ *
+ * @note I created such a function because of the frequency with which I use it.
+ * @param word Pointer to the word to check.
+ * @return TRUE if the word is a valid instruction, FALSE otherwise.
+ */
+BOOL is_instruction(const char *word);

@@ -184,7 +184,7 @@ void free_symbol_table()
     while (cur != NULL)
     {
         sym_to_free = cur; /* Stores current symbol to free */
-        cur - cur->next;   /* Move to the next symbol */
+        cur = cur->next;   /* Move to the next symbol */
         free(sym_to_free); /* Free the current symbol */
     }
 

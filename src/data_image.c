@@ -48,7 +48,7 @@ void init_data_image()
     if (data_image.data == NULL)
     {
         /*toDo: update error handling*/
-        fprint(stderr, "Error: Failed to initialize data image\n");
+        fprintf(stderr, "Error: Failed to initialize data image\n");
         exit(EXIT_GENERAL_ERROR);
     }
 
@@ -139,6 +139,7 @@ BOOL store_data(int value, const char *filename, int line_num)
     /* Store the value at the cureent DC position */
     data_image.data[data_image.size] = value;
     data_image.size++;
+    return TRUE;
 }
 
 /**

@@ -28,7 +28,7 @@ void trim_whitespace(char *str)
 
     start = str;
     /* Trim leading whitespaces */
-    while (*start && issapce((unsigned char)*start))
+    while (*start && isspace((unsigned char)*start))
     {
         start++;
     }
@@ -95,7 +95,7 @@ BOOL is_comment(const char *line)
     /* Skip leading whitespaces */
     for (i = 0; line[i] != '\0'; i++)
     {
-        if (!issapce((unsigned char)line[i]))
+        if (!isspace((unsigned char)line[i]))
             return (line[i] == ';') ? TRUE : FALSE;
     }
 
@@ -129,7 +129,7 @@ BOOL extract_label(const char *line, char *label_out)
         return FALSE;
 
     /* Copy the label until we hit a ':' */
-    while (line[i] && !issapce((unsigned char)line[i]) && line[i] != ':' && j < MAX_LABEL_LENGTH)
+    while (line[i] && !isspace((unsigned char)line[i]) && line[i] != ':' && j < MAX_LABEL_LENGTH)
     {
         label_out[j++] = line[i++];
     }
