@@ -307,3 +307,4 @@ static BOOL is_register(const char *str, int *reg_num)
  * @param value Output parameter for immediate addressing (#value).
  * @return TRUE if string is valid immediate value, FALSE otherwise.
  */
+static BOOL is_immediate(const)
