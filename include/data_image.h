@@ -19,8 +19,9 @@ void init_data_image();
 /**
  * @brief Stores a value in the data image.
  *
- * This function adds an integer value to the data image.
- * It integrates properly with the DC counter.
+ * This function adds an integer value to the data image, expanding
+ * the capacity if necessary. It integrates properly with the DC counter
+ * and provides comprehensive error checking.
  *
  * @param value     The integer value to store.
  * @param filename  Pointer to the file name (for error reporting).
@@ -41,10 +42,10 @@ BOOL store_data(int value, const char *filename, int line_num);
 int get_data_at(int index);
 
 /**
- * @brief Returns the current nu,ber of items in the data image.
+ * @brief Returns the current number of items in the data image.
  *
  * This function provides access to the current data counter (DC) value
- * which represents the nu,ber of data words stored on the data image.
+ * which represents the number of data words stored on the data image.
  *
  * @return Size of the data image (DC).
  */
