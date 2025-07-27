@@ -214,3 +214,96 @@ BOOL parse_instruction(const char *line, const char *filename, int line_num, Ins
 
     return TRUE;
 }
+
+/**
+ * @brief Parse a single opernad string into Operand struct.
+ *
+ * This function determines the addressing mode and extracts the necessary
+ * information from opernad string.
+ *
+ * @param operand_str   The oprenad string to parse.
+ * @param operand       Output operand struct.
+ * @param filename      Source filename (for error reporting).
+ * @param line_num      Current line number (for error reporting).
+ * @return TRUE if parsing successful, FALSE if error occured.
+ */
+static BOOL parse_operand(const char *operand_str, Operand *operand, const char *filename, int line_num)
+{
+    char trimmed[MAX_LINE_LENGTH];
+    int i, j;
+
+    /* Initalize operand struct */
+    memset(operand, 0, sizeof(Operand));
+
+    /* Trim whitespace by copying characters from the operand_str to the trimmed array */
+    for (i = 0, j = 0; operand_str[i] && j < MAX_LINE_LENGTH - 1; i++)
+    {
+        if (!isspace((unsigned char)operand_str[i]))
+        {
+            trimmed[j++] = operand_str[i];
+        }
+    }
+    /* Null terminate the trimmed str */
+
+    /* Check for register addressing (ro-r7) */
+    if (is_register(trimmed, &operand->value))
+    {
+        operand->mode = ADDRESSING_REGISTER;
+        operand->is_symbol = FALSE;
+        return TRUE;
+    }
+
+    /* Check for matrix addressing (label[reg][reg]) */
+    if (is_matrix_reference(trimmed, operand, filename, line_num))
+    {
+        operand->mode = ADDRESSING_MATRIX;
+        return TRUE; /* is_symbol flag set by is_matrix_reference */
+    }
+
+    /* If we got to here, must be direct addressing (label) */
+    if (is_valid_label(trimmed))
+    {
+        operand->mode = ADDRESSING_DIRECT;
+        strncpy(operand->symbol_name, trimmed, MAX_LABEL_LENGTH);
+        operand->symbol_name[MAX_LABEL_LENGTH] = '\0'; /* Null terminate */
+        operand->is_symbol = TRUE;
+        return TRUE;
+    }
+
+    /* Invalid operand */
+    print_line_error(filename, line_num, ERROR_INVALID_OPERAND);
+    err_found = TRUE;
+    return FALSE;
+}
+
+/**
+ * @brief Check if a strin represents a register (r0-r7)ץ
+ *
+ * @param str       The string to check.
+ * @param reg_num   Output parameter for register number (0-7).
+ * @return TRUE if string is a valid register, FALSE otherwise.
+ */
+static BOOL is_register(const char *str, int *reg_num)
+{
+    /* Valide basic register params */
+    if (!str || strlen(str) != 2)
+        return FALSE;
+
+    if (str[0] == 'r' && str[1] >= '0' && str[1] <= 7)
+    {
+        /* Converts it from its ASCII value to its integer value */
+        *reg_num = str[1] - '0';
+        return TRUE;
+    }
+
+    /* Invalid register name */
+    return FALSE;
+}
+
+/**
+ * @brief Check if a string represents immesiate addressing (#value).
+ *
+ * @param str The string to check.
+ * @param value Output parameter for immediate addressing (#value).
+ * @return TRUE if string is valid immediate value, FALSE otherwise.
+ */
