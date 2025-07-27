@@ -13,6 +13,9 @@
 /* Global pointer to the head of the symbol table linked list */
 static Symbol *symbol_table_head = NULL;
 
+/* === Static Function Prototypes === */
+static Symbol *find_symbol(const char *name);
+
 /**
  * @brief Initializes the symbol table.
  *
