@@ -13,10 +13,10 @@
 #include "../include/error.h"
 #include "../include/first_pass.h"
 
-/* === Internal Helpr Function Prototypes === */
+/* === Internal Helper Function Prototypes === */
 static BOOL parse_operand(const char *opernad_str, Operand *opernad, const char *filename, int line_num);
 static BOOL is_register(const char *str, int *reg_num);
-static BOOL is_immediate(const char *str, const *value);
+static BOOL is_immediate(const char *str, int *value);
 static BOOL is_matrix_reference(const char *str, Operand *operand, const char *filename, int line_num);
 static InstructionType get_instruction_type(int opcode);
 
@@ -127,12 +127,12 @@ BOOL parse_instruction(const char *line, const char *filename, int line_num, Ins
         /* Checks number of opernads in instruction */
         if (token_count == 1)
         {
-            strcpy(source_operand, token, sizeof(source_operand) - 1);
+            strncpy(source_operand, token, sizeof(source_operand) - 1);
             source_operand[sizeof(source_operand) - 1] = '\0'; /* Adds null terminator */
         }
         else if (token_count == 2)
         {
-            strcpy(target_operand, token, sizeof(target_operand) - 1);
+            strncpy(target_operand, token, sizeof(target_operand) - 1);
             target_operand[sizeof(target_operand) - 1] = '\0'; /* Adds null terminator */
         }
         else
@@ -149,7 +149,7 @@ BOOL parse_instruction(const char *line, const char *filename, int line_num, Ins
     /* Validate opernad count based on instruction type */
     switch (instruction->type)
     {
-    case INST_NO_OPERNADS:
+    case INST_NO_OPERANDS:
         /* Checks if there is too many opernands */
         if (token_count != 0)
         {
@@ -165,7 +165,7 @@ BOOL parse_instruction(const char *line, const char *filename, int line_num, Ins
         if (token_count != 1)
         {
             print_line_error(filename, line_num,
-                             token_count == 0 ? ERROR_TOO_FEW_OPERANDS, ERROR_TOO_MANY_OPERANDS);
+                             token_count == 0 ? ERROR_TOO_FEW_OPERANDS : ERROR_TOO_MANY_OPERANDS);
             err_found = TRUE;
             return FALSE;
         }
@@ -183,7 +183,7 @@ BOOL parse_instruction(const char *line, const char *filename, int line_num, Ins
         if (token_count != 2)
         {
             print_line_error(filename, line_num,
-                             token_count < 2 ? ERROR_TOO_FEW_OPERANDS, ERROR_TOO_MANY_OPERANDS);
+                             token_count < 2 ? ERROR_TOO_FEW_OPERANDS : ERROR_TOO_MANY_OPERANDS);
             err_found = TRUE;
             return FALSE;
         }
@@ -202,10 +202,10 @@ BOOL parse_instruction(const char *line, const char *filename, int line_num, Ins
     }
 
     /* Validate addressing modes */
-    if (!validate_addresing_modes(instruction->opcode,
-                                  instruction->has_source ? instruction->source.mode : 0,
-                                  instruction->has_target ? instruction->target.mode : 0,
-                                  instruction->has_source, instruction->has_target))
+    if (!validate_addressing_modes(instruction->opcode,
+                                   instruction->has_source ? instruction->source.mode : 0,
+                                   instruction->has_target ? instruction->target.mode : 0,
+                                   instruction->has_source, instruction->has_target))
     {
         print_line_error(filename, line_num, ERROR_INVALID_OPERAND);
         err_found = TRUE;
@@ -426,7 +426,7 @@ static BOOL is_matrix_reference(const char *str, Operand *operand, const char *f
     /* Validate label and registers */
     if (!is_valid_label(label_part) ||
         !is_register(trimmed_reg1, &operand->reg1) ||
-        !is_register(trimmed_reg2.& operand->reg2))
+        !is_register(trimmed_reg2, &operand->reg2))
     {
         return FALSE;
     }
@@ -475,13 +475,16 @@ int get_instruction_opcode(const char *instruction_name)
 static InstructionType get_instruction_type(int opcode)
 {
     if (opcode >= 0 && opcode <= 4)
-        return INST_TWO_OPERNADS; /* mov, cmp, add, sub, lea */
+        return INST_TWO_OPERANDS; /* mov, cmp, add, sub, lea */
 
     if (opcode >= 5 && opcode <= 13)
-        return INST_ONE_OPERNAD; /* clr, not, inc, dec, jmp, bne, jsr, red, prn */
+        return INST_ONE_OPERAND; /* clr, not, inc, dec, jmp, bne, jsr, red, prn */
 
     if (opcode >= 14 && opcode <= 15)
-        return INST_NO_OPERNADS; /* rts, stop */
+        return INST_NO_OPERANDS; /* rts, stop */
+
+    /* Invalid opcode */
+    return INST_INVALID;
 }
 
 /**
@@ -545,7 +548,7 @@ int get_instruction_word_count(const Instruction *instruction)
  * instructions of the project.
  */
 
-BOOL validate_addresing_modes(int opcode, AddressingMode source_mode, AddressingMode target_mode, BOOL has_source, BOOL has_target)
+BOOL validate_addressing_modes(int opcode, AddressingMode source_mode, AddressingMode target_mode, BOOL has_source, BOOL has_target)
 {
     /* Invalid opcode */
     if (opcode < 0 || opcode > 15)
@@ -587,7 +590,8 @@ BOOL validate_addresing_modes(int opcode, AddressingMode source_mode, Addressing
                (target_mode >= 1 && target_mode <= 3);
 
     case 13: /* prn: target(0,1,2,3) */
-        return !has_source && !has_target;
+        return !has_source && !has_target &&
+               (target_mode >= 0 && target_mode <= 3);
 
     case 14: /* rts */
     case 15: /*stop */

@@ -90,6 +90,18 @@ BOOL parse_instruction(const char *line, const char *filename, int line_num, Ins
 int get_instruction_opcode(const char *instruction_name);
 
 /**
+ * @brief Calculate instruction memory word count.
+ *
+ * This function determines the total number of memory words required
+ * to encode a complete instruction, including the base instruction word
+ * and any additional operand words based on their addressing modes.
+ *
+ * @param instruction Pointer to the instruction to analyze.
+ * @return The number of words needed for this instruction (1-5 words).
+ */
+int get_instruction_word_count(const Instruction *instruction);
+
+/**
  * @brief Validate opernad addresing modes for specifc instruction.
  *
  * This function checks if the addressing modes used in an instruction
