@@ -14,10 +14,12 @@
 #include "../include/error.h"
 #include "../include/constants.h"
 #include "../include/data_parser.h"
+#include "../include/instruction_parser.h"
 
 /* Initalize IC and DC */
 int IC = BASE_IC_ADDRESS; /* Instruction counter */
 int DC = 0;               /* Data counter */
+
 /* Initalize ERR flag */
 BOOL err_found = FALSE; /* Flag to indicate if an error was found */
 
@@ -26,6 +28,7 @@ static void process_line(const char *line, const char *filename, int line_num);
 static void handle_extern_directive(const char *line, const char *filename, int line_num);
 static void handle_entry_directive(const char *line, const char *filename, int line_num);
 static void handle_data_directive(const char *label, const char *directive, const char *line, const char *filename, int lineno);
+static void handle_instruction(const char *label, const char *filename, int line_number);
 
 /**
  * @brief Preforms the first pass on the given .am source file.
@@ -165,21 +168,60 @@ static void process_line(const char *line, const char *filename, int line_num)
     /* Step 4 - Handle Instructions */
     else if (is_instruction(first_token))
     {
-        /* TODO: implement handle_instruction function. */
-        /* For now, just increment IC to account for the instruction */
-        if (has_label)
-            add_symbol(label, IC, SYMBOL_CODE);
-
-        /* Temporarily incremet IC by 1, will be calculated later (Todo)*/
-        IC++;
+        handle_instruction(has_label ? label : NULL, line, filename, line_num);
     }
-    /* Step 7 - Handle Unknown Instructions/Directives */
+    /* Step 5 - Handle Unknown Instructions/Directives */
     else
     {
         print_line_error(filename, line_num, ERROR_UNKNOWN_INSTRUCTION);
         err_found = TRUE;
         return; /* Skip processing this line */
     }
+}
+
+/***
+ * @brief Handles instruction lines during the first pass.
+ *
+ * This function parses an instruction line, validates its syntax and operands,
+ * adds any label to the symbol table, and updates the IC (instruction counter).
+ *
+ * @param label     Optional label for instruction (can be NULL if none).
+ * @param line      The complete instruction line.
+ * @param filename  Name of the source file (for error reporting).
+ * @param line_num  The current line number in the source file (for error reporting).
+ */
+static void handle_instruction(const char *label, const char *filename, int line_number)
+{
+    Instruction instruction;
+    char *instruction_part;
+    char line_copy[MAX_LINE_LENGTH + 1];
+
+    /* Create a copy of the line for processing */
+    strncpy(line_copy, line, MAX_LINE_LENGTH);
+    line_copy[MAX_LINE_LENGTH] = '\0';
+
+    /* Skip the label part if it exists */
+    instruction_part = line_copy;
+    if (label != NULL)
+        instruction_part = skip_label(instruction_part);
+
+    /* Add label to symbol table if it exists */
+    if (label != NULL)
+    {
+        if (!add_symbol(label, IC, SYMBOL_code))
+        {
+            print_line_number(filename, line_num, ERROR_DUPLICATE_LABEL);
+            err_found = TRUE;
+            return;
+        }
+    }
+
+    /* Parse the instruction */
+    if (!parse_instruction(instruction_part, filename, line_num, &instruction))
+        return; /* Error already reported bt parse_instruction */
+
+    /* Update instruction counter (IC) by the word count of this instruction */
+    IC += instruction.word_count;
 }
 
 /**
