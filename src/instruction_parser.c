@@ -490,8 +490,12 @@ static InstructionType get_instruction_type(int opcode)
 /**
  * @brief Calculate instruction memory word count.
  *
- * @param instruction Pointer to the instruction to check.
- * @return The number of words count of an Instruction.
+ * This function determines the total number of memory words required
+ * to encode a complete instruction, including the base instruction word
+ * and any additional operand words based on their addressing modes.
+ *
+ * @param instruction Pointer to the instruction to analyze.
+ * @return The number of words needed for this instruction (1-5 words).
  */
 int get_instruction_word_count(const Instruction *instruction)
 {
@@ -544,10 +548,18 @@ int get_instruction_word_count(const Instruction *instruction)
 }
 
 /**
- * @brief Validate addressing modes based on the compatibility table in the
- * instructions of the project.
+ * @brief Validate opernad addresing modes for specifc instruction.
+ *
+ * This function checks if the addressing modes used in an instruction
+ * are valid according to the addressing mode compatibility table.
+ *
+ * @param opcode        The instruction opcoode (0-15).
+ * @param source_mode   Source opernad addressing mode (ignored if there is no source).
+ * @param target_mode   Target opernad addressing mode (ignored if there is no target).
+ * @param has_source    TRUE if instruction has a source opernad
+ * @param has_target    TRUE if instruction has a target opernad
+ * @return TRUE if addresing mode combination is valid, FALSE otherwise.
  */
-
 BOOL validate_addressing_modes(int opcode, AddressingMode source_mode, AddressingMode target_mode, BOOL has_source, BOOL has_target)
 {
     /* Invalid opcode */
