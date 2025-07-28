@@ -33,7 +33,8 @@ typedef enum
 {
     INST_TWO_OPERANDS, /* mov, cmp, add, sub, lea */
     INST_ONE_OPERAND,  /* clr, not, inc, dec, jmp, bne, jsr, red, prn */
-    INST_NO_OPERNADS   /* rts, stop */
+    INST_NO_OPERNADS,  /* rts, stop */
+    INST_INVALID = -1  /* Invalid opcode */
 } InstructionType;
 
 /**
