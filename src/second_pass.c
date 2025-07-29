@@ -255,4 +255,78 @@ static void handle_entry_directive_second_pass(const char *line, const char *fil
     }
 
     /* Mark symbol as entry and add to entry list */
+    mark_symbol_as_entry(label);
+    add_entry_symbol(context, label, symbol->address)
+}
+
+/**
+ * @brief Encodes a complete instruction into the machine code.
+ *
+ * @param instruction   The parsed instruction to encode.
+ * @param address       The address where this instruction starts.
+ * @param filename      Source filenmae (for error reporting).
+ * @param line_num      Current line number (for error reporting).
+ * @param context       Assembly context for storing results.
+ * @return TRUE if encoding successful, FALSE otherwise.
+ */
+static BOOL encode_instruction(const Instruction *instruction, int address, const char *filename, int line_num, AssemblyContext *context)
+{
+    int instruction_word;
+    int current_address = address;
+    int register_word;
+
+    /* Create the main instruction word */
+    instruction_word = create_instruction_word(
+        instruction->opcode,
+        instruction->has_source ? instruction->source.mode : 0,
+        instruction->has_target ? instruction->target.mode : 0);
+
+    /* Store the instruction word */
+    if (!store_instruction_word(context->instruction_image, instruction_word, current_address++))
+        return FALSE;
+
+    /* Handle register sharing optimization */
+    if (instruction->has_source && instruction->has_target &&
+        instruction->source.mode == ADDRESSING_REGISTER &&
+        instruction->target.mode == ADDRESSING_REGISTER)
+    {
+        register_word = (instruction->source.mode << 6) | (instruction->target_value << 2) | 0x00;
+        if (!store_instruction_word(context->instruction_image, register_word, current_address))
+            return FALSE;
+
+        return TRUE;
+    }
+
+    /* Encode source operand if exist */
+    if (instruction->has_source)
+    {
+        if (!encode_opernad(&instruction->source, current_address, TRUE, filename, line_num, context))
+            return FALSE;
+
+        /* Update address based on source opernad encoding */
+        switch (instruction->source.mode)
+        {
+        case ADDRESSING_IMMEDIATE:
+        case ADDRESSING_DIRECT:
+            current_address += 1;
+            break;
+
+        case ADDRESSING_MATRIX:
+            current_address += 2;
+            break;
+
+        case ADDRESSING_REGISTER:
+            current_address += 1;
+            break;
+        }
+    }
+
+    /* Encode target opernad if exist */
+    if (instruction->has_target)
+    {
+        if (!encode_opernad(&instruction->target, current_address, FALSE, filename, line_num, context))
+            return FALSE;
+    }
+
+    return TRUE;
 }
