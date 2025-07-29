@@ -131,7 +131,7 @@ BOOL second_pass(FILE *am_file, const char *filename, AssemblyContext *context)
  *
  * @param line          The line content to process.
  * @param filename      Name of the source file (for error reporting).
- * @param line_num      The current line number (for error reporting)
+ * @param line_num      The current line number (for error reporting).
  * @param current_ic    Pointer to the current instruction counter (IC).
  * @param context       Assembly context for storing results.
  */
@@ -170,4 +170,89 @@ static void process_line_second_pass(const char *line, const char *filename, int
     /* Handle instructions */
     else if (is_instruction(first_token))
         handle_instruction_second_pass(line, filename, line_num, current_ic, context);
+}
+
+/**
+ * @brief Handles instruction lines during the second pass.
+ *
+ * @param line          The complete instruction line.
+ * @param filename      Name of the source file (for error reporting).
+ * @param line_num      The current line number (for error reporting).
+ * @param current_ic    Pointer to the current instruction counter (IC)
+ * @param context       Assembly context for storing results.
+ */
+static void handle_instruction_second_pass(const char *line, const char *filename, int line_num, int *current_ic, AssemblyContext *context)
+{
+    Instruction instruction;
+    char *instruction_part;
+    char line_copy[MAX_LINE_LENGTH + 1];
+    char label[MAX_LABEL_LENGTH + 1];
+
+    /* Creates a copy of the line for processing */
+    strncpy(line_copy, line, MAX_LINE_LENGTH);
+    line_copy[MAX_LINE_LENGTH] = '\0'; /* Null terminate the line_copy */
+
+    instruction_part = line_copy;
+
+    /* Skip label if exist */
+    if (extract_label(line, label))
+        instruction_part = skip_label(instruction_part);
+
+    /* Parse the instruction */
+    if (!parse_instruction(instruction_part, filename, line_num, &instruction))
+        return; /* Error already being reported in parse_instruction */
+
+    if (!encode_instruction(&instruction, *current_ic, filename, line_num, context))
+        return; /* Error already being reported in encode_instruction */
+
+    /* Update instruction counter */
+    *current_ic += instruction.word_count;
+}
+
+/**
+ * @brief Handles .entry directive during the second pass.
+ *
+ * @param line          The line content after the ".entry" directive.
+ * @param filename      Pointer to the file name (for error reporting).
+ * @param line_num      The current line number (for error reporting).
+ * @param context       Assembly context for storing results.
+ */
+static void handle_entry_directive_second_pass(const char *line, const char *filename, int line_num, AssemblyContext *context)
+{
+    char label[MAX_LABEL_LENGTH + 1];
+    const Symbol *symbol;
+
+    /* Skip leading whitespace */
+    while (isspace((unsigned char)*line))
+        line++;
+
+    /* Extract the label name */
+    if (!get_next_token(line, label))
+    {
+        print_line_error(filename, line_num, ERROR_SYNTAX);
+        err_found = TRUE;
+        context->has_errors = TRUE;
+        return;
+    }
+
+    /* Find the symbol in the symbol table */
+    symbol = get_symbol(label);
+    if (!symbol)
+    {
+        print_line_error(filename, line_num, ERROR_UNDEFINED_SYMBOL);
+        err_found = TRUE;
+        context->has_errors = TRUE;
+        return;
+    }
+
+    /* Check if it's an external symbol (can't be entry) */
+    if (symbol->is_external)
+    {
+        print_line_error(filename, line_num, ERROR_EXTERNAL_CONFLICT);
+        err_found = TRUE;
+        context->has_errors = TRUE;
+        return;
+    }
+
+    /* Mark symbol as entry and add to entry list */
 }
