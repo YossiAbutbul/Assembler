@@ -253,7 +253,7 @@ static void handle_entry_directive_second_pass(const char *line, const char *fil
 
     /* Mark symbol as entry and add to entry list */
     mark_symbol_as_entry(label);
-    add_entry_symbol(context, label, symbol->address)
+    add_entry_symbol(context, label, symbol->address);
 }
 
 /**
@@ -584,7 +584,7 @@ static void add_entry_symbol(AssemblyContext *context, const char *name, int add
     if (!new_mode)
         return;
 
-    strncpy(new_noce->name, name, MAX_SYMBOL_NAME_LENGTH - 1);
+    strncpy(new_node->name, name, MAX_SYMBOL_NAME_LENGTH - 1);
     new_node->name[MAX_SYMBOL_NAME_LENGTH] - 1 = '\0'; /* Null terminate the name */
     new_node->address = address;
     new_node->next = context->entry_list;
@@ -606,7 +606,7 @@ static void add_external_reference(AssemblyContext *context, const char *name, i
         return;
 
     strncpy(new_node->name, name, MAX_SYMBOL_NAME_LENGTH - 1);
-    new_node->name[MAX_SYMBOL_NAME_LENGTH - 1];
+    new_node->name[MAX_SYMBOL_NAME_LENGTH - 1] = '\0'; /* Null terminate the name */
     new_node->address = address;
     new_node->next = context->external_list;
     context->external_list = new_node;

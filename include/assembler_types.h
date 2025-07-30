@@ -22,7 +22,7 @@ struct Operand;
  * Used to build linked list of all symbols declared as .entry
  * for outpput file genration.
  */
-typedef struct ExternalNode
+typedef struct EntryNode
 {
     char name[MAX_SYMBOL_NAME_LENGTH]; /* Symbol name */
     int address;                       /* Symbol address in memory */

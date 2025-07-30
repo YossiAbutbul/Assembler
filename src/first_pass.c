@@ -208,9 +208,9 @@ static void handle_instruction(const char *label, const char *filename, int line
     /* Add label to symbol table if it exists */
     if (label != NULL)
     {
-        if (!add_symbol(label, IC, SYMBOL_code))
+        if (!add_symbol(label, IC, SYMBOL_CODE))
         {
-            print_line_number(filename, line_num, ERROR_DUPLICATE_LABEL);
+            print_line_error(filename, line_num, ERROR_DUPLICATE_LABEL);
             err_found = TRUE;
             return;
         }
