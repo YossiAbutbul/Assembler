@@ -581,7 +581,7 @@ static void add_entry_symbol(AssemblyContext *context, const char *name, int add
 {
     EntryNode *new_node = (EntryNode *)malloc(sizeof(EntryNode));
 
-    if (!new_mode)
+    if (!new_node)
         return;
 
     strncpy(new_node->name, name, MAX_SYMBOL_NAME_LENGTH - 1);

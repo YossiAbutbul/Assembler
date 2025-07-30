@@ -14,7 +14,7 @@
 #include "../include/first_pass.h"
 
 /* === Internal Helper Function Prototypes === */
-static BOOL parse_operand(const char *opernad_str, Operand *opernad, const char *filename, int line_num);
+static BOOL parse_operand(const char *operand_str, Operand *operand, const char *filename, int line_num);
 static BOOL is_register(const char *str, int *reg_num);
 static BOOL is_immediate(const char *str, int *value);
 static BOOL is_matrix_reference(const char *str, Operand *operand, const char *filename, int line_num);
@@ -39,8 +39,8 @@ static const InstructionMapping instruction_table[] = {
  * @brief Parse an instruction line during first pass.
  *
  * This function takes a line containing an instruction (without any label)
- * ans parses it into it components: opcode and opernads.
- * It validates the instruction syntax and opernad addressing modes.
+ * ans parses it into it components: opcode and operands.
+ * It validates the instruction syntax and operand addressing modes.
  *
  * @param line          Pointer to the instruction line.
  * @param filename      Pointer to the source file name (for error reporting).
@@ -111,7 +111,7 @@ BOOL parse_instruction(const char *line, const char *filename, int line_num, Ins
         return FALSE;
     }
 
-    /* Parse opernads based on instruction type */
+    /* Parse operands based on instruction type */
     while ((token = strtok(NULL, ",")) != NULL)
     {
         /* Trim leading whitespace from token */
@@ -124,7 +124,7 @@ BOOL parse_instruction(const char *line, const char *filename, int line_num, Ins
 
         token_count++;
 
-        /* Checks number of opernads in instruction */
+        /* Checks number of operands in instruction */
         if (token_count == 1)
         {
             strncpy(source_operand, token, sizeof(source_operand) - 1);
@@ -137,7 +137,7 @@ BOOL parse_instruction(const char *line, const char *filename, int line_num, Ins
         }
         else
         {
-            /* Too many opernads */
+            /* Too many operands */
             print_line_error(filename, line_num, ERROR_TOO_MANY_OPERANDS);
             err_found = TRUE;
             free(line_copy);
@@ -146,7 +146,7 @@ BOOL parse_instruction(const char *line, const char *filename, int line_num, Ins
     }
     free(line_copy);
 
-    /* Validate opernad count based on instruction type */
+    /* Validate operand count based on instruction type */
     switch (instruction->type)
     {
     case INST_NO_OPERANDS:
@@ -157,7 +157,7 @@ BOOL parse_instruction(const char *line, const char *filename, int line_num, Ins
             err_found = TRUE;
             return FALSE;
         }
-        /* No Opernads instruction */
+        /* No operands instruction */
         instruction->has_source = FALSE;
         instruction->has_target = FALSE;
         break;
@@ -170,11 +170,11 @@ BOOL parse_instruction(const char *line, const char *filename, int line_num, Ins
             return FALSE;
         }
 
-        /* For one-opernad instruction, the opernad goes in target */
+        /* For one-operand instruction, the operand goes in target */
         if (!parse_operand(source_operand, &instruction->target, filename, line_num))
             return FALSE;
 
-        /* One opernad instruction */
+        /* One operand instruction */
         instruction->has_source = FALSE;
         instruction->has_target = TRUE;
         break;
@@ -188,14 +188,14 @@ BOOL parse_instruction(const char *line, const char *filename, int line_num, Ins
             return FALSE;
         }
 
-        /* Parse both opernads */
+        /* Parse both operands */
         if (!parse_operand(source_operand, &instruction->source, filename, line_num) ||
             !parse_operand(target_operand, &instruction->target, filename, line_num))
         {
             return FALSE;
         }
 
-        /* Two opernads instruction */
+        /* Two operands instruction */
         instruction->has_source = TRUE;
         instruction->has_target = TRUE;
         break;
@@ -219,10 +219,10 @@ BOOL parse_instruction(const char *line, const char *filename, int line_num, Ins
 }
 
 /**
- * @brief Parse a single opernad string into Operand struct.
+ * @brief Parse a single operand string into Operand struct.
  *
  * This function determines the addressing mode and extracts the necessary
- * information from opernad string.
+ * information from operand string.
  *
  * @param operand_str   The oprenad string to parse.
  * @param operand       Output operand struct.
@@ -339,7 +339,7 @@ static BOOL is_immediate(const char *str, int *value)
  * @brief Check if string represents matrix addressing (label[reg][reg]).
  *
  * @param str       The string to check.
- * @param operand   Output opernad struct.
+ * @param operand   Output operand struct.
  * @param filename  Source filename (for error reporting).
  * @param line_num  Current line nu,ber (for error reporting).
  * @return TRUE if string is valid matrix refernce, FALSE otherwise.
@@ -467,10 +467,10 @@ int get_instruction_opcode(const char *instruction_name)
  * @brief Determine instruction type based on opcode.
  *
  * This function maps opcodes to their corresponding instruction types
- * according to the number of opernads each instruction requires.
+ * according to the number of operands each instruction requires.
  *
  * @param opcode    This instruction code (0-15).
- * @return The instruction type indicating opernad count requriements.
+ * @return The instruction type indicating operand count requriements.
  */
 static InstructionType get_instruction_type(int opcode)
 {
@@ -504,7 +504,7 @@ int get_instruction_word_count(const Instruction *instruction)
     if (!instruction)
         return 1;
 
-    /* Add source opernad words */
+    /* Add source operand words */
     if (instruction->has_source)
     {
         switch (instruction->source.mode)
@@ -523,7 +523,7 @@ int get_instruction_word_count(const Instruction *instruction)
         }
     }
 
-    /* Add target opernad words */
+    /* Add target operand words */
     if (instruction->has_target)
     {
         switch (instruction->target.mode)
@@ -548,16 +548,16 @@ int get_instruction_word_count(const Instruction *instruction)
 }
 
 /**
- * @brief Validate opernad addresing modes for specifc instruction.
+ * @brief Validate operand addresing modes for specifc instruction.
  *
  * This function checks if the addressing modes used in an instruction
  * are valid according to the addressing mode compatibility table.
  *
  * @param opcode        The instruction opcoode (0-15).
- * @param source_mode   Source opernad addressing mode (ignored if there is no source).
- * @param target_mode   Target opernad addressing mode (ignored if there is no target).
- * @param has_source    TRUE if instruction has a source opernad
- * @param has_target    TRUE if instruction has a target opernad
+ * @param source_mode   Source operand addressing mode (ignored if there is no source).
+ * @param target_mode   Target operand addressing mode (ignored if there is no target).
+ * @param has_source    TRUE if instruction has a source operand
+ * @param has_target    TRUE if instruction has a target operand
  * @return TRUE if addresing mode combination is valid, FALSE otherwise.
  */
 BOOL validate_addressing_modes(int opcode, AddressingMode source_mode, AddressingMode target_mode, BOOL has_source, BOOL has_target)
@@ -602,12 +602,12 @@ BOOL validate_addressing_modes(int opcode, AddressingMode source_mode, Addressin
                (target_mode >= 1 && target_mode <= 3);
 
     case 13: /* prn: target(0,1,2,3) */
-        return !has_source && !has_target &&
+        return !has_source && has_target &&
                (target_mode >= 0 && target_mode <= 3);
 
     case 14: /* rts */
     case 15: /*stop */
-        /* No opernads */
+        /* No operands */
         return !has_source && !has_target;
 
     default:
