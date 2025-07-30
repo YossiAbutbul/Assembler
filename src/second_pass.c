@@ -22,9 +22,6 @@ extern int IC;
 extern int DC;
 extern BOOL err_found;
 
-/* Initial capaciry for instruction image */
-#define INITIAL_INSTRUCTION_CAPACITY 1000
-
 /* === Internal Helper Function Prototypes === */
 static void process_line_second_pass(const char *line, const char *filename, int line_num, int *current_ic, AssemblyContext *context);
 static void handle_instruction_second_pass(const char *line, const char *filename, int line_num, int *current_ic, AssemblyContext *context);
@@ -283,16 +280,28 @@ static BOOL encode_instruction(const Instruction *instruction, int address, cons
 
     /* Store the instruction word */
     if (!store_instruction_word(context->instruction_image, instruction_word, current_address++))
+    {
+        print_line_error(filename, line_num, ERROR_INSTRUCTION_IMAGE_OVERFLOW);
+        err_found = TRUE;
+        context->has_errors = TRUE;
         return FALSE;
+    }
 
     /* Handle register sharing optimization */
     if (instruction->has_source && instruction->has_target &&
         instruction->source.mode == ADDRESSING_REGISTER &&
         instruction->target.mode == ADDRESSING_REGISTER)
     {
-        register_word = (instruction->source.mode << 6) | (instruction->target_value << 2) | 0x00;
+        register_word = (instruction->source.value << 6) | (instruction->target.value << 2) | 0x00;
+
+        /* Store the word */
         if (!store_instruction_word(context->instruction_image, register_word, current_address))
+        {
+            print_line_error(filename, line_num, ERROR_INSTRUCTION_IMAGE_OVERFLOW);
+            err_found = TRUE;
+            context->has_errors = TRUE;
             return FALSE;
+        }
 
         return TRUE;
     }
@@ -300,10 +309,10 @@ static BOOL encode_instruction(const Instruction *instruction, int address, cons
     /* Encode source operand if exist */
     if (instruction->has_source)
     {
-        if (!encode_opernad(&instruction->source, current_address, TRUE, filename, line_num, context))
+        if (!encode_operand(&instruction->source, current_address, TRUE, filename, line_num, context))
             return FALSE;
 
-        /* Update address based on source opernad encoding */
+        /* Update address based on source operand encoding */
         switch (instruction->source.mode)
         {
         case ADDRESSING_IMMEDIATE:
@@ -321,10 +330,10 @@ static BOOL encode_instruction(const Instruction *instruction, int address, cons
         }
     }
 
-    /* Encode target opernad if exist */
+    /* Encode target operand if exist */
     if (instruction->has_target)
     {
-        if (!encode_opernad(&instruction->target, current_address, FALSE, filename, line_num, context))
+        if (!encode_operand(&instruction->target, current_address, FALSE, filename, line_num, context))
             return FALSE;
     }
 
@@ -334,7 +343,7 @@ static BOOL encode_instruction(const Instruction *instruction, int address, cons
 /**
  * @brief Encodes a single operand into machine code.
  *
- * @param opernad       The opernad to encode.
+ * @param operand       The operand to encode.
  * @param address       The address where this operand should be stored.
  * @param is_source     TRUE if this source operand, FALSE for target.
  * @param filename      Source file name (for error reporting).
@@ -347,17 +356,28 @@ static BOOL encode_operand(const Operand *operand, int address, BOOL is_source, 
     const Symbol *symbol;
     int operand_word;
 
-    switch (opernad->mode)
+    switch (operand->mode)
     {
     case ADDRESSING_IMMEDIATE:
         /* Encode immediate value with A,R,E = 00 (the encoding is absolute) */
+        /* Shift left by 2 bits to make room for A,R,E bits and sets the A,R,E to 0 */
         operand_word = (operand->value << 2) | 0x00;
-        return store_instruction_word(context->instruction_image, operand_word, address);
+
+        /* store the word */
+        if (!store_instruction_word(context->instruction_image, operand_word, address))
+        {
+            print_line_error(filename, line_num, ERROR_INSTRUCTION_IMAGE_OVERFLOW);
+            err_found = TRUE;
+            context->has_errors = TRUE;
+            return FALSE;
+        }
+        return TRUE;
 
     case ADDRESSING_DIRECT:
-        /* Look up symbol address */
-        symbol = get_symbol(opernad->symbol_name);
+        /* Look up symbol address in the symbol table */
+        symbol = get_symbol(operand->symbol_name);
 
+        /* If symbol not exist */
         if (!symbol)
         {
             print_line_error(filename, line_num, ERROR_UNDEFINED_SYMBOL);
@@ -370,19 +390,29 @@ static BOOL encode_operand(const Operand *operand, int address, BOOL is_source, 
         {
             /* External symbol: A,R,E = 01 */
             operand_word = 0x01;
-            add_external_reference(context, opernad->symbol_name, address);
+            add_external_reference(context, operand->symbol_name, address);
         }
         else
         {
             /* Internal symbol: use symbol address, A,R,E = 10 */
             operand_word = (symbol->address << 2) | 0x02;
         }
-        return store_instruction_word(context->instruction_image, operand_word, address);
+
+        /* Store the word */
+        if (!store_instruction_word(context->instruction_image, operand_word, address))
+        {
+            print_line_error(filename, line_num, ERROR_INSTRUCTION_IMAGE_OVERFLOW);
+            err_found = TRUE;
+            context->has_errors = TRUE;
+            return FALSE;
+        }
+        return TRUE;
 
     case ADDRESSING_MATRIX:
-        /* First word: symbol address */
-        symbol = get_symbol(opernad->symbol_name);
+        /* First word: Look up symbol address in the symbol table */
+        symbol = get_symbol(operand->symbol_name);
 
+        /* If symbol not exist */
         if (!symbol)
         {
             print_line_error(filename, line_num, ERROR_UNDEFINED_SYMBOL);
@@ -394,16 +424,33 @@ static BOOL encode_operand(const Operand *operand, int address, BOOL is_source, 
         if (symbol->is_external)
         {
             operand_word = 0x01;
-            add_external_reference(context, opernad->symbol_name, address);
+            add_external_reference(context, operand->symbol_name, address);
         }
         else
         {
             operand_word = (symbol->address << 2) | 0x02;
         }
 
+        /* Store the first word */
+        if (!store_instruction_word(context->instruction_image, operand_word, address))
+        {
+            print_line_error(filename, line_num, ERROR_INSTRUCTION_IMAGE_OVERFLOW);
+            err_found = TRUE;
+            context->has_errors = TRUE;
+            return FALSE;
+        }
+
         /* Second word: regitser indicates */
         operand_word = (operand->reg1 << 6) | (operand->reg2 << 2) | 0x00;
-        return store_instruction_word(context->instruction_image, opernad_word, address + 1);
+
+        if (!store_instruction_word(context->instruction_image, operand_word, address))
+        {
+            print_line_error(filename, line_num, ERROR_INSTRUCTION_IMAGE_OVERFLOW);
+            err_found = TRUE;
+            context->has_errors = TRUE;
+            return FALSE;
+        }
+        return TRUE;
 
     case ADDRESSING_REGISTER:
         /* Register encoding depends on wether we have both source and target registers */
@@ -417,10 +464,22 @@ static BOOL encode_operand(const Operand *operand, int address, BOOL is_source, 
             /* Target register goes in bits 2-5, A,R,E = 00 */
             operand_word = (operand->value << 2) | 0x00;
         }
-        return store_instruction_word(context->instruction_image, opernad_word, address);
+
+        if (!store_instruction_word(context->instruction_image, operand_word, address))
+        {
+            print_line_error(filename, line_num, ERROR_INSTRUCTION_IMAGE_OVERFLOW);
+            err_found = TRUE;
+            context->has_errors = TRUE;
+            return FALSE;
+        }
+        return TRUE;
     }
 
     /* encode_operand did not succeed */
+
+    print_line_error(filename, line_num, ERROR_INVALID_OPERAND);
+    err_found = TRUE;
+    context->has_errors = TRUE;
     return FALSE;
 }
 
@@ -428,7 +487,7 @@ static BOOL encode_operand(const Operand *operand, int address, BOOL is_source, 
  * @brief Creates the main instruction word with opcode and addressing modes.
  *
  * @param opcode        The instruction opcode (0-15).
- * @param source_mode   Source opernad addressing mode
+ * @param source_mode   Source operand addressing mode
  * @param target_mode   Target addressing mode.
  * @return The encoded instruction word.
  */
@@ -459,14 +518,23 @@ static int create_instruction_word(int opcode, AddressingMode source_mode, Addre
  */
 static BOOL init_instruction_image(InstructionImage *image)
 {
+    /* Checks if the pointer is valid */
     if (!image)
         return FALSE;
 
-    image->capacity = INITIAL_INSTRUCTION_CAPACITY;
+    /* Sets initail capacity */
+    image->capacity = MAX_INSTRUCTION_IMAGE_SIZE;
+
+    /* Dynamicly stores the machine code values */
     image->code = (int *)malloc(image->capacity * sizeof(int));
+
+    /* Stores the memory address for each machine code word */
     image->addresses = (int *)malloc(image->capacity * sizeof(int));
+
+    /* Tracks how many words are currently stored */
     image->size = 0;
 
+    /* Returns TRUE if both allocations succeeded*/
     return (image->code != NULL && image->addresses != NULL);
 }
 
@@ -483,17 +551,19 @@ static BOOL store_instruction_word(InstructionImage *image, int word, int addres
     if (!image)
         return FALSE;
 
-    if (image->size >= image->capacity)
+    /* Check memory address bounds */
+    if (address < 0 || address > 255)
     {
-        /* Expand capacity if needed */
-        image->capacity *= 2;
-        image->code = (int *)realloc(image->code, image->capacity * sizeof(int));
-        image->addresses = (int *)realloc(image->addresses, image->capacity * sizeof(int));
-
-        if (!image->code || !image->addresses)
-            return FALSE;
+        return FALSE;
     }
 
+    /* Check capacity */
+    if (image->size >= image->capacity)
+    {
+        return FALSE;
+    }
+
+    /* Store the word */
     image->code[image->size] = word;
     image->addresses[image->size] = address;
     image->size++;
@@ -589,6 +659,22 @@ static void free_entry_list(EntryNode *list)
 {
     EntryNode *current = list;
     EntryNode *next;
+
+    while (current)
+    {
+        next = current->next;
+        free(current);
+        current = next;
+    }
+}
+
+/**
+ * @brief Frees all memory allocated for the external list.
+ */
+static void free_external_list(ExternalNode *list)
+{
+    ExternalNode *current = list;
+    ExternalNode *next;
 
     while (current)
     {

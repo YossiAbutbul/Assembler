@@ -65,7 +65,9 @@ void print_line_error(const char *filename, int line_number, ErrorType err_type)
         /* 15 */ "String too long",
         /* 16 */ "Label must start with a letter",
         /* 17 */ "General error",
-        /* 18 */ "Data image overflow"};
+        /* 18 */ "Data image overflow",
+        /* 19 */ "Instruction image overflow",
+        /* 20 */ "Memory address out of bounds"};
 
     size_t err_cnt = (sizeof(error_messages) / sizeof(error_messages[0]));
 

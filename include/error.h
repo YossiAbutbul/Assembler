@@ -52,7 +52,11 @@ typedef enum
     /* === General Errors === */
     ERROR_SYNTAX,
     ERROR_GENERAL,
-    ERROR_DATA_IMAGE_OVERFLOW
+    ERROR_DATA_IMAGE_OVERFLOW,
+
+    /* === Instruction Generation Erros === */
+    ERROR_INSTRUCTION_IMAGE_OVERFLOW,
+    ERROR_ADDRESS_OUT_OF_BOUNDS
 } ErrorType;
 
 /**
