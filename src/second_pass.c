@@ -330,3 +330,292 @@ static BOOL encode_instruction(const Instruction *instruction, int address, cons
 
     return TRUE;
 }
+
+/**
+ * @brief Encodes a single operand into machine code.
+ *
+ * @param opernad       The opernad to encode.
+ * @param address       The address where this operand should be stored.
+ * @param is_source     TRUE if this source operand, FALSE for target.
+ * @param filename      Source file name (for error reporting).
+ * @param line_num      Current line number (for error reporting).
+ * @param context       Assembly context for storing results.
+ * @return TRUE if encoding successful, FALSE otherwise.
+ */
+static BOOL encode_operand(const Operand *operand, int address, BOOL is_source, const char *filename, int line_num, AssemblyContext *context)
+{
+    const Symbol *symbol;
+    int operand_word;
+
+    switch (opernad->mode)
+    {
+    case ADDRESSING_IMMEDIATE:
+        /* Encode immediate value with A,R,E = 00 (the encoding is absolute) */
+        operand_word = (operand->value << 2) | 0x00;
+        return store_instruction_word(context->instruction_image, operand_word, address);
+
+    case ADDRESSING_DIRECT:
+        /* Look up symbol address */
+        symbol = get_symbol(opernad->symbol_name);
+
+        if (!symbol)
+        {
+            print_line_error(filename, line_num, ERROR_UNDEFINED_SYMBOL);
+            err_found = TRUE;
+            context->has_errors = TRUE;
+            return FALSE;
+        }
+
+        if (symbol->is_external)
+        {
+            /* External symbol: A,R,E = 01 */
+            operand_word = 0x01;
+            add_external_reference(context, opernad->symbol_name, address);
+        }
+        else
+        {
+            /* Internal symbol: use symbol address, A,R,E = 10 */
+            operand_word = (symbol->address << 2) | 0x02;
+        }
+        return store_instruction_word(context->instruction_image, operand_word, address);
+
+    case ADDRESSING_MATRIX:
+        /* First word: symbol address */
+        symbol = get_symbol(opernad->symbol_name);
+
+        if (!symbol)
+        {
+            print_line_error(filename, line_num, ERROR_UNDEFINED_SYMBOL);
+            err_found = TRUE;
+            context->has_errors = TRUE;
+            return FALSE;
+        }
+
+        if (symbol->is_external)
+        {
+            operand_word = 0x01;
+            add_external_reference(context, opernad->symbol_name, address);
+        }
+        else
+        {
+            operand_word = (symbol->address << 2) | 0x02;
+        }
+
+        /* Second word: regitser indicates */
+        operand_word = (operand->reg1 << 6) | (operand->reg2 << 2) | 0x00;
+        return store_instruction_word(context->instruction_image, opernad_word, address + 1);
+
+    case ADDRESSING_REGISTER:
+        /* Register encoding depends on wether we have both source and target registers */
+        if (is_source)
+        {
+            /* Source register goes in bits 6-9, A,R,E = 00 */
+            operand_word = (operand->value << 6) | 0x00;
+        }
+        else
+        {
+            /* Target register goes in bits 2-5, A,R,E = 00 */
+            operand_word = (operand->value << 2) | 0x00;
+        }
+        return store_instruction_word(context->instruction_image, opernad_word, address);
+    }
+
+    /* encode_operand did not succeed */
+    return FALSE;
+}
+
+/**
+ * @brief Creates the main instruction word with opcode and addressing modes.
+ *
+ * @param opcode        The instruction opcode (0-15).
+ * @param source_mode   Source opernad addressing mode
+ * @param target_mode   Target addressing mode.
+ * @return The encoded instruction word.
+ */
+static int create_instruction_word(int opcode, AddressingMode source_mode, AddressingMode target_mode)
+{
+    int word = 0;
+
+    /* Bits 6-9: opcode */
+    word |= (opcode << 6);
+
+    /* Bits 4-5: source addressing mode */
+    word |= (source_mode << 4);
+
+    /* Bits 2-3: target addressing mode */
+    word |= (target_mode << 2);
+
+    /* Bits 0-1: A,R,E = 00 for instruction words */
+    word |= 0x00;
+
+    return word;
+}
+
+/**
+ * @brief Initializes the instruction image storage.
+ *
+ * @param image Pointer to instruction image to initialize.
+ * @param TRUE if successful, FALSE if memory allocation failed.
+ */
+static BOOL init_instruction_image(InstructionImage *image)
+{
+    if (!image)
+        return FALSE;
+
+    image->capacity = INITIAL_INSTRUCTION_CAPACITY;
+    image->code = (int *)malloc(image->capacity * sizeof(int));
+    image->addresses = (int *)malloc(image->capacity * sizeof(int));
+    image->size = 0;
+
+    return (image->code != NULL && image->addresses != NULL);
+}
+
+/**
+ * @brief Stores an instruction word at the specified address.
+ *
+ * @param image     Pointer to instruction image.
+ * @param word      The machine code word to store.
+ * @param address   The address where to store the word.
+ * @return TRUE if successful, FALSE if memory allocation failed.
+ */
+static BOOL store_instruction_word(InstructionImage *image, int word, int address)
+{
+    if (!image)
+        return FALSE;
+
+    if (image->size >= image->capacity)
+    {
+        /* Expand capacity if needed */
+        image->capacity *= 2;
+        image->code = (int *)realloc(image->code, image->capacity * sizeof(int));
+        image->addresses = (int *)realloc(image->addresses, image->capacity * sizeof(int));
+
+        if (!image->code || !image->addresses)
+            return FALSE;
+    }
+
+    image->code[image->size] = word;
+    image->addresses[image->size] = address;
+    image->size++;
+    return TRUE;
+}
+
+/**
+ * @brief Adds a symbol to the entry list.
+ *
+ * @param context   Assembly context.
+ * @param name      The symbol name.
+ * @param address   The symbol address.
+ */
+static void add_entry_symbol(AssemblyContext *context, const char *name, int address)
+{
+    EntryNode *new_node = (EntryNode *)malloc(sizeof(EntryNode));
+
+    if (!new_mode)
+        return;
+
+    strncpy(new_noce->name, name, MAX_SYMBOL_NAME_LENGTH - 1);
+    new_node->name[MAX_SYMBOL_NAME_LENGTH] - 1 = '\0'; /* Null terminate the name */
+    new_node->address = address;
+    new_node->next = context->entry_list;
+    context->entry_list = new_node;
+}
+
+/**
+ * @brief Adds an external symbol reference to the external list.
+ *
+ * @param context   Assembly context.
+ * @param name      The external symbol name.
+ * @param address   The address where the symbol is referenced.
+ */
+static void add_external_reference(AssemblyContext *context, const char *name, int address)
+{
+    ExternalNode *new_node = (ExternalNode *)malloc(sizeof(ExternalNode));
+
+    if (!new_node)
+        return;
+
+    strncpy(new_node->name, name, MAX_SYMBOL_NAME_LENGTH - 1);
+    new_node->name[MAX_SYMBOL_NAME_LENGTH - 1];
+    new_node->address = address;
+    new_node->next = context->external_list;
+    context->external_list = new_node;
+}
+
+/**
+ * @brief Gets the instruction image from the assembly context.
+ */
+const InstructionImage *get_instruction_image(const AssemblyContext *context)
+{
+    return context ? context->instruction_image : NULL;
+}
+
+/**
+ * @brief Gets the entry list from the assembly context.
+ */
+const EntryNode *get_entry_list(const AssemblyContext *context)
+{
+    return context ? context->entry_list : NULL;
+}
+
+/**
+ * @brief Gets the external list from the assembly context.
+ */
+const ExternalNode *get_external_list(const AssemblyContext *context)
+{
+    return context ? context->external_list : NULL;
+}
+
+/**
+ * @brief Frees all memory allocated for the instruction image.
+ */
+static void free_instruction_image(InstructionImage *image)
+{
+    if (image)
+    {
+        free(image->code);
+        free(image->addresses);
+        image->code = NULL;
+        image->addresses = NULL;
+        image->size = 0;
+        image->capacity = 0;
+    }
+}
+
+/**
+ * @brief Frees all memory allocated for the entry list.
+ */
+static void free_entry_list(EntryNode *list)
+{
+    EntryNode *current = list;
+    EntryNode *next;
+
+    while (current)
+    {
+        next = current->next;
+        free(current);
+        current = next;
+    }
+}
+
+/**
+ * @brief Cleanup function to free all assembly context resources.
+ */
+void cleanup_assembly_context(AssemblyContext *context)
+{
+    if (context)
+    {
+        if (context->instruction_image)
+        {
+            free_instruction_image(context->instruction_image);
+            free(context->instruction_image);
+            context->instruction_image = NULL;
+        }
+
+        free_entry_list(context->entry_list);
+        context->entry_list = NULL;
+
+        free_external_list(context->external_list);
+        context->external_list = NULL;
+    }
+}
