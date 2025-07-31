@@ -10,13 +10,13 @@
 
 /* === Global Variables: === */
 
-extern int IC; /* Instruction counter */
-extern int DC; /* Data counter */
+extern int IC;         /* Instruction counter */
+extern int DC;         /* Data counter */
 extern BOOL err_found; /* Flag to indicate if an error was found */
 
 /**
  * @brief Preforms the first pass on the given .am source file.
- * 
+ *
  * Scans the file line by line to:
  * - Identify labels, instructions and directives.
  * - Add symbols to the symbol table.
@@ -28,6 +28,6 @@ extern BOOL err_found; /* Flag to indicate if an error was found */
  * @param filename Name of the source file (for error reporting).
  * @return TRUE if the first pass was successful, FALSE otherwise.
  */
-void first_pass(FILE *am_file, const char *filename);
+BOOL first_pass(FILE *am_file, const char *filename);
 
 #endif

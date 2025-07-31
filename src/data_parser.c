@@ -376,7 +376,6 @@ void parse_matrix(const char *line, const char *filename, int line_num)
                 else
                 {
                     actual_values++;
-                    /*ToDo: store values in data image */
                     if (!store_data(val, filename, line_num))
                     {
                         free(copy);

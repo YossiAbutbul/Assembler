@@ -76,7 +76,7 @@ BOOL parse_instruction(const char *line, const char *filename, int line_num, Ins
     }
 
     /* Parse instruction name */
-    token = strtok(line_copy, " \t"); /*ToDo: Check this */
+    token = strtok(line_copy, " \t");
     if (!token)
     {
         print_line_error(filename, line_num, ERROR_SYNTAX);
