@@ -22,6 +22,9 @@ extern int IC;
 extern int DC;
 extern BOOL err_found;
 
+/* Static variable to track instruction index within second pass */
+static int current_instruction_index = 0;
+
 /* === Internal Helper Function Prototypes === */
 
 static void process_line_second_pass(const char *line, const char *filename, int line_num, int *current_ic, AssemblyContext *context);
@@ -40,6 +43,9 @@ static void free_instruction_image(InstructionImage *image);
 static void free_entry_list(EntryNode *list);
 static void free_external_list(ExternalNode *list);
 static BOOL validate_first_pass_data(void);
+static void reset_instruction_index(void);
+static int get_current_instruction_index(void);
+static const InstructionData *get_next_instruction_data(void);
 
 /**
  * @brief Initializes an assembly context structure.
@@ -100,6 +106,16 @@ BOOL second_pass(FILE *am_file, const char *filename, AssemblyContext *context)
     if (!am_file || !filename || !context)
         return FALSE;
 
+    /* Validate  first pass data is availbale */
+    if (!validate_first_pass_data())
+    {
+        print_line_error(filename, 0, ERROR_GENERAL);
+        return FALSE;
+    }
+
+    /* Reset the instruction indec for the current file */
+    reset_instruction_index();
+
     /* Reset the file pointer back to the start of the file (can be moved after first pass)*/
     rewind(am_file);
 
@@ -122,6 +138,15 @@ BOOL second_pass(FILE *am_file, const char *filename, AssemblyContext *context)
     context->ICF = current_ic;
     context->DCF = DC;
     context->has_errors = err_found;
+
+    /* Validate we processed the expected number of instructions */
+    if (get_current_instruction_index() != get_instruction_count)
+    {
+        print_line_error(filename, 0, ERROR_GENERAL);
+        err_found = TRUE;
+        context->has_errors = TRUE;
+        return FALSE;
+    }
 
     /* Second pass completed if no errors found */
     return !err_found;
@@ -185,7 +210,6 @@ static void process_line_second_pass(const char *line, const char *filename, int
  */
 static void handle_instruction_second_pass(const char *line, const char *filename, int line_num, int *current_ic, AssemblyContext *context)
 {
-    static int instruction_index = 0; /* Track which stored instruction we are processing */
     const InstructionData *inst_data;
     Instruction instruction;
     char *instruction_part;
@@ -193,7 +217,7 @@ static void handle_instruction_second_pass(const char *line, const char *filenam
     char label[MAX_LABEL_LENGTH + 1];
 
     /* Get pre-calculated instruction data from first pass */
-    inst_data = get_instruction_data(instruction_index);
+    inst_data = get_next_instruction_data();
     if (!inst_data)
     {
         print_line_error(filename, line_num, ERROR_GENERAL);
@@ -221,17 +245,25 @@ static void handle_instruction_second_pass(const char *line, const char *filenam
     if (extract_label(line, label))
         instruction_part = skip_label(instruction_part);
 
-    /* Parse the instruction (for opernad details for e.g.) */
+    /* Parse the instruction (for opernad details for symbol resolution) */
     if (!parse_instruction(instruction_part, filename, line_num, &instruction))
+        return; /* The index increneted in get_next_instruction_data() */
+
+    /* Verify word count consistency between passes */
+    if (instruction.word_count != inst_data->word_count)
+    {
+        print_line_error(filename, line_num, ERROR_GENRAL);
+        err_found = TRUE;
+        context->has_errors = TRUE;
         return;
+    }
 
     /* Use pre-calculated data for encoding */
     if (!encode_instruction_with_stored_data(&instruction, inst_data, *current_ic, filename, line_num, context))
         return;
 
     /* Update instruction counter using pre-calculated word count */
-    *current_ic += inst_data->word_count; /*todo : check if there is no mosmatchh with first pass and instruction parser word_count*/
-    instruction_index++;
+    *current_ic += inst_data->word_count; /*todo : check if there is no mismatchh with first pass and instruction parser word_count*/
 }
 
 /**
@@ -861,4 +893,35 @@ static BOOL validate_first_pass_data(void)
 
     /* todo: myabe insert another validation*/
     return TRUE;
+}
+
+/**
+ * @brief Reset instruction index for new file processing.
+ */
+static void reset_instruction_index(void)
+{
+    current_instruction_index = 0;
+}
+
+/**
+ * @brief Get current instruction index.
+ * @return Current instruction index.
+ */
+static int get_current_instruction_index(void)
+{
+    return current_instruction_index;
+}
+
+/**
+ * @brief Increment instruction index and return current InstructionData.
+ * @return Pointer to current InstructionData, NULL if invalid.
+ */
+static const InstructionData *get_next_instruction_data(void)
+{
+    const InstructionData *data = get_instruction_data(current_instruction_index);
+    if (data)
+    {
+        current_instruction_index++;
+    }
+    return data;
 }
