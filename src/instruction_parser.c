@@ -39,7 +39,7 @@ static const InstructionMapping instruction_table[] = {
  * @brief Parse an instruction line during first pass.
  *
  * This function takes a line containing an instruction (without any label)
- * ans parses it into it components: opcode and operands.
+ * and parses it into it components: opcode and operands.
  * It validates the instruction syntax and operand addressing modes.
  *
  * @param line          Pointer to the instruction line.
@@ -76,7 +76,7 @@ BOOL parse_instruction(const char *line, const char *filename, int line_num, Ins
     }
 
     /* Parse instruction name */
-    token = strtok(line_copy, " \t,"); /*ToDo: Check this */
+    token = strtok(line_copy, " \t"); /*ToDo: Check this */
     if (!token)
     {
         print_line_error(filename, line_num, ERROR_SYNTAX);
@@ -150,7 +150,7 @@ BOOL parse_instruction(const char *line, const char *filename, int line_num, Ins
     switch (instruction->type)
     {
     case INST_NO_OPERANDS:
-        /* Checks if there is too many opernands */
+        /* Checks if there is too many operands */
         if (token_count != 0)
         {
             print_line_error(filename, line_num, ERROR_TOO_MANY_OPERANDS);
@@ -224,7 +224,7 @@ BOOL parse_instruction(const char *line, const char *filename, int line_num, Ins
  * This function determines the addressing mode and extracts the necessary
  * information from operand string.
  *
- * @param operand_str   The oprenad string to parse.
+ * @param operand_str   The operand string to parse.
  * @param operand       Output operand struct.
  * @param filename      Source filename (for error reporting).
  * @param line_num      Current line number (for error reporting).
@@ -289,7 +289,7 @@ static BOOL parse_operand(const char *operand_str, Operand *operand, const char 
 }
 
 /**
- * @brief Check if a strin represents a register (r0-r7).
+ * @brief Check if a string represents a register (r0-r7).
  *
  * @param str       The string to check.
  * @param reg_num   Output parameter for register number (0-7).
@@ -341,7 +341,7 @@ static BOOL is_immediate(const char *str, int *value)
  * @param str       The string to check.
  * @param operand   Output operand struct.
  * @param filename  Source filename (for error reporting).
- * @param line_num  Current line nu,ber (for error reporting).
+ * @param line_num  Current line number (for error reporting).
  * @return TRUE if string is valid matrix refernce, FALSE otherwise.
  */
 static BOOL is_matrix_reference(const char *str, Operand *operand, const char *filename, int line_num)
@@ -553,7 +553,7 @@ int get_instruction_word_count(const Instruction *instruction)
  * This function checks if the addressing modes used in an instruction
  * are valid according to the addressing mode compatibility table.
  *
- * @param opcode        The instruction opcoode (0-15).
+ * @param opcode        The instruction opcode (0-15).
  * @param source_mode   Source operand addressing mode (ignored if there is no source).
  * @param target_mode   Target operand addressing mode (ignored if there is no target).
  * @param has_source    TRUE if instruction has a source operand

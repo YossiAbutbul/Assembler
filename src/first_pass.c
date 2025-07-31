@@ -27,9 +27,8 @@ BOOL err_found = FALSE; /* Flag to indicate if an error was found */
 static void process_line(const char *line, const char *filename, int line_num);
 static void handle_extern_directive(const char *line, const char *filename, int line_num);
 static void handle_entry_directive(const char *line, const char *filename, int line_num);
-static void handle_data_directive(const char *label, const char *directive, const char *line, const char *filename, int lineno);
-static void handle_instruction(const char *label, const char *filename, int line_number);
-
+static void handle_data_directive(const char *label, const char *directive, const char *line, const char *filename, int line_num);
+static void handle_instruction(const char *label, const char *line, const char *filename, int line_num);
 /**
  * @brief Preforms the first pass on the given .am source file.
  *
@@ -190,7 +189,7 @@ static void process_line(const char *line, const char *filename, int line_num)
  * @param filename  Name of the source file (for error reporting).
  * @param line_num  The current line number in the source file (for error reporting).
  */
-static void handle_instruction(const char *label, const char *filename, int line_number)
+static void handle_instruction(const char *label, const char *line, const char *filename, int line_num)
 {
     Instruction instruction;
     char *instruction_part;
@@ -337,7 +336,7 @@ static void handle_entry_directive(const char *line, const char *filename, int l
  * @param line_num  Pointer to the current line number in the source file.
  */
 
-static void handle_data_directive(const char *label, const char *directive, const char *line, const char *filename, int lineno)
+static void handle_data_directive(const char *label, const char *directive, const char *line, const char *filename, int line_num)
 {
     /* Handle label if exsist */
     if (label != NULL && label[0] != '\0')
@@ -346,7 +345,7 @@ static void handle_data_directive(const char *label, const char *directive, cons
         /* Validates the label. */
         if (!is_valid_label(label))
         {
-            print_line_error(filename, lineno, ERROR_INVALID_LABEL);
+            print_line_error(filename, line_num, ERROR_INVALID_LABEL);
             err_found = TRUE;
             return; /* Skip processing this line */
         }
@@ -354,7 +353,7 @@ static void handle_data_directive(const char *label, const char *directive, cons
         /* Check if the label already exists in the symbol table. */
         if (is_label_defined(label))
         {
-            print_line_error(filename, lineno, ERROR_DUPLICATE_LABEL);
+            print_line_error(filename, line_num, ERROR_DUPLICATE_LABEL);
             err_found = TRUE;
             return; /* Skip processing this line */
         }

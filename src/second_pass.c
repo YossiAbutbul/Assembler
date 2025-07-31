@@ -443,7 +443,7 @@ static BOOL encode_operand(const Operand *operand, int address, BOOL is_source, 
         /* Second word: regitser indicates */
         operand_word = (operand->reg1 << 6) | (operand->reg2 << 2) | 0x00;
 
-        if (!store_instruction_word(context->instruction_image, operand_word, address))
+        if (!store_instruction_word(context->instruction_image, operand_word, address + 1))
         {
             print_line_error(filename, line_num, ERROR_INSTRUCTION_IMAGE_OVERFLOW);
             err_found = TRUE;
@@ -585,7 +585,7 @@ static void add_entry_symbol(AssemblyContext *context, const char *name, int add
         return;
 
     strncpy(new_node->name, name, MAX_SYMBOL_NAME_LENGTH - 1);
-    new_node->name[MAX_SYMBOL_NAME_LENGTH] - 1 = '\0'; /* Null terminate the name */
+    new_node->name[MAX_SYMBOL_NAME_LENGTH - 1] = '\0'; /* Null terminate the name */
     new_node->address = address;
     new_node->next = context->entry_list;
     context->entry_list = new_node;
