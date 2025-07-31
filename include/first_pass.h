@@ -20,7 +20,7 @@ typedef struct
     int ic_address;        /* IC value when instruction was processed */
     int word_count;        /* L - number of words this instruction takes */
     int first_word;        /* First word of instruction - partial machine code */
-    int immediate_word[4]; /* Stroage for immediate operand words */
+    int immediate_word[4]; /* Stroage for immediate operand words (the 4 is the base of the new encoding) */
     int immediate_count;   /* Number of immediate words stored */
 } InstructionData;
 
