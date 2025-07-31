@@ -263,7 +263,7 @@ static void handle_instruction_second_pass(const char *line, const char *filenam
         return;
 
     /* Update instruction counter using pre-calculated word count */
-    *current_ic += inst_data->word_count; /*todo : check if there is no mismatchh with first pass and instruction parser word_count*/
+    *current_ic += inst_data->word_count;
 }
 
 /**
