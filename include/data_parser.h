@@ -29,7 +29,7 @@ void parse_data_values(const char *line, const char *filename, int line_num);
 /**
  * @brief Parses a ".string" directive and stores its characters into the data image.
  *
- * This function processes a string kiteral enclosed in double quotes. The string is
+ * This function processes a string literal enclosed in double quotes. The string is
  * interoreted as sequence of printable ASCII characters, with each character stored
  * as one word in the data segemet. A null-terminator is appended to indocates the
  * end of the string.

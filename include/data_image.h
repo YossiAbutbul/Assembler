@@ -14,7 +14,7 @@
  * This function setsup the data image with initial capacity and
  * prepares it for storing data values during the first pass.
  */
-void init_data_image();
+void init_data_image(void);
 
 /**
  * @brief Stores a value in the data image.
@@ -49,7 +49,7 @@ int get_data_at(int index);
  *
  * @return Size of the data image (DC).
  */
-int get_data_size();
+int get_data_size(void);
 
 /**
  * @brief Get a pointer to the entire data array for output generation.
@@ -59,7 +59,7 @@ int get_data_size();
  *
  * @return Pointer to the data array, or NULL if not initialized.
  */
-const int *get_data_array();
+const int *get_data_array(void);
 
 /**
  * @brief Free all memory allocated for the data image.
@@ -67,6 +67,6 @@ const int *get_data_array();
  * This function releases all memory used by the data image.
  * Used when processing is complete to prevent memory leaks.
  */
-void free_data_image();
+void free_data_image(void);
 
 #endif

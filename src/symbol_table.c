@@ -23,7 +23,7 @@ static Symbol *find_symbol(const char *name);
  * symbols and preparing for new symbol additions.
  * @note This function will be called at the start of processing each source file.
  */
-void init_symbol_table()
+void init_symbol_table(void)
 {
     /* Initialize the symbol table to an empty state */
     symbol_table_head = NULL;
@@ -178,7 +178,7 @@ void update_data_symbols(int icf)
  * This function releases all memory allocated for the symbol table.
  * @note Called when processing is complete to prevent memory leaks.
  */
-void free_symbol_table()
+void free_symbol_table(void)
 {
     Symbol *cur = symbol_table_head;
     Symbol *sym_to_free;
@@ -203,7 +203,7 @@ void free_symbol_table()
  *
  * @note This function is primarily for debugging purposes.
  */
-void print_symbol_table()
+void print_symbol_table(void)
 {
     Symbol *cur = symbol_table_head;
 

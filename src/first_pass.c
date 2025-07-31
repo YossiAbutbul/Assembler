@@ -23,16 +23,6 @@ int DC = 0;               /* Data counter */
 /* Flag to indicate if an error was found */
 BOOL err_found = FALSE;
 
-/* Storage for IC/L values and partial machine code */
-typedef struct
-{
-    int ic_address;        /* IC value when instruction was processed */
-    int word_count;        /* L - number of words this instruction takes */
-    int first_word;        /* First word of instruction - partial machine code */
-    int immediate_word[4]; /* Stroage for immediate operand words */
-    int immediate_count;   /* Number of immediate words stored */
-} InstructionData;
-
 static InstructionData instruction_table[MAX_INSTRUCTION_IMAGE_SIZE];
 static int instruction_count = 0;
 
@@ -122,8 +112,7 @@ BOOL first_pass(FILE *am_file, const char *filename)
  * Step 15 implementaion - provides access to stored IC/L values.
  *
  * @param index The index of the instruction to retrieve.
- * @return A pointer to the InstructionData at the given index if is
- *         within the instruction table range, NUll otherwise.
+ * @return Pointer to the InstructionData if valid index, NULL otherwise.
  * @note This is an internal function.
  */
 
@@ -142,7 +131,7 @@ const InstructionData *get_instruction_data(int index)
  * @return The instruction count number.
  * @note This is an internal function to safely return the instruction count.
  */
-int get_instruction_count()
+int get_instruction_count(void)
 {
     return instruction_count;
 }
@@ -536,4 +525,16 @@ static void handle_data_directive(const char *label, const char *directive, cons
         print_line_error(filename, line_num, ERROR_INVALID_DIRECTIVE);
         err_found = TRUE;
     }
+}
+
+/**
+ * @brief Cleanup first pass instruction storage betwenn files.
+ * @note This function will be called at the end of processing each file in the main.c
+ */
+void cleanup_first_pass_data(void)
+{
+    inst_count = 0;
+
+    /* Clear the instruction table */
+    memset(instruction_table, sizeof(instruction_table));
 }

@@ -15,7 +15,6 @@
 #include "../include/preprocessor.h"
 #include "../include/constants.h"
 
-
 /**
  * @struct Macro
  * @brief Represents a macro and its body lines.
@@ -161,7 +160,7 @@ static void write_macro_body(FILE *am_file, const char *name)
 /**
  * @brief Frees all allocated memory used by macros.
  */
-static void free_macro_table()
+static void free_macro_table(void)
 {
     int i, j;
     for (i = 0; i < macro_count; i++)
@@ -274,7 +273,7 @@ ExitCode preprocess(const char *filename)
     fclose(as_file);
     fclose(am_file);
     free_macro_table();
-    /*ToDo: Check if needs to free the macro table or keep it in order 
+    /*ToDo: Check if needs to free the macro table or keep it in order
     to check if macro name is not a reserved word */
     return EXIT_SUCCESS_CODE;
 }

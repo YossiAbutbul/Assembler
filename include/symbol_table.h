@@ -41,7 +41,7 @@ typedef struct Symbol
  * symbols and preparing for new symbol additions.
  * @note This function will be called at the start of processing each source file.
  */
-void init_symbol_table();
+void init_symbol_table(void);
 
 /**
  * @brief Check if a label is already defined in the symbol table.
@@ -108,7 +108,7 @@ void update_data_symbols(int icf);
  * This function releases all memory allocated for the symbol table.
  * @note Called when processing is complete to prevent memory leaks.
  */
-void free_symbol_table();
+void free_symbol_table(void);
 
 /**
  * @brief Print the symbol table to the console.
@@ -118,6 +118,6 @@ void free_symbol_table();
  *
  * @note This function is primarily for debugging purposes.
  */
-void print_symbol_table();
+void print_symbol_table(void);
 
 #endif

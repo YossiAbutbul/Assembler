@@ -6,19 +6,23 @@
 #include "error.h"
 #include "constants.h"
 
-
 /**
  * @brief Simple assertion utility for test results.
  */
-void assert_true(BOOL condition, const char *message) {
-    if (!condition) {
+void assert_true(BOOL condition, const char *message)
+{
+    if (!condition)
+    {
         printf("❌ FAIL: %s\n", message);
-    } else {
+    }
+    else
+    {
         printf("✅ PASS: %s\n", message);
     }
 }
 
-int main(void) {
+int main(void)
+{
     const Symbol *sym;
 
     printf("Running symbol_table unit tests...\n\n");

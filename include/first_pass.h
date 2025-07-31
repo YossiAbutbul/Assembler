@@ -14,6 +14,31 @@ extern int IC;         /* Instruction counter */
 extern int DC;         /* Data counter */
 extern BOOL err_found; /* Flag to indicate if an error was found */
 
+/* Storage for IC/L values and partial machine code  from first pass */
+typedef struct
+{
+    int ic_address;        /* IC value when instruction was processed */
+    int word_count;        /* L - number of words this instruction takes */
+    int first_word;        /* First word of instruction - partial machine code */
+    int immediate_word[4]; /* Stroage for immediate operand words */
+    int immediate_count;   /* Number of immediate words stored */
+} InstructionData;
+
+/**
+ * @brief Get stored instruction data for second pass.
+ *
+ * @param index The index of the instruction to retrieve.
+ * @return Pointer to the InstructionData if valid index, NULL otherwise.
+ */
+const InstructionData *get_instruction_data(int index);
+
+/**
+ * @brief Get total number of stored instructions.
+ *
+ * @return The instruction count.
+ */
+int get_instruction_count(void);
+
 /**
  * @brief Preforms the first pass on the given .am source file.
  *
@@ -29,5 +54,11 @@ extern BOOL err_found; /* Flag to indicate if an error was found */
  * @return TRUE if the first pass was successful, FALSE otherwise.
  */
 BOOL first_pass(FILE *am_file, const char *filename);
+
+/**
+ * @brief Cleanup first pass instruction storage betwenn files.
+ * @note This function will be called at the end of processing each file in the main.c
+ */
+void cleanup_first_pass_data(void);
 
 #endif

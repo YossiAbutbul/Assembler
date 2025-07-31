@@ -37,7 +37,7 @@ static DataImage data_image = {NULL, 0, 0};
  * This function sets up the data image with initial capacity and
  * prepares it for storing data values during the first pass.
  */
-void init_data_image()
+void init_data_image(void)
 {
     /* Free all existing data*/
     if (data_image.data != NULL)
@@ -62,6 +62,7 @@ void init_data_image()
  *
  * This function doubles the capacity of the data image
  * when the current capacity is exceeded.
+ * todo: rethink this function
  *
  * @param filename Pointer to filename The current line number (for error reporting).
  * @param line_num The current line number (for error reporting).
@@ -127,7 +128,7 @@ BOOL store_data(int value, const char *filename, int line_num)
 {
     /* Initialize data image if not already done */
     if (data_image.data == NULL)
-        init_data_image();
+        init_data_image(void);
 
     /* Check if expanding the capacity is needed */
     if (data_image.size >= data_image.capacity)
@@ -170,7 +171,7 @@ int get_data_at(int index)
  *
  * @return Size of the data image (number of stored data).
  */
-int get_data_size()
+int get_data_size(void)
 {
     return data_image.size;
 }
@@ -183,7 +184,7 @@ int get_data_size()
  *
  * @return Pointer to the data array, or NULL if not initialized.
  */
-const int *get_data_array()
+const int *get_data_array(void)
 {
     return data_image.data;
 }
@@ -194,7 +195,7 @@ const int *get_data_array()
  * This function releases all memory used by the data image.
  * Used when processing is complete to prevent memory leaks.
  */
-void free_data_image()
+void free_data_image(void)
 {
     if (data_image.data != NULL)
     {
