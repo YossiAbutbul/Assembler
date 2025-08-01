@@ -140,7 +140,7 @@ BOOL second_pass(FILE *am_file, const char *filename, AssemblyContext *context)
     context->has_errors = err_found;
 
     /* Validate we processed the expected number of instructions */
-    if (get_current_instruction_index() != get_instruction_count)
+    if (get_current_instruction_index() != get_instruction_count())
     {
         print_line_error(filename, 0, ERROR_GENERAL);
         err_found = TRUE;
@@ -252,7 +252,7 @@ static void handle_instruction_second_pass(const char *line, const char *filenam
     /* Verify word count consistency between passes */
     if (instruction.word_count != inst_data->word_count)
     {
-        print_line_error(filename, line_num, ERROR_GENRAL);
+        print_line_error(filename, line_num, ERROR_GENERAL);
         err_found = TRUE;
         context->has_errors = TRUE;
         return;
@@ -574,7 +574,7 @@ static BOOL encode_instruction_with_stored_data(const Instruction *instruction, 
         instruction->source.mode == ADDRESSING_REGISTER &&
         instruction->target.mode == ADDRESSING_REGISTER)
     {
-        register_word = (instruction->source.value << 6) | (instruction->source.value << 2) | 0x00;
+        register_word = (instruction->source.value << 6) | (instruction->target.value << 2) | 0x00;
 
         if (!store_instruction_word(context->instruction_image, register_word, current_address))
         {
@@ -589,13 +589,13 @@ static BOOL encode_instruction_with_stored_data(const Instruction *instruction, 
     /* Encode source operand if exist */
     if (instruction->has_source)
     {
-        if (instruction->soucre.mode == ADDRESSING_IMMEDIATE)
+        if (instruction->source.mode == ADDRESSING_IMMEDIATE)
         {
             /* Use pre-encoded immediate word */
             if (immediate_index < inst_data->immediate_count)
             {
                 if (!store_instruction_word(context->instruction_image,
-                                            inst_data->immediate_words[immediate_count++],
+                                            inst_data->immediate_words[immediate_index++],
                                             current_address))
                 {
                     print_line_error(filename, line_num, ERROR_INSTRUCTION_IMAGE_OVERFLOW);
@@ -639,7 +639,7 @@ static BOOL encode_instruction_with_stored_data(const Instruction *instruction, 
             if (immediate_index < inst_data->immediate_count)
             {
                 if (!store_instruction_word(context->instruction_image,
-                                            inst_data->immediate_words[immediate_count++],
+                                            inst_data->immediate_words[immediate_index++],
                                             current_address))
                 {
                     print_line_error(filename, line_num, ERROR_INSTRUCTION_IMAGE_OVERFLOW);
@@ -656,6 +656,7 @@ static BOOL encode_instruction_with_stored_data(const Instruction *instruction, 
                 return FALSE;
         }
     }
+    return TRUE;
 }
 
 /**
