@@ -24,7 +24,7 @@ int DC = 0;               /* Data counter */
 BOOL err_found = FALSE;
 
 static InstructionData instruction_table[MAX_INSTRUCTION_IMAGE_SIZE];
-static int instruction_count = 0;
+static int instruction_count = 0; /*todo: rethink why i have both IC and instruction_count*/
 
 /* === Internal Helper Prototypes functions === */
 static void
@@ -533,7 +533,7 @@ static void handle_data_directive(const char *label, const char *directive, cons
  */
 void cleanup_first_pass_data(void)
 {
-    instruction_count  = 0;
+    instruction_count = 0;
 
     /* Clear the instruction table */
     memset(instruction_table, 0, sizeof(instruction_table));
