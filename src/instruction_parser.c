@@ -67,13 +67,14 @@ BOOL parse_instruction(const char *line, const char *filename, int line_num, Ins
     instruction->word_count = 1; /* At least the instruction name itself */
 
     /* Creates a copy of the line */
-    line_copy = strdup(line);
+    line_copy = (char *)malloc(strlen(line) + 1);
     if (!line_copy)
     {
         print_line_error(filename, line_num, ERROR_MEMORY_ALLOCATION_FAILED);
         err_found = TRUE;
         return FALSE;
     }
+    strcpy(line_copy, line);
 
     /* Parse instruction name */
     token = strtok(line_copy, " \t");
@@ -199,6 +200,8 @@ BOOL parse_instruction(const char *line, const char *filename, int line_num, Ins
         instruction->has_source = TRUE;
         instruction->has_target = TRUE;
         break;
+    case INST_INVALID:
+        print_line_error(filename, line_num, ERROR_UNKNOWN_INSTRUCTION);
     }
 
     /* Validate addressing modes */
@@ -324,7 +327,7 @@ static BOOL is_immediate(const char *str, int *value)
     char *endptr;
 
     /* Check empty str or str not staring with'#' (e.g.: #5 represents the value 5) */
-    if (!str || str[0] != "#")
+    if (!str || str[0] != '#')
         return FALSE;
 
     /* Parse the nu,ber after the '#' */

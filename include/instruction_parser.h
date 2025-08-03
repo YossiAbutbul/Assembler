@@ -33,7 +33,7 @@ typedef enum
 {
     INST_TWO_OPERANDS, /* mov, cmp, add, sub, lea */
     INST_ONE_OPERAND,  /* clr, not, inc, dec, jmp, bne, jsr, red, prn */
-    INST_NO_OPERNADS,  /* rts, stop */
+    INST_NO_OPERANDS,  /* rts, stop */
     INST_INVALID = -1  /* Invalid opcode */
 } InstructionType;
 
@@ -115,3 +115,5 @@ int get_instruction_word_count(const Instruction *instruction);
  * @return TRUE if addresing mode combination is valid, FALSE otherwise.
  */
 BOOL validate_addressing_modes(int opcode, AddressingMode source_mode, AddressingMode target_mode, BOOL has_source, BOOL has_target);
+
+#endif

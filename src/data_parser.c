@@ -47,6 +47,7 @@ void parse_data_values(const char *line, const char *filename, int line_num)
         err_found = TRUE;
         return;
     }
+    strcpy(copy, line);
 
     /* Split the line by ',' and process each token */
     token = strtok(copy, ",");
@@ -252,6 +253,7 @@ void parse_matrix(const char *line, const char *filename, int line_num)
         err_found = TRUE;
         return;
     }
+    strcpy(copy, line);
 
     /* Skips leading whitespaces */
     while (isspace((unsigned char)*copy))

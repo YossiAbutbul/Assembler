@@ -318,7 +318,7 @@ static int build_first_instruction_word(const Instruction *instruction)
 
     /* Bits 4-5: source addressing mode */
     if (instruction->has_source)
-        word |= (instructionc->source.mode << 4);
+        word |= (instruction->source.mode << 4);
 
     /* Bits 2-3: target addressing mode */
     if (instruction->has_target)
@@ -349,7 +349,7 @@ static void encode_immediate_operands(const Instruction *instruction, Instructio
     if (instruction->has_source && instruction->source.mode == ADDRESSING_IMMEDIATE)
     {
         /* Encode immediate value: shit left by 2 bits, A,R,E = 00 */
-        inst_data->immediate_words[inst_data->immediate_count] = (instruction->source.value << 2) | 0x00;
+        inst_data->immediate_word[inst_data->immediate_count] = (instruction->source.value << 2) | 0x00;
         inst_data->immediate_count++;
     }
 
@@ -357,7 +357,7 @@ static void encode_immediate_operands(const Instruction *instruction, Instructio
     if (instruction->has_target && instruction->target.mode == ADDRESSING_IMMEDIATE)
     {
         /* Encode immediate value: shit left by 2 bits, A,R,E = 00 */
-        inst_data->immediate_words[inst_data->immediate_count] = (instruction->target.value << 2) | 0x00;
+        inst_data->immediate_word[inst_data->immediate_count] = (instruction->target.value << 2) | 0x00;
         inst_data->immediate_count++;
     }
 }
@@ -533,8 +533,8 @@ static void handle_data_directive(const char *label, const char *directive, cons
  */
 void cleanup_first_pass_data(void)
 {
-    inst_count = 0;
+    instruction_count  = 0;
 
     /* Clear the instruction table */
-    memset(instruction_table, sizeof(instruction_table));
+    memset(instruction_table, 0, sizeof(instruction_table));
 }
