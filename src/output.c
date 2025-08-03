@@ -2,7 +2,7 @@
  * @file output.c
  * @brief Implementation of output file generation for assembler.
  *
- *  * According to the instructions on mmn14:
+ * According to the instructions on mmn14:
  * - All machine words are 10 bits (range: -512 to +511 in two's complement method).
  * - Memory addresses: 0-255 (8-bits), but the assembler uses 100-255 (IC start at 100).
  * - Base-4 encoding uses exactly 5 characters (at the encoded format):
@@ -12,7 +12,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
 
 #include "../include/output.h"
 #include "../include/error.h"
@@ -22,12 +21,12 @@
 #include "../include/second_pass.h"
 
 /**
- * @brief Genrate all output files for successful assembly.
+ * @brief Generate all output files for successful assembly.
  *
  * This function creates the required output files based on the assembly results:
  * - Always create .ob file with machine code.
- * - Creates .ent file only if entry symbols are exist.
- * - Creates .ext file only if external refernces are exist.
+ * - Creates .ent file only if entry symbols exist.
+ * - Creates .ext file only if external references exist.
  *
  * @param filename      Base filename (without extension).
  * @param context       Assembly context containing all generated data.
@@ -69,11 +68,11 @@ BOOL generate_output_files(const char *filename, const AssemblyContext *context)
  *
  * Format:
  * - First line: instruction_count data_count.
- * - Following lines: address machine code in base-4 format (a,b,c,d).
+ * - Following lines: address machine_code in base-4 format (a,b,c,d).
  *
  * @param filename      Base filename (without extension).
  * @param context       Assembly context containing instruction and data image.
- * @return TRUE if file generated successfully, FALSE if error occured.
+ * @return TRUE if file generated successfully, FALSE if error occurred.
  */
 BOOL generate_object_file(const char *filename, const AssemblyContext *context)
 {
@@ -85,12 +84,12 @@ BOOL generate_object_file(const char *filename, const AssemblyContext *context)
     const int *data_array;
     int data_size;
     int i;
-    int data_start_address = context->ICF; /* Data starts after instructions */
+    int data_start_address;
 
     if (!filename || !context)
         return FALSE;
 
-    /* Creates .ob filename */
+    /* Create .ob filename */
     sprintf(ob_filename, "%s.ob", filename);
 
     /* Open .ob file for writing */
@@ -105,6 +104,7 @@ BOOL generate_object_file(const char *filename, const AssemblyContext *context)
     inst_image = get_instruction_image(context);
     data_array = get_data_array();
     data_size = get_data_size();
+    data_start_address = context->ICF; /* Data starts after instructions */
 
     /* Write header line: total length of instruction section (in memory words)
        and total length of the data section (in memory words)*/
@@ -146,8 +146,8 @@ BOOL generate_object_file(const char *filename, const AssemblyContext *context)
  * Addresses in base-4 format (a,b,c,d)
  *
  * @param filename      Base filename (without extension).
- * @param context       Assembly context containing instruction and data image.
- * @return TRUE if file generated successfully, FALSE if error occured.
+ * @param context       Assembly context containing entry list..
+ * @return TRUE if file generated successfully, FALSE if error occurred.
  */
 BOOL generate_entries_file(const char *filename, const AssemblyContext *context)
 {
@@ -191,8 +191,8 @@ BOOL generate_entries_file(const char *filename, const AssemblyContext *context)
  * Addresses in base-4 format (a,b,c,d)
  *
  * @param filename      Base filename (without extension).
- * @param context       Assembly context containing instruction and data image.
- * @return TRUE if file generated successfully, FALSE if error occured.
+ * @param context       Assembly context containing external reference list.
+ * @return TRUE if file generated successfully, FALSE if error occurred.
  */
 BOOL generate_externals_file(const char *filename, const AssemblyContext *context)
 {
@@ -215,7 +215,7 @@ BOOL generate_externals_file(const char *filename, const AssemblyContext *contex
         return FALSE;
     }
 
-    /* Write all external refernces */
+    /* Write all external references */
     current = context->external_list;
     while (current)
     {
@@ -232,7 +232,7 @@ BOOL generate_externals_file(const char *filename, const AssemblyContext *contex
  * @brief Converts decimal value to base-4 format.
  *
  * Converts a decimal value to the unique base-4 format:
- * 0->1, 1->b, 2->c, 3->d
+ * 0->a, 1->b, 2->c, 3->d
  * The converted word is exactly 5 digits with padding of 'a' if needed.
  *
  * Valid input range (10 bit two's complement method):
@@ -242,7 +242,7 @@ BOOL generate_externals_file(const char *filename, const AssemblyContext *contex
  * Implementation Details:
  * - Handles 10-bit two's complement values (-512 to +511).
  * - Negative values converted using two's complement representation.
- * - Output is exactly 5 vase-4 chars using a,b,c,d.
+ * - Output is exactly 5 base-4 chars using a,b,c,d.
  * - Leading 'a's pad values shorter than 5 digits.
  *
  * @param value     Decimal value to convert (valid range: -512 to +511).
@@ -260,7 +260,7 @@ void decimal_to_base4(int value, char *output)
     /* Validate input range */
     if (value < -512 || value > 511)
     {
-        /* Should never happenes - but for defensive */
+        /* Should never happen - but for defensive programming */
         print_line_error("output", 0, ERROR_DATA_OUT_OF_RANGE);
         return;
     }
@@ -269,10 +269,10 @@ void decimal_to_base4(int value, char *output)
     if (value < 0)
         value = (1 << 10) + value; /* Convert to positive representation */
 
-    /* Ensure value fits in 10 bits (0-1023) - Keep ony bits 0-9, clear bits 10 and above */
+    /* Ensure value fits in 10 bits (0-1023) - Keep only bits 0-9, clear bits 10 and above */
     value &= 0x3FF;
 
-    /* Converts to base 4 digits */
+    /* Convert to base 4 digits */
     if (value == 0)
     {
         strcpy(output, "aaaaa");
@@ -290,7 +290,7 @@ void decimal_to_base4(int value, char *output)
     while (i < 5)
         temp[i++] = 'a';
 
-    temp[i] = '\0'; /* Ensure null-termiante */
+    temp[i] = '\0'; /* Ensure null-terminate */
 
     /* Reverse string to get correct order (msb first) */
     for (j = 0; j < 5; j++)
@@ -301,7 +301,7 @@ void decimal_to_base4(int value, char *output)
 }
 
 /**
- * @brief Convert base-4 format back to back to decimal.
+ * @brief Convert base-4 format back to decimal.
  *
  * @param base4_str Base-4 string to convert (must be exactly 5 chars: a,b,c,d only).
  * @return Decimal value (-512 to +511) if valid format,
@@ -313,7 +313,7 @@ int base4_to_decimal(const char *base4_str)
     int power = 1;
     int i;
 
-    /* Check for inavlid format - outside valid 10-bit range */
+    /* Check for invalid format - outside valid 10-bit range */
     if (!base4_str || strlen(base4_str) != 5)
         return -9999;
 
@@ -349,16 +349,16 @@ int base4_to_decimal(const char *base4_str)
 
     /* Handle two's complement for negative values (10-bits) */
     if (result >= 512)
-        result -= 1024; /* Convert from unsigned to signed representaion */
+        result -= 1024; /* Convert from unsigned to signed representation */
 
-    /* Retrun the answer */
+    /* Return the answer */
     return result;
 }
 
 /**
  * @brief Validate that a decimal value is within 10 bit range.
  *
- * @param value Deciaml value to check.
+ * @param value Decimal value to check.
  * @return TRUE if value is in range [-512, +511], FALSE otherwise.
  */
 BOOL is_valid_dec_value(int value)
