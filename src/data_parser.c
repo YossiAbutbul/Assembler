@@ -1,6 +1,6 @@
 /**
  * @file data_parser.c
- * @brief Implementation od the data parsing functions for assembler directives.
+ * @brief Implementation of the data parsing functions for assembler directives.
  */
 #include <stdlib.h>
 #include <string.h>
@@ -13,9 +13,9 @@
 #include "../include/data_image.h"
 
 /**
- * @brief Parses the opernad list of a ".data" directive.
+ * @brief Parses the operand list of a ".data" directive.
  *
- * This function extracts a comma-sparated list of integers and adds
+ * This function extracts a comma-separated list of integers and adds
  * each valid number to the data image.
  * Each value increases the data counter (DC).
  *
@@ -72,7 +72,7 @@ void parse_data_values(const char *line, const char *filename, int line_num)
         {
             print_line_error(filename, line_num, ERROR_SYNTAX);
             err_found = TRUE;
-            /* Moves to the next token in the comma seprated list. */
+            /* Moves to the next token in the comma separated list. */
             token = strtok(NULL, ",");
             continue;
         }
@@ -111,17 +111,17 @@ void parse_data_values(const char *line, const char *filename, int line_num)
  *
  * This function processes a string literal enclosed in double quotes. The string is
  * interpreted as sequence of printable ASCII characters, with each character stored
- * as one word in the data segemet. A null-terminator is appended to indicate the
+ * as one word in the data segment. A null-terminator is appended to indicate the
  * end of the string.
  *
  * The parser extracts all characters between the first and last double quote on the line.
- * Quotes withing the string are allowed and treated as regular characters.
+ * Quotes within the string are allowed and treated as regular characters.
  * Any non-whitespace content following the closing quote is considered invalid.
  *
  * Errors are reported if:
  * - The string is not enclosed in double quotes.
  * - Characters fall outside the ASCII range [0-127].
- * - Trailing non-whitespce characters are present after the closing quote.
+ * - Trailing non-whitespace characters are present after the closing quote.
  *
  * @param line      Pointer to the line content after the  ".string" directive.
  * @param filename  Pointer to the source file (for error reporting).
@@ -185,7 +185,7 @@ void parse_string_value(const char *line, const char *filename, int line_num)
     if (!store_data(0, filename, line_num))
         return;
 
-    /*Incremet the DC */
+    /*Increment the DC */
     DC++;
 
     /* Check for extra characters after the closing quote */
@@ -203,21 +203,21 @@ void parse_string_value(const char *line, const char *filename, int line_num)
 }
 
 /**
- * @brief Parses a ".mat" directive, extracts matrix dimentions and values,
+ * @brief Parses a ".mat" directive, extracts matrix dimensions and values,
  * and stores them into the data image.
  *
- * The matrix format must follow on of the patterns:
+ * The matrix format must follow the pattern:
  * - [rows][cols] val1, val2, ..., valN
  * - [rows][cols]
  *
  * - The opening '[' must appear immediately aftee the directive name
  *   (no space between .mat and '[').
- * - Whitespace is permited only inside the brackets.
+ * - Whitespace is permitted only inside the brackets.
  * - The number of values must not exceed rows * cols.
  * - If fewer values are provided, the remaining elements are implicitly initialized to zero.
  * - Matrix values are stored row by row (left to right, top to bottom).
  *
- * Each valid value and dimenion increamets the data counter 'DC'.
+ * Each valid value and dimension increments the data counter 'DC'.
  * The dimensions themselves occupy two words in the data image.
  *
  * Errors are reported if:
@@ -233,11 +233,16 @@ void parse_string_value(const char *line, const char *filename, int line_num)
 void parse_matrix(const char *line, const char *filename, int line_num)
 {
     int rows, cols, exp_vals, val, i;
-    char *copy = NULL, *values_part = NULL;
+    char *copy, *values_part;
     char *p_start, *p_mid, *p_end;
     char *token;
-    int actual_values = 0;
+    int actual_values;
     char *endptr;
+
+    /* Initialization */
+    copy = NULL;
+    values_part = NULL;
+    actual_values = 0;
 
     /* Check for null line pointer */
     if (!line)
@@ -246,7 +251,7 @@ void parse_matrix(const char *line, const char *filename, int line_num)
     /* Duplicate the line */
     copy = (char *)malloc(strlen(line) + 1);
 
-    /* Checks for memory aloocation error */
+    /* Checks for memory allocation error */
     if (!copy)
     {
         print_line_error(filename, line_num, ERROR_MEMORY_ALLOCATION_FAILED);
@@ -255,7 +260,7 @@ void parse_matrix(const char *line, const char *filename, int line_num)
     }
     strcpy(copy, line);
 
-    /* Skips leading whitespaces */
+    /* Skip leading whitespaces */
     while (isspace((unsigned char)*copy))
         copy++;
 
@@ -287,7 +292,7 @@ void parse_matrix(const char *line, const char *filename, int line_num)
         p_start++;
 
     /* Converts the string pointed to by p_start into an integer,
-        using base 10 (this is the rows value of the matrix) */
+    using base 10 (this is the rows value of the matrix) */
     rows = (int)strtol(p_start, &endptr, 10);
 
     /* Check if there are leftover characters after the number or rows < 0 */
@@ -323,7 +328,7 @@ void parse_matrix(const char *line, const char *filename, int line_num)
 
     p_start = p_mid + 2;
 
-    /* Skip whitespaces inside the rows brackets */
+    /* Skip whitespaces inside the cols brackets */
     while (isspace((unsigned char)*p_start))
         p_start++;
 
@@ -332,7 +337,7 @@ void parse_matrix(const char *line, const char *filename, int line_num)
     cols = (int)strtol(p_start, &endptr, 10);
 
     /* Checks if there are leftover characters after the number or cols < 0 */
-    if (*endptr != '\0')
+    if (*endptr != '\0' || cols < 0)
     {
         print_line_error(filename, line_num, ERROR_INVALID_MATRIX);
         err_found = TRUE;
@@ -346,9 +351,9 @@ void parse_matrix(const char *line, const char *filename, int line_num)
     /* Skip to start of value list */
     values_part = p_end + 1;
 
-    /* Skip whitespaces inside the rows brackets */
-    while (isspace((unsigned char)*p_start))
-        p_start++;
+    /* Skip whitespaces after closing bracket */
+    while (isspace((unsigned char)*values_part))
+        values_part++;
 
     /* Parse matrix values (if any)*/
     if (*values_part != '\0')
@@ -356,7 +361,7 @@ void parse_matrix(const char *line, const char *filename, int line_num)
         token = strtok(values_part, ",");
         while (token != NULL)
         {
-            /* Skip spaces bweteen ',' */
+            /* Skip spaces between ',' */
             while (isspace((unsigned char)*token))
                 token++;
 
@@ -386,7 +391,7 @@ void parse_matrix(const char *line, const char *filename, int line_num)
                     DC++;
                 }
             }
-            /* Gets the next tokem from the comma seprated ;ist of matrix values */
+            /* Gets the next token from the comma separated list of matrix values */
             token = strtok(NULL, ",");
         }
     }
