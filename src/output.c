@@ -35,6 +35,10 @@ BOOL generate_output_files(const char *filename, const AssemblyContext *context)
     if (!filename || !context)
         return FALSE;
 
+    /* Don't generate output files if there were assembly errors */
+    if (context->has_errors)
+        return FALSE;
+
     /* Always generate .ob file */
     if (!generate_object_file(filename, context))
         return FALSE;
@@ -90,7 +94,7 @@ BOOL generate_object_file(const char *filename, const AssemblyContext *context)
     ob_file = fopen(ob_filename, "w");
     if (!ob_file)
     {
-        fprint(stderr, "Error: Cannot create file %s\n", ob_filename); /* todo: handle with error mechanizim*/
+        report_error(EXIT_WRITE_ERROR, filename);
         return FALSE;
     }
 
@@ -103,7 +107,7 @@ BOOL generate_object_file(const char *filename, const AssemblyContext *context)
        and total length of the data section (in memory words)*/
     decimal_to_base4(inst_image ? inst_image->size : 0, inst_count_str);
     decimal_to_base4(data_size, data_count_str);
-    fprintf(ob_file, "%s %s\n", inst_count_str, data_count_str); /* todo: think if needed a speciakl function to write to file */
+    fprintf(ob_file, "%s %s\n", inst_count_str, data_count_str);
 
     /* Write instruction image */
     if (inst_image)
@@ -159,7 +163,7 @@ BOOL generate_entries_file(const char *filename, const AssemblyContext *context)
     ent_file = fopen(ent_filename, "w");
     if (!ent_file)
     {
-        fprint(stderr, "Error: Cannot create file %s\n", ent_filename);
+        report_error(EXIT_WRITE_ERROR, filename);
         return FALSE;
     }
 
@@ -173,5 +177,213 @@ BOOL generate_entries_file(const char *filename, const AssemblyContext *context)
     }
 
     fclose(ent_file);
+    return TRUE;
+}
+
+/**
+ * @brief Generate .ext (external) file containing external references.
+ *
+ * Format:
+ * - symbol_name address (one per line).
+ * Addresses in base-4 format (a,b,c,d)
+ *
+ * @param filename      Base filename (without extension).
+ * @param context       Assembly context containing instruction and data image.
+ * @return TRUE if file generated successfully, FALSE if error occured.
+ */
+BOOL generate_externals_file(const char *filename, const AssemblyContext *context)
+{
+    FILE *ext_file;
+    char ext_filename[MAX_FILE_NAME_LENGTH];
+    char address_str[6];
+    const ExternalNode *current;
+
+    if (!filename || !context || !context->external_list)
+        return FALSE;
+
+    /* Create .ext filename */
+    snprintf(ext_filename, sizeof(ext_filename), "%s.ext", filename);
+
+    /* Open file for writing */
+    ext_file = fopen(ext_filename, "w");
+    if (!ext_file)
+    {
+        report_error(EXIT_WRITE_ERROR, filename);
+        return FALSE;
+    }
+
+    /* Write all external refernces */
+    current = context->external_list;
+    while (current)
+    {
+        decimal_to_base4(current->address, address_str);
+        fprintf(ext_file, "%s %s\n", current->name, address_str);
+        current = current->next;
+    }
+
+    fclose(ext_file);
+    return TRUE;
+}
+
+/**
+ * @brief Converts decimal value to base-4 format.
+ *
+ * Converts a decimal value to the unique base-4 format:
+ * 0->1, 1->b, 2->c, 3->d
+ * The converted word is exactly 5 digits with padding of 'a' if needed.
+ *
+ * Valid input range (10 bit two's complement method):
+ * - Positive: 0 to +511 (aaaaa to bdddd).
+ * - Negative: -1 to -512 (ddddd to caaaa)
+ *
+ * Implementation Details:
+ * - Handles 10-bit two's complement values (-512 to +511).
+ * - Negative values converted using two's complement representation.
+ * - Output is exactly 5 vase-4 chars using a,b,c,d.
+ * - Leading 'a's pad values shorter than 5 digits.
+ *
+ * @param value     Decimal value to convert (valid range: -512 to +511).
+ * @param output    Buffer for 5-character result + null-terminator.
+ */
+void decimal_to_base4(int value, char *output)
+{
+    const char digits[] = "abcd";
+    char temp[6];
+    int i = 0, j;
+
+    if (!output)
+        return; /*maybe have error message?*/
+
+    /* Validate input range */
+    if (value < -512 || value > 511)
+    {
+        /* Should never happenes - but for defensive */
+        print_line_error("output", 0, ERROR_DATA_OUT_OF_RANGE);
+        return;
+    }
+
+    /* Handle negative values using two's complement for 10-bit words */
+    if (value < 0)
+        value = (1 << 10) + value; /* Convert to positive representation */
+
+    /* Ensure value fits in 10 bits (0-1023) - Keep ony bits 0-9, clear bits 10 and above */
+    value &= 0x3FF;
+
+    /* Converts to base 4 digits */
+    if (value == 0)
+    {
+        strcpy(output, "aaaaa");
+        return;
+    }
+
+    /* Extract base 4 digits (lsb first) */
+    while (value > 0)
+    {
+        temp[i++] = digits[value % 4];
+        value /= 4;
+    }
+
+    /* Pad with 'a' to make exactly 5 chars */
+    while (i < 5)
+        temp[i++] = 'a';
+
+    temp[i] = '\0'; /* Ensure null-termiante */
+
+    /* Reverse string to get correct order (msb first) */
+    for (j = 0; j < 5; j++)
+        output[j] = temp[4 - j];
+
+    /* Null terminate the output */
+    output[5] = '\0';
+}
+
+/**
+ * @brief Convert base-4 format back to back to decimal.
+ *
+ * @param base4_str Base-4 string to convert (must be exactly 5 chars: a,b,c,d only).
+ * @return Decimal value (-512 to +511) if valid format,
+ *         -9999 if invalid format (outside valid range for error detection).
+ */
+int base4_to_decimal(const char *base4_str)
+{
+    int results, digit_value;
+    int power = 1;
+    int i;
+
+    /* Check for inavlid format - outside valid 10-bit range */
+    if (!base4_str || strlen(base4_str) != 5)
+        return -9999;
+
+    /* Convert from right to left (least significant digit first) */
+    for (i = 4; i >= 0; i--)
+    {
+        switch (base4_str[i])
+        {
+        case 'a':
+            digit_value = 0;
+            break;
+
+        case 'b':
+            digit_value = 1;
+            break;
+
+        case 'c':
+            digit_value = 2;
+            break;
+
+        case 'd':
+            digit_value = 3;
+            break;
+
+        /* Invalid char - outside valid range */
+        default:
+            return -9999;
+        }
+
+        result += digit_value * power;
+        power *= 4;
+    }
+
+    /* Handle two's complement for negative values (10-bits) */
+    if (result >= 512)
+        result -= 1024; /* Convert from unsigned to signed representaion */
+
+    /* Retrun the answer */
+    return result;
+}
+
+/**
+ * @brief Validate that a decimal value is within 10 bit range.
+ *
+ * @param value Deciaml value to check.
+ * @return TRUE if value is in range [-512, +511], FALSE otherwise.
+ */
+BOOL is_valid_dec_value(int value)
+{
+    return (value >= -512 && value <= 511);
+}
+
+/**
+ * @brief Validate base-4 string format.
+ *
+ * @param base4_str String to validate.
+ * @return TRUE if exactly 5 chars using only a,b,c,d, FALSE otherwise.
+ */
+BOOL is_valid_base4_string(const char *base4_str)
+{
+    int i;
+
+    if (!base4_str || strlen(bas4_str) != 5)
+        return FALSE;
+
+    for (i = 0; i < 5; i++)
+    {
+        if (base4_str[i] != 'a' && base4_str[i] != 'b' &&
+            base4_str[i] != 'c' && base4_str[i] != 'd')
+        {
+            return FALSE;
+        }
+    }
+
     return TRUE;
 }
