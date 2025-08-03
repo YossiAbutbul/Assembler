@@ -95,3 +95,5 @@ BOOL is_reserved_word(const char *word);
  * @return TRUE if the word is a valid instruction, FALSE otherwise.
  */
 BOOL is_instruction(const char *word);
+
+#endif

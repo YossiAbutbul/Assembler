@@ -12,11 +12,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 #include "../include/output.h"
 #include "../include/error.h"
 #include "../include/constants.h"
 #include "../include/data_image.h"
+#include "../include/first_pass.h"
+#include "../include/second_pass.h"
 
 /**
  * @brief Genrate all output files for successful assembly.
@@ -75,7 +78,7 @@ BOOL generate_output_files(const char *filename, const AssemblyContext *context)
 BOOL generate_object_file(const char *filename, const AssemblyContext *context)
 {
     FILE *ob_file;
-    cahr ob_filename[MAX_FILE_NAME_LENGTH];
+    char ob_filename[MAX_FILE_NAME_LENGTH];
     char address_str[6], code_str[6]; /* 6 because it is 5 chars + null-terminator */
     char inst_count_str[6], data_count_str[6];
     const InstructionImage *inst_image;
@@ -87,8 +90,8 @@ BOOL generate_object_file(const char *filename, const AssemblyContext *context)
     if (!filename || !context)
         return FALSE;
 
-    /* Creates .ob filename (we use snprintf()  because its provides automatic buffer overflow protection) */
-    snprintf(ob_filename, sizeof(ob_filename), "%s.ob", filename);
+    /* Creates .ob filename */
+    sprintf(ob_filename, "%s.ob", filename);
 
     /* Open .ob file for writing */
     ob_file = fopen(ob_filename, "w");
@@ -157,7 +160,7 @@ BOOL generate_entries_file(const char *filename, const AssemblyContext *context)
         return FALSE;
 
     /* Create .ent filename */
-    snprintf(ent_filename, sizeof(ent_filename), "%s.ent", filename);
+    sprintf(ent_filename, "%s.ent", filename);
 
     /* Open .ent filename for writing */
     ent_file = fopen(ent_filename, "w");
@@ -202,7 +205,7 @@ BOOL generate_externals_file(const char *filename, const AssemblyContext *contex
         return FALSE;
 
     /* Create .ext filename */
-    snprintf(ext_filename, sizeof(ext_filename), "%s.ext", filename);
+    sprintf(ext_filename, "%s.ext", filename);
 
     /* Open file for writing */
     ext_file = fopen(ext_filename, "w");
@@ -306,7 +309,7 @@ void decimal_to_base4(int value, char *output)
  */
 int base4_to_decimal(const char *base4_str)
 {
-    int results, digit_value;
+    int result, digit_value;
     int power = 1;
     int i;
 
@@ -373,7 +376,7 @@ BOOL is_valid_base4_string(const char *base4_str)
 {
     int i;
 
-    if (!base4_str || strlen(bas4_str) != 5)
+    if (!base4_str || strlen(base4_str) != 5)
         return FALSE;
 
     for (i = 0; i < 5; i++)

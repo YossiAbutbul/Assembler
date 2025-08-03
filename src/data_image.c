@@ -128,7 +128,7 @@ BOOL store_data(int value, const char *filename, int line_num)
 {
     /* Initialize data image if not already done */
     if (data_image.data == NULL)
-        init_data_image(void);
+        init_data_image();
 
     /* Check if expanding the capacity is needed */
     if (data_image.size >= data_image.capacity)

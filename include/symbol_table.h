@@ -8,8 +8,6 @@
 
 #include "constants.h"
 
-#define MAX_SYMBOL_NAME_LENGTH 32 /* max 30 chars + /0 + /n */
-
 /**
  * @brief The type of a symbol in the symbol table.
  */
