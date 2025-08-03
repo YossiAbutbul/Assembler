@@ -1,6 +1,6 @@
 /**
  * @file second_pass.c
- * @brief Implements the second pass of the assmenbler.
+ * @brief Implements the second pass of the assembler.
  */
 
 #include <stdio.h>
@@ -30,11 +30,9 @@ static int current_instruction_index = 0;
 static void process_line_second_pass(const char *line, const char *filename, int line_num, int *current_ic, AssemblyContext *context);
 static void handle_instruction_second_pass(const char *line, const char *filename, int line_num, int *current_ic, AssemblyContext *context);
 static void handle_entry_directive_second_pass(const char *line, const char *filename, int line_num, AssemblyContext *context);
-static BOOL encode_instruction(const Instruction *instruction, int address, const char *filename, int line_num, AssemblyContext *context);
-static BOOL encode_operand(const Operand *operand, int address, BOOL is_source, const char *filename, int line_num, AssemblyContext *context);
 static BOOL encode_instruction_with_stored_data(const Instruction *instruction, const InstructionData *inst_data, int address, const char *filename, int line_num, AssemblyContext *context);
+static BOOL encode_operand(const Operand *operand, int address, BOOL is_source, const char *filename, int line_num, AssemblyContext *context);
 
-static int create_instruction_word(int opcode, AddressingMode source_mode, AddressingMode target_mode);
 static BOOL init_instruction_image(InstructionImage *image);
 static BOOL store_instruction_word(InstructionImage *image, int word, int address);
 static void add_entry_symbol(AssemblyContext *context, const char *name, int address);
@@ -50,15 +48,15 @@ static const InstructionData *get_next_instruction_data(void);
 /**
  * @brief Initializes an assembly context structure.
  *
- * @param context Pointer to the assembly context to initalize.
- * @return TRUE if initalization successful, FALSE if memory allocation failed.
+ * @param context Pointer to the assembly context to initialize.
+ * @return TRUE if initialization successful, FALSE if memory allocation failed.
  */
 BOOL init_assembly_context(AssemblyContext *context)
 {
     if (!context)
         return FALSE;
 
-    /* Initalizes all fields */
+    /* Initialize all fields */
     context->instruction_image = (InstructionImage *)malloc(sizeof(InstructionImage));
     if (!context->instruction_image)
         return FALSE;
@@ -83,37 +81,41 @@ BOOL init_assembly_context(AssemblyContext *context)
 }
 
 /**
- * @brief Preforms the second pass on the given .am source file.
+ * @brief Performs the second pass on the given .am source file.
  *
  * Completes the assembly process by:
  * - Resolving symbol addresses using the symbol table.
  * - Generating complete machine code for all instructions.
  * - Processing .entry directives and building entry list.
- * - Recording external symbol refernces for linking.
- * - Validating all symbols refernces are defined.
+ * - Recording external symbol references for linking.
+ * - Validating all symbols references are defined.
  *
  * @param am_file   Pointer to the .am source file (after macro expansion).
  * @param filename  Pointer to the source file (for error reporting).
  * @param context   Assembly context to store results.
- * @return TRUE if second pass completed successfully, FALSE if errors ocurred.
+ * @return TRUE if second pass completed successfully, FALSE if errors occurred.
  */
 BOOL second_pass(FILE *am_file, const char *filename, AssemblyContext *context)
 {
     char line[MAX_LINE_LENGTH];
-    int line_num = 0;
-    int current_ic = BASE_IC_ADDRESS;
+    int line_num;
+    int current_ic;
+
+    /* Initialization */
+    line_num = 0;
+    current_ic = BASE_IC_ADDRESS;
 
     if (!am_file || !filename || !context)
         return FALSE;
 
-    /* Validate  first pass data is availbale */
+    /* Validate first pass data is available */
     if (!validate_first_pass_data())
     {
         print_line_error(filename, 0, ERROR_GENERAL);
         return FALSE;
     }
 
-    /* Reset the instruction indec for the current file */
+    /* Reset the instruction index for the current file */
     reset_instruction_index();
 
     /* Reset the file pointer back to the start of the file (can be moved after first pass)*/
@@ -178,13 +180,13 @@ static void process_line_second_pass(const char *line, const char *filename, int
 
     /* Get the first token (instruction or directive) */
     if (!get_next_token(rest, first_token))
-        return; /* Safe handle this scenrio (not supposed to happened) */
+        return; /* Safe handle this scenario (not supposed to happen) */
 
     /* handle .entry directive */
     if (strcmp(first_token, ".entry") == 0)
         handle_entry_directive_second_pass(rest, filename, line_num, context);
 
-    /* Skips .extern, .data, .string, .mat directives (already processed in first pass) */
+    /* Skip .extern, .data, .string, .mat directives (already processed in first pass) */
     else if (strcmp(first_token, ".extern") == 0 ||
              strcmp(first_token, ".data") == 0 ||
              strcmp(first_token, ".string") == 0 ||
@@ -199,7 +201,7 @@ static void process_line_second_pass(const char *line, const char *filename, int
 }
 
 /**
- * @brief Handles instruction lines during the second pass using ore-calculated
+ * @brief Handles instruction lines during the second pass using pre-calculated
  * first pass data.
  *
  * @param line          The complete instruction line.
@@ -245,9 +247,9 @@ static void handle_instruction_second_pass(const char *line, const char *filenam
     if (extract_label(line, label))
         instruction_part = skip_label(instruction_part);
 
-    /* Parse the instruction (for opernad details for symbol resolution) */
+    /* Parse the instruction (for operand details for symbol resolution) */
     if (!parse_instruction(instruction_part, filename, line_num, &instruction))
-        return; /* The index increneted in get_next_instruction_data() */
+        return; /* The index incremented in get_next_instruction_data() */
 
     /* Verify word count consistency between passes */
     if (instruction.word_count != inst_data->word_count)
@@ -317,29 +319,28 @@ static void handle_entry_directive_second_pass(const char *line, const char *fil
 }
 
 /**
- * @brief Encodes a complete instruction into the machine code.
+ * @brief Encodes instruction using pre-calculated first pass data.
  *
- * @param instruction   The parsed instruction to encode.
- * @param address       The address where this instruction starts.
- * @param filename      Source filenmae (for error reporting).
+ * @param instruction   The parsed instruction.
+ * @param inst_data     Pre-calculated instruction data from first pass.
+ * @param address       Current IC address.
+ * @param filename      Source filename (for error reporting).
  * @param line_num      Current line number (for error reporting).
  * @param context       Assembly context for storing results.
  * @return TRUE if encoding successful, FALSE otherwise.
  */
-static BOOL encode_instruction(const Instruction *instruction, int address, const char *filename, int line_num, AssemblyContext *context)
+static BOOL encode_instruction_with_stored_data(const Instruction *instruction, const InstructionData *inst_data, int address, const char *filename, int line_num, AssemblyContext *context)
 {
-    int instruction_word;
-    int current_address = address;
+    int current_address;
+    int immediate_index;
     int register_word;
 
-    /* Create the main instruction word */
-    instruction_word = create_instruction_word(
-        instruction->opcode,
-        instruction->has_source ? instruction->source.mode : 0,
-        instruction->has_target ? instruction->target.mode : 0);
+    /* Initialization */
+    current_address = address;
+    immediate_index = 0;
 
-    /* Store the instruction word */
-    if (!store_instruction_word(context->instruction_image, instruction_word, current_address++))
+    /* Store the pre-built first instruction word */
+    if (!store_instruction_word(context->instruction_image, inst_data->first_word, current_address++))
     {
         print_line_error(filename, line_num, ERROR_INSTRUCTION_IMAGE_OVERFLOW);
         err_found = TRUE;
@@ -354,7 +355,6 @@ static BOOL encode_instruction(const Instruction *instruction, int address, cons
     {
         register_word = (instruction->source.value << 6) | (instruction->target.value << 2) | 0x00;
 
-        /* Store the word */
         if (!store_instruction_word(context->instruction_image, register_word, current_address))
         {
             print_line_error(filename, line_num, ERROR_INSTRUCTION_IMAGE_OVERFLOW);
@@ -362,15 +362,34 @@ static BOOL encode_instruction(const Instruction *instruction, int address, cons
             context->has_errors = TRUE;
             return FALSE;
         }
-
         return TRUE;
     }
 
     /* Encode source operand if exist */
     if (instruction->has_source)
     {
-        if (!encode_operand(&instruction->source, current_address, TRUE, filename, line_num, context))
-            return FALSE;
+        if (instruction->source.mode == ADDRESSING_IMMEDIATE)
+        {
+            /* Use pre-encoded immediate word */
+            if (immediate_index < inst_data->immediate_count)
+            {
+                if (!store_instruction_word(context->instruction_image,
+                                            inst_data->immediate_word[immediate_index++],
+                                            current_address))
+                {
+                    print_line_error(filename, line_num, ERROR_INSTRUCTION_IMAGE_OVERFLOW);
+                    err_found = TRUE;
+                    context->has_errors = TRUE;
+                    return FALSE;
+                }
+            }
+        }
+        else
+        {
+            /* Use existing encode_operand for non-immediate operands */
+            if (!encode_operand(&instruction->source, current_address, TRUE, filename, line_num, context))
+                return FALSE;
+        }
 
         /* Update address based on source operand encoding */
         switch (instruction->source.mode)
@@ -393,10 +412,29 @@ static BOOL encode_instruction(const Instruction *instruction, int address, cons
     /* Encode target operand if exist */
     if (instruction->has_target)
     {
-        if (!encode_operand(&instruction->target, current_address, FALSE, filename, line_num, context))
-            return FALSE;
+        if (instruction->target.mode == ADDRESSING_IMMEDIATE)
+        {
+            /* Use pre-encoded immediate word */
+            if (immediate_index < inst_data->immediate_count)
+            {
+                if (!store_instruction_word(context->instruction_image,
+                                            inst_data->immediate_word[immediate_index++],
+                                            current_address))
+                {
+                    print_line_error(filename, line_num, ERROR_INSTRUCTION_IMAGE_OVERFLOW);
+                    err_found = TRUE;
+                    context->has_errors = TRUE;
+                    return FALSE;
+                }
+            }
+        }
+        else
+        {
+            /* Use existing encode_operand for non-immediate operands */
+            if (!encode_operand(&instruction->target, current_address, FALSE, filename, line_num, context))
+                return FALSE;
+        }
     }
-
     return TRUE;
 }
 
@@ -500,7 +538,7 @@ static BOOL encode_operand(const Operand *operand, int address, BOOL is_source, 
             return FALSE;
         }
 
-        /* Second word: regitser indicates */
+        /* Second word: register indices */
         operand_word = (operand->reg1 << 6) | (operand->reg2 << 2) | 0x00;
 
         if (!store_instruction_word(context->instruction_image, operand_word, address + 1))
@@ -513,7 +551,7 @@ static BOOL encode_operand(const Operand *operand, int address, BOOL is_source, 
         return TRUE;
 
     case ADDRESSING_REGISTER:
-        /* Register encoding depends on wether we have both source and target registers */
+        /* Register encoding depends on whether we have both source and target registers */
         if (is_source)
         {
             /* Source register goes in bits 6-9, A,R,E = 00 */
@@ -536,7 +574,6 @@ static BOOL encode_operand(const Operand *operand, int address, BOOL is_source, 
     }
 
     /* encode_operand did not succeed */
-
     print_line_error(filename, line_num, ERROR_INVALID_OPERAND);
     err_found = TRUE;
     context->has_errors = TRUE;
@@ -544,153 +581,10 @@ static BOOL encode_operand(const Operand *operand, int address, BOOL is_source, 
 }
 
 /**
- * @brief Encodes instruction using pre-calculated first pass data.
- *
- * @param instruction   The parsed instruction.
- * @param inst_data     Pre-calculated instruction data from first pass.
- * @param address       Current IC address.
- * @param filename      Source filename (for error reporting).
- * @param line_num      Current line number (for error reporting).
- * @param context       Assembly context for storing results.
- * @return TRUE if encoding successful, FALSE otherwise.
- */
-static BOOL encode_instruction_with_stored_data(const Instruction *instruction, const InstructionData *inst_data, int address, const char *filename, int line_num, AssemblyContext *context)
-{
-    int current_address = address;
-    int immediate_index = 0;
-    int register_word;
-
-    /* Store the pre-built first instruction word */
-    if (!store_instruction_word(context->instruction_image, inst_data->first_word, current_address++))
-    {
-        print_line_error(filename, line_num, ERROR_INSTRUCTION_IMAGE_OVERFLOW);
-        err_found = TRUE;
-        context->has_errors = TRUE;
-        return FALSE;
-    }
-
-    /* Handle register sharing optimization */
-    if (instruction->has_source && instruction->has_target &&
-        instruction->source.mode == ADDRESSING_REGISTER &&
-        instruction->target.mode == ADDRESSING_REGISTER)
-    {
-        register_word = (instruction->source.value << 6) | (instruction->target.value << 2) | 0x00;
-
-        if (!store_instruction_word(context->instruction_image, register_word, current_address))
-        {
-            print_line_error(filename, line_num, ERROR_INSTRUCTION_IMAGE_OVERFLOW);
-            err_found = TRUE;
-            context->has_errors = TRUE;
-            return FALSE;
-        }
-        return TRUE;
-    }
-
-    /* Encode source operand if exist */
-    if (instruction->has_source)
-    {
-        if (instruction->source.mode == ADDRESSING_IMMEDIATE)
-        {
-            /* Use pre-encoded immediate word */
-            if (immediate_index < inst_data->immediate_count)
-            {
-                if (!store_instruction_word(context->instruction_image,
-                                            inst_data->immediate_words[immediate_index++],
-                                            current_address))
-                {
-                    print_line_error(filename, line_num, ERROR_INSTRUCTION_IMAGE_OVERFLOW);
-                    err_found = TRUE;
-                    context->has_errors = TRUE;
-                    return FALSE;
-                }
-            }
-        }
-        else
-        {
-            /* Use existing encode_opernad for non-immediate operands */
-            if (!encode_operand(&instruction->source, current_address, TRUE, filename, line_num, context))
-                return FALSE;
-        }
-
-        /* Update address based on source operand encoding */
-        switch (instruction->source.mode)
-        {
-        case ADDRESSING_IMMEDIATE:
-        case ADDRESSING_DIRECT:
-            current_address += 1;
-            break;
-
-        case ADDRESSING_MATRIX:
-            current_address += 2;
-            break;
-
-        case ADDRESSING_REGISTER:
-            current_address += 1;
-            break;
-        }
-    }
-
-    /* Encode target operand if exist */
-    if (instruction->has_target)
-    {
-        if (instruction->target.mode == ADDRESSING_IMMEDIATE)
-        {
-            /* Use pre-encoded immediate word */
-            if (immediate_index < inst_data->immediate_count)
-            {
-                if (!store_instruction_word(context->instruction_image,
-                                            inst_data->immediate_words[immediate_index++],
-                                            current_address))
-                {
-                    print_line_error(filename, line_num, ERROR_INSTRUCTION_IMAGE_OVERFLOW);
-                    err_found = TRUE;
-                    context->has_errors = TRUE;
-                    return FALSE;
-                }
-            }
-        }
-        else
-        {
-            /* Use existing encode_opernad for non-immediate operands */
-            if (!encode_operand(&instruction->target, current_address, FALSE, filename, line_num, context))
-                return FALSE;
-        }
-    }
-    return TRUE;
-}
-
-/**
- * @brief Creates the main instruction word with opcode and addressing modes.
- *
- * @param opcode        The instruction opcode (0-15).
- * @param source_mode   Source operand addressing mode
- * @param target_mode   Target addressing mode.
- * @return The encoded instruction word.
- */
-static int create_instruction_word(int opcode, AddressingMode source_mode, AddressingMode target_mode)
-{
-    int word = 0;
-
-    /* Bits 6-9: opcode */
-    word |= (opcode << 6);
-
-    /* Bits 4-5: source addressing mode */
-    word |= (source_mode << 4);
-
-    /* Bits 2-3: target addressing mode */
-    word |= (target_mode << 2);
-
-    /* Bits 0-1: A,R,E = 00 for instruction words */
-    word |= 0x00;
-
-    return word;
-}
-
-/**
  * @brief Initializes the instruction image storage.
  *
  * @param image Pointer to instruction image to initialize.
- * @param TRUE if successful, FALSE if memory allocation failed.
+ * @return TRUE if successful, FALSE if memory allocation failed.
  */
 static BOOL init_instruction_image(InstructionImage *image)
 {
@@ -698,10 +592,10 @@ static BOOL init_instruction_image(InstructionImage *image)
     if (!image)
         return FALSE;
 
-    /* Sets initail capacity */
+    /* Sets initial capacity */
     image->capacity = MAX_INSTRUCTION_IMAGE_SIZE;
 
-    /* Dynamicly stores the machine code values */
+    /* Dynamically stores the machine code values */
     image->code = (int *)malloc(image->capacity * sizeof(int));
 
     /* Stores the memory address for each machine code word */
