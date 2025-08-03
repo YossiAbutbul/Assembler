@@ -1,5 +1,5 @@
 /**
- * @file first_pass.h
+ * @file first_pass.c
  * @brief Implements the first pass of the assembler.
  */
 
@@ -16,7 +16,7 @@
 #include "../include/data_parser.h"
 #include "../include/instruction_parser.h"
 
-/* Initalize IC and DC */
+/* Initialize IC and DC */
 int IC = BASE_IC_ADDRESS; /* Instruction counter */
 int DC = 0;               /* Data counter */
 
@@ -27,8 +27,7 @@ static InstructionData instruction_table[MAX_INSTRUCTION_IMAGE_SIZE];
 static int instruction_count = 0; /*todo: rethink why i have both IC and instruction_count*/
 
 /* === Internal Helper Prototypes functions === */
-static void
-process_line(const char *line, const char *filename, int line_num);
+static void process_line(const char *line, const char *filename, int line_num);
 static void handle_extern_directive(const char *line, const char *filename, int line_num);
 static void handle_entry_directive(const char *line, const char *filename, int line_num);
 static void handle_data_directive(const char *label, const char *directive, const char *line, const char *filename, int line_num);
@@ -37,7 +36,7 @@ static int build_first_instruction_word(const Instruction *instruction);
 static void encode_immediate_operands(const Instruction *instruction, InstructionData *inst_data);
 
 /**
- * @brief Preforms the first pass on the given .am source file.
+ * @brief Performs the first pass on the given .am source file.
  *
  * Scans the file line by line to:
  * - Identify labels, instructions and directives.
@@ -53,14 +52,15 @@ static void encode_immediate_operands(const Instruction *instruction, Instructio
 BOOL first_pass(FILE *am_file, const char *filename)
 {
     char line[MAX_LINE_LENGTH];
-    int line_num = 0;
+    int line_num;
     int ICF, DCF; /* For step 18: Final IC and DC values */
 
     /* Step 1: Initialize IC <- BASE_IC_ADDRESS, DC <- 0 */
     IC = BASE_IC_ADDRESS;  /* Reset instruction counter */
     DC = 0;                /* Reset data counter */
     err_found = FALSE;     /* Reset error flag */
-    instruction_count = 0; /* Intialize instruction storage */
+    instruction_count = 0; /* Initialize instruction storage */
+    line_num = 0;          /* Initialize line number to zero */
 
     /* Step 2: Process each line in the file */
     while (fgets(line, sizeof(line), am_file))
@@ -73,7 +73,7 @@ BOOL first_pass(FILE *am_file, const char *filename)
             print_line_error(filename, line_num, ERROR_SYNTAX);
             err_found = TRUE;
 
-            /* Skips the rest of the line */
+            /* Skip the rest of the line */
             while (!feof(am_file) && fgetc(am_file) != '\n')
                 continue;
         }
@@ -81,7 +81,7 @@ BOOL first_pass(FILE *am_file, const char *filename)
         /* Trim leading and trailing whitespace */
         trim_whitespace(line);
 
-        /* Skips empty lines and comments */
+        /* Skip empty lines and comments */
         if (is_whitespace(line) || is_comment(line))
             continue;
 
@@ -100,7 +100,7 @@ BOOL first_pass(FILE *am_file, const char *filename)
     /* Update data symbols with the current IC */
     update_data_symbols(ICF);
 
-    /* Step 20: Start second pass (todo: Handled by main assembler) */
+    /* Step 20: Start second pass (handled by main assembler) */
     return TRUE;
 }
 
@@ -109,13 +109,12 @@ BOOL first_pass(FILE *am_file, const char *filename)
 /**
  * @brief Get stored instruction data for second pass.
  *
- * Step 15 implementaion - provides access to stored IC/L values.
+ * Step 15 implementation - provides access to stored IC/L values.
  *
  * @param index The index of the instruction to retrieve.
  * @return Pointer to the InstructionData if valid index, NULL otherwise.
  * @note This is an internal function.
  */
-
 const InstructionData *get_instruction_data(int index)
 {
     if (index >= 0 && index < instruction_count)
@@ -126,7 +125,7 @@ const InstructionData *get_instruction_data(int index)
 }
 
 /**
- * @brief Get total nu,ber of stored instruction.
+ * @brief Get total number of stored instructions.
  *
  * @return The instruction count number.
  * @note This is an internal function to safely return the instruction count.
@@ -137,33 +136,32 @@ int get_instruction_count(void)
 }
 
 /**
- * @brief Preforms the first pass on the given .am source file.
+ * @brief Processes a single line during the first pass.
  *
- * Scans the file line by line to:
- * - Identify labels, instructions and directives.
- * - Add symbols to the symbol table.
- * - Count IC and DC.
- * - Validate syntax and operand legality.
- * - Print errors if any are found.
+ * Identifies the line type and delegates to appropriate handler functions.
+ * Handles labels, instructions and directives according to the algorithm.
  *
- * @param am_file Open file pointer to the .am source file (after macro expansion).
- * @param filename Name of the source file (for error reporting).
- * @return TRUE if the first pass was successful, FALSE otherwise.
+ * @param line      The line content to process.
+ * @param filename  Name of the source file (for error reporting).
+ * @param line_num  Current line number (for error reporting).
  */
 static void process_line(const char *line, const char *filename, int line_num)
 {
     char label[MAX_LABEL_LENGTH + 1];
     char first_token[MAX_LINE_LENGTH + 1];
-    char *rest = NULL;
-    BOOL has_label = FALSE;
+    char *rest;
+    BOOL has_label;
+    char buffer[MAX_LINE_LENGTH + 1];
+
+    /* Initialization */
+    has_label = FALSE;
 
     /* Create copy of the line. */
-    char buffer[MAX_LINE_LENGTH + 1];
     strncpy(buffer, line, MAX_LINE_LENGTH);
     buffer[MAX_LINE_LENGTH] = '\0'; /* Ensure null-termination */
     rest = buffer;
 
-    /* Step 3 - Extract label if exsist. */
+    /* Step 3 - Extract label if exists. */
     if (extract_label(rest, label))
     {
         /* Step 4: Turn on has_label flag */
@@ -234,7 +232,7 @@ static void process_line(const char *line, const char *filename, int line_num)
     }
 }
 
-/***
+/**
  * @brief Handles instruction lines during the first pass.
  *
  * This function parses an instruction line, validates its syntax and operands,
@@ -244,7 +242,7 @@ static void process_line(const char *line, const char *filename, int line_num)
  * @param line      The complete instruction line.
  * @param filename  Name of the source file (for error reporting).
  * @param line_num  The current line number in the source file (for error reporting).
- * @note This handles step 11-16 in the first pass algorytm.
+ * @note This handles step 11-16 in the first pass algorithm.
  */
 static void handle_instruction(const char *label, const char *line, const char *filename, int line_num)
 {
@@ -275,7 +273,7 @@ static void handle_instruction(const char *label, const char *line, const char *
 
     /* Step 12: Parse the instruction */
     if (!parse_instruction(instruction_part, filename, line_num, &instruction))
-        return; /* Error already reported bt parse_instruction */
+        return; /* Error already reported by parse_instruction */
 
     /* Step 13: Calculate word count (L) already done in get_instruction_word_count */
 
@@ -307,7 +305,7 @@ static void handle_instruction(const char *label, const char *line, const char *
  *
  * @param instruction Struct containing the operation code and operand addressing modes.
  * @return The binary encoding for the main instruction code.
- * @note This is a part of the step 14 in the first pass algorytm.
+ * @note This is a part of the step 14 in the first pass algorithm.
  */
 static int build_first_instruction_word(const Instruction *instruction)
 {
@@ -339,7 +337,7 @@ static int build_first_instruction_word(const Instruction *instruction)
  *
  * @param instruction   Pointer to the instruction containing the operands.
  * @param inst_data     Pointer to the struct where the encoded immediate words and their count will be stored.
- * @note This a part of step 14 in the first pass algorytm.
+ * @note This a part of step 14 in the first pass algorithm.
  */
 static void encode_immediate_operands(const Instruction *instruction, InstructionData *inst_data)
 {
@@ -348,41 +346,41 @@ static void encode_immediate_operands(const Instruction *instruction, Instructio
     /* Check source operand for immediate addressing */
     if (instruction->has_source && instruction->source.mode == ADDRESSING_IMMEDIATE)
     {
-        /* Encode immediate value: shit left by 2 bits, A,R,E = 00 */
+        /* Encode immediate value: shift left by 2 bits, A,R,E = 00 */
         inst_data->immediate_word[inst_data->immediate_count] = (instruction->source.value << 2) | 0x00;
         inst_data->immediate_count++;
     }
 
-    /* Check target opernad for immediate addressing */
+    /* Check target operand for immediate addressing */
     if (instruction->has_target && instruction->target.mode == ADDRESSING_IMMEDIATE)
     {
-        /* Encode immediate value: shit left by 2 bits, A,R,E = 00 */
+        /* Encode immediate value: shift left by 2 bits, A,R,E = 00 */
         inst_data->immediate_word[inst_data->immediate_count] = (instruction->target.value << 2) | 0x00;
         inst_data->immediate_count++;
     }
 }
 
 /**
- * @brief Handles the "".extern" directive in the first pass.
+ * @brief Handles the ".extern" directive in the first pass.
  *
  * This function parses the operand after ".extern", validates it is a legal label,
  * and adds it to the symbol table with the type SYMBOL_EXTERNAL type and address 0.
  *
  * Errors are reported if:
  * - No Operand is found.
- * - The label is unvalid or already defined.
+ * - The label is invalid or already defined.
  *
  * @param line       The line content after the ".extern" directive.
  * @param filename   Pointer to the file name of the source file (for error reporting).
  * @param line_num   The current line number in the source file.
- * @note This is part of step 10 in the first pass algorytm.
+ * @note This is part of step 10 in the first pass algorithm.
  */
 static void handle_extern_directive(const char *line, const char *filename, int line_num)
 {
     char label[MAX_LABEL_LENGTH + 1];
 
     /* Skip leading whitespace. */
-    while (isspace(*line))
+    while (isspace((unsigned char)*line))
         line++;
 
     /* Extract the label name */
@@ -425,12 +423,12 @@ static void handle_extern_directive(const char *line, const char *filename, int 
  *
  * Errors are reported if:
  * - No operand is found after ".entry".
- * - The label is invalid or already defined.
+ * - The label is invalid.
  *
  * @param line       The line content after the ".entry" directive.
  * @param filename   Pointer to the file name of the source file (for error reporting).
  * @param line_num   The current line number in the source file.
- * @note This is part of step 9 in the first pass algorytm.
+ * @note This is part of step 9 in the first pass algorithm.
  * @note Actual marking as entry happens in second pass.
  */
 static void handle_entry_directive(const char *line, const char *filename, int line_num)
@@ -459,32 +457,37 @@ static void handle_entry_directive(const char *line, const char *filename, int l
 }
 
 /**
- * @brief Handles "."data", ".string", and ".mat" directives during the first pass.
+ * @brief Handles ".data", ".string", and ".mat" directives during the first pass.
  *
  * This function parses and validates the operand(s) after a data-related directive.
  * For a valid labels, it adds the symbol to the symbol table as a "SYMBOL_DATA" type,
  * and updates the data counter (DC) accordingly.
  *
  * Errors are reported if:
- * - Invalid lable.
+ * - Invalid label.
  * - Duplicate label.
  * - Syntax issues (bad numbers, strings or matrix).
  *
- * @param label     Optional label for the directive (can be NULL ot "" if none).
- * @param directive The directive type (e.g., ".data", ".string", ".mat
+ * @param label     Optional label for the directive (can be NULL or "" if none).
+ * @param directive The directive type (e.g., ".data", ".string", ".mat").
  * @param line      The rest of the line after the directive.
  * @param filename  Pointer to the file name of the source file (for error reporting).
  * @param line_num  Pointer to the current line number in the source file.
- * @note This is part of steps 5-7 in the first pass algorytm.
+ * @note This is part of steps 5-7 in the first pass algorithm.
  */
 
 static void handle_data_directive(const char *label, const char *directive, const char *line, const char *filename, int line_num)
 {
-    /* step 6: Handle label if exsist */
+    int initial_dc; /* Store initial DC to calculate how much was added */
+
+    /* Store initial DC value */
+    initial_dc = DC;
+
+    /* step 6: Handle label if exists */
     if (label != NULL && label[0] != '\0')
     {
 
-        /* Validates the label. */
+        /* Validate the label. */
         if (!is_valid_label(label))
         {
             print_line_error(filename, line_num, ERROR_INVALID_LABEL);
@@ -509,17 +512,14 @@ static void handle_data_directive(const char *label, const char *directive, cons
     {
         parse_data_values(line, filename, line_num);
     }
-
     else if (strcmp(directive, ".string") == 0)
     {
         parse_string_value(line, filename, line_num);
     }
-
     else if (strcmp(directive, ".mat") == 0)
     {
         parse_matrix(line, filename, line_num);
     }
-
     else
     {
         print_line_error(filename, line_num, ERROR_INVALID_DIRECTIVE);
@@ -528,7 +528,7 @@ static void handle_data_directive(const char *label, const char *directive, cons
 }
 
 /**
- * @brief Cleanup first pass instruction storage betwenn files.
+ * @brief Cleanup first pass instruction storage between files.
  * @note This function will be called at the end of processing each file in the main.c
  */
 void cleanup_first_pass_data(void)
