@@ -38,7 +38,7 @@ void parse_data_values(const char *line, const char *filename, int line_num)
         return;
 
     /* Creates a copy of the line to not change it directly. */
-    copy = strdup(line);
+    copy = (char *)malloc(strlen(line) + 1);
 
     /* Checks for memory allocation error. */
     if (!copy)
@@ -243,7 +243,7 @@ void parse_matrix(const char *line, const char *filename, int line_num)
         return;
 
     /* Duplicate the line */
-    copy = strdup(line);
+    copy = (char *)malloc(strlen(line) + 1);
 
     /* Checks for memory aloocation error */
     if (!copy)
