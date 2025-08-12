@@ -14,6 +14,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "../include/constants.h"
+#include "../include/error.h"
+#include "../include/assembler_types.h"
 #include "../include/assembler.h"
 #include "../include/preprocessor.h"
 #include "../include/first_pass.h"
@@ -21,8 +24,6 @@
 #include "../include/output.h"
 #include "../include/symbol_table.h"
 #include "../include/data_image.h"
-#include "../include/error.h"
-#include "../include/constants.h"
 
 /**
  * @brief Assemble the given source file (with .as extenstion) into machine code.

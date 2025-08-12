@@ -6,7 +6,8 @@
 #ifndef ASSEMBLER_H
 #define ASSEMBLER_H
 
-#include "../include/constants.h"
+#include "constants.h"
+#include "error.h"
 
 /***
  * Assembles the given source file (with .as extension) into machine code.
@@ -15,9 +16,9 @@
  * of the assembly process.
  *
  * @param filename The base name of the source file to be assembled (without .as extension).
- * @return TRUE if the assembly was successful, FALSE otherwise.
+ * @return EXIT_SUCCESS_CODE if the assembly was successful, error code otherwise.
  */
 
-BOOL assemble(const char *filename);
+ExitCode assemble(const char *filename);
 
 #endif

@@ -19,7 +19,6 @@
 
 #include "constants.h"
 #include "assembler_types.h"
-#include "data_image.h"
 
 /**
  * @brief Genrate all output files for successful assembly.
@@ -77,7 +76,7 @@ BOOL generate_externals_file(const char *filename, const AssemblyContext *contex
 /**
  * @brief Converts decimal value to base-4 format.
  *
- * Converts a secimal value to the unique base-4 format:
+ * Converts a decimal value to the unique base-4 format:
  * 0->1, 1->b, 2->c, 3->d
  * The converted word is exactly 5 digits with padding of 'a' if needed.
  *
@@ -91,7 +90,7 @@ BOOL generate_externals_file(const char *filename, const AssemblyContext *contex
 void decimal_to_base4(int value, char *output);
 
 /**
- * @brief Convert base-4 format back to back to decimal.
+ * @brief Convert base-4 format back to decimal.
  *
  * @param base4_str Base-4 string to convert (must be exactly 5 chars: a,b,c,d only).
  * @return Decimal value (-512 to +511) if valid format,
@@ -102,7 +101,7 @@ int base4_to_decimal(const char *base4_str);
 /**
  * @brief Validate that a decimal value is within 10 bit range.
  *
- * @param value Deciaml value to check.
+ * @param value Decimal value to check.
  * @return TRUE if value is in range [-512, +511], FALSE otherwise.
  */
 BOOL is_valid_dec_value(int value);

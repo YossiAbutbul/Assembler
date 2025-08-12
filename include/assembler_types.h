@@ -9,12 +9,7 @@
 
 #include "constants.h"
 
-/* === Forward declarations === */
-struct Symbol;
-struct Instruction;
-struct Operand;
-
-/* === Asswmbly Output Data Structure === */
+/* === Assembly Output Data Structure === */
 
 /**
  * @brief Node for tracking .entry symbols during assembly.

@@ -7,14 +7,7 @@
 #define FIRST_PASS_H
 
 #include <stdio.h>
-
-#include "../include/constants.h"
-
-/* === Global Variables: === */
-
-extern int IC;         /* Instruction counter */
-extern int DC;         /* Data counter */
-extern BOOL err_found; /* Flag to indicate if an error was found */
+#include "constants.h"
 
 /* Storage for IC/L values and partial machine code  from first pass */
 typedef struct

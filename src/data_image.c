@@ -12,7 +12,9 @@
 #include "../include/data_image.h"
 #include "../include/constants.h"
 #include "../include/error.h"
-#include "../include/first_pass.h"
+
+/* External variable from first_pass.c */
+extern BOOL err_found;
 
 /**
  * @brief Dynamic data image structure to store data values efficiently.
@@ -31,7 +33,7 @@ static DataImage data_image = {NULL, 0, 0};
 #define INITIAL_DATA_CAPACITY 100
 #define DATA_GROWTH_FACTOR 2
 
-/***
+/**
  * @brief Initalize the data image for new assembly file.
  *
  * This function sets up the data image with initial capacity and
@@ -64,7 +66,7 @@ void init_data_image(void)
  * when the current capacity is exceeded.
  * todo: rethink this function
  *
- * @param filename Pointer to filename The current line number (for error reporting).
+ * @param filename Pointer to filename (for error reporting).
  * @param line_num The current line number (for error reporting).
  * @return TRUE if expansion successful, FALSE otherwise.
  * @note This is an internal function.

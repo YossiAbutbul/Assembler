@@ -7,6 +7,7 @@
 #define PREPROCESSOR_H
 
 #include "constants.h"
+#include "error.h"
 
 #define MAX_MACROS 50
 #define MAX_MACRO_NAME_LENGTH 32 /* Maximum allowed lenfth of macro name + Null terminator + Margin for unexpected charachters / debugging */
