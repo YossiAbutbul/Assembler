@@ -23,6 +23,18 @@
 #include "../include/error.h"
 #include "../include/constants.h"
 
+/**
+ * @brief Main entry point for assembler program.
+ *
+ * Processes command line arguments and assebles each specified file.
+ * Each file is processed independently - if one fails, processing
+ * continues with the next file. Errors are printed as the occur.
+ *
+ * @param argc Number of command line arguments.
+ * @param argv Array of command line argument strings.
+ * @return EXIT_SUCCESS_CODE if all files processed successfully,
+ *         EXIT_GENERAL_ERROR if any file failed.
+ */
 int main(int argc, char *argv[])
 {
     int i;
