@@ -223,6 +223,8 @@ BOOL get_next_token(const char *src, char *token_out)
 {
     int i = 0, j = 0;
 
+    printf("DEBUG GET_NEXT_TOKEN: Input: '%s'\n", src ? src : "NULL");
+
     /* Checks for null pointers */
     if (!src || !token_out)
         return FALSE;
@@ -236,6 +238,7 @@ BOOL get_next_token(const char *src, char *token_out)
     /* Check if we reached the end of the string. */
     if (src[i] == '\0')
     {
+        printf("DEBUG GET_NEXT_TOKEN: No token found (empty after whitespace)\n");
         return FALSE; /* No more tokens available */
     }
 
@@ -246,6 +249,8 @@ BOOL get_next_token(const char *src, char *token_out)
     }
 
     token_out[j] = '\0'; /* Null-terminate the token */
+    
+    printf("DEBUG GET_NEXT_TOKEN: Output token: '%s'\n", token_out);
     return TRUE;         /* Token successfully extracted */
 }
 
