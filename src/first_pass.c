@@ -16,12 +16,12 @@
 #include "../include/data_parser.h"
 #include "../include/instruction_parser.h"
 
-/* Initialize IC and DC */
-int IC = BASE_IC_ADDRESS; /* Instruction counter */
-int DC = 0;               /* Data counter */
-
-/* Flag to indicate if an error was found */
-BOOL err_found = FALSE;
+/* Initializiation */
+int IC = BASE_IC_ADDRESS;   /* Instruction counter */
+int DC = 0;                 /* Data counter */
+int ICF = 0;                /* Final instruction counter */
+int DCF = 0;                /* Final Data counter */
+BOOL err_found = FALSE;     /* Flag to indicate if an error was found */
 
 static InstructionData instruction_table[MAX_INSTRUCTION_IMAGE_SIZE];
 static int instruction_count = 0; /*todo: rethink why i have both IC and instruction_count*/
@@ -53,7 +53,6 @@ BOOL first_pass(FILE *am_file, const char *filename)
 {
     char line[MAX_LINE_LENGTH];
     int line_num;
-    int ICF, DCF; /* For step 18: Final IC and DC values */
 
     /* Step 1: Initialize IC <- BASE_IC_ADDRESS, DC <- 0 */
     IC = BASE_IC_ADDRESS;  /* Reset instruction counter */
@@ -96,6 +95,9 @@ BOOL first_pass(FILE *am_file, const char *filename)
     /* Step 18: Save final values of IC and DC */
     ICF = IC;
     DCF = DC;
+
+    printf("DEBUG FIRST PASS: IC=%d, DC=%d, ICF=%d, DCF=%d\n", IC, DC, ICF, DCF);
+    printf("DEBUG FIRST PASS: Instruction count = %d\n", ICF - BASE_IC_ADDRESS);
 
     /* Update data symbols with the current IC */
     update_data_symbols(ICF);
@@ -251,6 +253,9 @@ static void handle_instruction(const char *label, const char *line, const char *
     char line_copy[MAX_LINE_LENGTH + 1];
     InstructionData *inst_data;
 
+    printf("DEBUG 1ST PASS: Processing instruction line %d: '%s'\n", line_num, line);
+    printf("DEBUG 1ST PASS: Label = '%s', IC before = %d\n", label ? label : "NULL", IC);
+
     /* Create a copy of the line for processing */
     strncpy(line_copy, line, MAX_LINE_LENGTH);
     line_copy[MAX_LINE_LENGTH] = '\0';
@@ -297,6 +302,8 @@ static void handle_instruction(const char *label, const char *line, const char *
 
     /* Step 16: Update IC by L (instruction word count) */
     IC += instruction.word_count;
+    printf("DEBUG 1ST PASS: IC after += %d = %d\n", instruction.word_count, IC);
+
 }
 
 /**
@@ -478,11 +485,6 @@ static void handle_entry_directive(const char *line, const char *filename, int l
 
 static void handle_data_directive(const char *label, const char *directive, const char *line, const char *filename, int line_num)
 {
-    int initial_dc; /* Store initial DC to calculate how much was added */
-
-    /* Store initial DC value */
-    initial_dc = DC;
-
     /* step 6: Handle label if exists */
     if (label != NULL && label[0] != '\0')
     {

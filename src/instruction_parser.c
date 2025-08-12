@@ -502,10 +502,18 @@ static InstructionType get_instruction_type(int opcode)
  */
 int get_instruction_word_count(const Instruction *instruction)
 {
-    int count = 1; /* Instruction word */
+    int count = 1; /* Base instruction word */
 
     if (!instruction)
         return 1;
+
+    /* Special case: both operands are registers - they share one word */
+    if (instruction->has_source && instruction->has_target &&
+        instruction->source.mode == ADDRESSING_REGISTER &&
+        instruction->target.mode == ADDRESSING_REGISTER)
+    {
+        return 1 + 1; /* Base instruction word + shared register word */
+    }
 
     /* Add source operand words */
     if (instruction->has_source)
@@ -520,8 +528,9 @@ int get_instruction_word_count(const Instruction *instruction)
         case ADDRESSING_MATRIX:
             count += 2;
             break;
+            
         case ADDRESSING_REGISTER:
-            /* Handled in target calculation */
+            /* Single register - encoded in base word, no extra word */
             break;
         }
     }
@@ -539,14 +548,13 @@ int get_instruction_word_count(const Instruction *instruction)
         case ADDRESSING_MATRIX:
             count += 2;
             break;
+            
         case ADDRESSING_REGISTER:
-            /* Share word with source if both registers */
-            if (!instruction->has_source || instruction->source.mode != ADDRESSING_REGISTER)
-                count += 1;
-
+            /* Single register - encoded in base word, no extra word */
             break;
         }
     }
+    
     return count;
 }
 

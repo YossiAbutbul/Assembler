@@ -9,6 +9,13 @@
 #include <stdio.h>
 #include "constants.h"
 
+/* Global variables used across multiple modules */
+extern int IC;  /* Instruction counter */
+extern int DC;  /* Data counter */
+extern int ICF; /* Final instruction counter */
+extern int DCF; /* Final data counter */
+extern BOOL err_found;  /* Error flag */
+
 /* Storage for IC/L values and partial machine code  from first pass */
 typedef struct
 {

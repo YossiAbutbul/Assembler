@@ -41,6 +41,10 @@ BOOL generate_output_files(const char *filename, const AssemblyContext *context)
     if (context->has_errors)
         return FALSE;
 
+    printf("DEBUG OUTPUT: Starting output generation\n");
+    printf("DEBUG OUTPUT: context->entry_list = %p\n", (void*)context->entry_list);
+    printf("DEBUG OUTPUT: context->external_list = %p\n", (void*)context->external_list);
+
     /* Always generate .ob file */
     if (!generate_object_file(filename, context))
         return FALSE;
@@ -48,17 +52,25 @@ BOOL generate_output_files(const char *filename, const AssemblyContext *context)
     /* Generate .ent file only if entries exist */
     if (context->entry_list)
     {
+        printf("DEBUG OUTPUT: Generating .ent file\n");
         if (!generate_entries_file(filename, context))
             return FALSE;
     }
+    else
+        printf("DEBUG OUTPUT: No entries - skipping .ent file\n");
 
     /* Generate .ext file only if externals exist */
     if (context->external_list)
     {
+        printf("DEBUG OUTPUT: Generating .ext file\n");
         if (!generate_externals_file(filename, context))
             return FALSE;
     }
+    else
+        printf("DEBUG OUTPUT: No externals - skipping .ext file\n");
 
+
+     printf("DEBUG OUTPUT: Output generation complete\n");
     /* If all creations were successful, return TRUE */
     return TRUE;
 }
@@ -78,7 +90,7 @@ BOOL generate_object_file(const char *filename, const AssemblyContext *context)
 {
     FILE *ob_file;
     char ob_filename[MAX_FILE_NAME_LENGTH];
-    char address_str[6], code_str[6]; /* 6 because it is 5 chars + null-terminator */
+    char address_str[6], code_str[6];
     char inst_count_str[6], data_count_str[6];
     const InstructionImage *inst_image;
     const int *data_array;
@@ -104,37 +116,58 @@ BOOL generate_object_file(const char *filename, const AssemblyContext *context)
     inst_image = get_instruction_image(context);
     data_array = get_data_array();
     data_size = get_data_size();
-    data_start_address = context->ICF; /* Data starts after instructions */
+    data_start_address = context->ICF;
 
-    /* Write header line: total length of instruction section (in memory words)
-       and total length of the data section (in memory words)*/
-    decimal_to_base4(inst_image ? inst_image->size : 0, inst_count_str);
-    decimal_to_base4(data_size, data_count_str);
+    /* Write header line */
+    decimal_to_base4(context->ICF - BASE_IC_ADDRESS, inst_count_str);
+    decimal_to_base4(context->DCF, data_count_str);
     fprintf(ob_file, "%s %s\n", inst_count_str, data_count_str);
+
+    printf("DEBUG OB: Header written successfully\n");
 
     /* Write instruction image */
     if (inst_image)
     {
+        printf("DEBUG OB: Writing %d instruction words\n", inst_image->size);
         for (i = 0; i < inst_image->size; i++)
         {
+            printf("DEBUG OB: Processing instruction word %d: address=%d, code=%d\n", 
+                   i, inst_image->addresses[i], inst_image->code[i]);
+                   
             decimal_to_base4(inst_image->addresses[i], address_str);
             decimal_to_base4(inst_image->code[i], code_str);
+            
+            printf("DEBUG OB: Converted to base4: address='%s', code='%s'\n", 
+                   address_str, code_str);
+                   
             fprintf(ob_file, "%s %s\n", address_str, code_str);
+            
+            printf("DEBUG OB: Successfully wrote instruction word %d\n", i);
         }
+        printf("DEBUG OB: All instruction words written\n");
     }
 
     /* Write data image */
     if (data_array && data_size > 0)
     {
+        printf("DEBUG OB: Writing %d data words\n", data_size);
         for (i = 0; i < data_size; i++)
         {
+            printf("DEBUG OB: Processing data word %d\n", i);
             decimal_to_base4(data_start_address + i, address_str);
             decimal_to_base4(data_array[i], code_str);
             fprintf(ob_file, "%s %s\n", address_str, code_str);
         }
+        printf("DEBUG OB: All data words written\n");
+    }
+    else
+    {
+        printf("DEBUG OB: No data to write\n");
     }
 
+    printf("DEBUG OB: Closing file\n");
     fclose(ob_file);
+    printf("DEBUG OB: File closed successfully\n");
     return TRUE;
 }
 
@@ -255,22 +288,14 @@ void decimal_to_base4(int value, char *output)
     int i = 0, j;
 
     if (!output)
-        return; /*maybe have error message?*/
-
-    /* Validate input range */
-    if (value < -512 || value > 511)
-    {
-        /* Should never happen - but for defensive programming */
-        print_line_error("output", 0, ERROR_DATA_OUT_OF_RANGE);
         return;
-    }
 
-    /* Handle negative values using two's complement for 10-bit words */
+    /* For 10-bit values, ensure we stay within 10-bit range */
     if (value < 0)
-        value = (1 << 10) + value; /* Convert to positive representation */
+        value = (1 << 10) + value; /* Convert negative to positive representation */
 
-    /* Ensure value fits in 10 bits (0-1023) - Keep only bits 0-9, clear bits 10 and above */
-    value &= 0x3FF;
+    /* Ensure value fits in 10 bits (0-1023) */
+    value &= 0x3FF; /* Keep only bits 0-9 */
 
     /* Convert to base 4 digits */
     if (value == 0)
@@ -290,13 +315,12 @@ void decimal_to_base4(int value, char *output)
     while (i < 5)
         temp[i++] = 'a';
 
-    temp[i] = '\0'; /* Ensure null-terminate */
+    temp[i] = '\0';
 
     /* Reverse string to get correct order (msb first) */
     for (j = 0; j < 5; j++)
         output[j] = temp[4 - j];
 
-    /* Null terminate the output */
     output[5] = '\0';
 }
 

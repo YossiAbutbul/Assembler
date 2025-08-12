@@ -156,25 +156,20 @@ char *skip_label(const char *line)
 
     /* Skip leading whitespace */
     while (isspace((unsigned char)*p))
-    {
         p++;
-    }
 
     /* Skip label characters until ':' */
     while (*p && *p != ':')
-    {
         p++;
-    }
+        
     /* Skip the ':' character if found */
     if (*p == ':')
-    {
         p++;
-    }
+        
     /* Skip any whitespace after the label */
     while (isspace((unsigned char)*p))
-    {
         p++;
-    }
+        
     return (char *)p; /* Return pointer to the rest of the line */
 }
 

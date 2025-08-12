@@ -138,9 +138,12 @@ BOOL second_pass(FILE *am_file, const char *filename, AssemblyContext *context)
 
     /* Update final counters */
     context->ICF = current_ic;
-    context->DCF = DC;
+    context->DCF = DCF;
     context->has_errors = err_found;
 
+    printf("DEBUG SECOND PASS: current_ic=%d, DCF=%d\n", current_ic, DCF);
+    printf("DEBUG SECOND PASS: context->ICF=%d, context->DCF=%d\n", context->ICF, context->DCF);
+    
     /* Validate we processed the expected number of instructions */
     if (get_current_instruction_index() != get_instruction_count())
     {
@@ -217,6 +220,10 @@ static void handle_instruction_second_pass(const char *line, const char *filenam
     char *instruction_part;
     char line_copy[MAX_LINE_LENGTH + 1];
     char label[MAX_LABEL_LENGTH + 1];
+    BOOL has_label = FALSE;
+
+    printf("DEBUG 2ND PASS: Processing line %d: '%s'\n", line_num, line);
+    printf("DEBUG 2ND PASS: current_ic before = %d\n", *current_ic);
 
     /* Get pre-calculated instruction data from first pass */
     inst_data = get_next_instruction_data();
@@ -228,9 +235,14 @@ static void handle_instruction_second_pass(const char *line, const char *filenam
         return;
     }
 
+    printf("DEBUG 2ND PASS: inst_data->ic_address = %d, inst_data->word_count = %d\n", 
+           inst_data->ic_address, inst_data->word_count);
+
     /* Verify IC alignment with first pass */
     if (inst_data->ic_address != *current_ic)
     {
+        printf("DEBUG 2ND PASS: IC MISMATCH! Expected %d, got %d\n", inst_data->ic_address, *current_ic);
+
         print_line_error(filename, line_num, ERROR_GENERAL);
         err_found = TRUE;
         context->has_errors = TRUE;
@@ -245,15 +257,33 @@ static void handle_instruction_second_pass(const char *line, const char *filenam
 
     /* Skip label if exists */
     if (extract_label(line, label))
+    {
+        has_label = TRUE;
         instruction_part = skip_label(instruction_part);
+        printf("DEBUG 2ND PASS: Original line: '%s'\n", line);
+        printf("DEBUG 2ND PASS: Found label '%s', instruction part: '%s'\n", label, instruction_part);
+    }
+    else
+    {
+        printf("DEBUG 2ND PASS: No label, instruction part: '%s'\n", instruction_part);
+    }
 
     /* Parse the instruction (for operand details for symbol resolution) */
     if (!parse_instruction(instruction_part, filename, line_num, &instruction))
+    {
+        printf("DEBUG 2ND PASS: Failed to parse instruction\n");
         return; /* The index incremented in get_next_instruction_data() */
+
+    }
+
+    printf("DEBUG 2ND PASS: Parsed instruction opcode=%d, word_count=%d\n", 
+           instruction.opcode, instruction.word_count);
 
     /* Verify word count consistency between passes */
     if (instruction.word_count != inst_data->word_count)
     {
+        printf("DEBUG 2ND PASS: WORD COUNT MISMATCH! Parsed=%d, Stored=%d\n", 
+               instruction.word_count, inst_data->word_count);
         print_line_error(filename, line_num, ERROR_GENERAL);
         err_found = TRUE;
         context->has_errors = TRUE;
@@ -262,10 +292,15 @@ static void handle_instruction_second_pass(const char *line, const char *filenam
 
     /* Use pre-calculated data for encoding */
     if (!encode_instruction_with_stored_data(&instruction, inst_data, *current_ic, filename, line_num, context))
-        return;
+        {
+            printf("DEBUG 2ND PASS: Failed to encode instruction\n");
+            return;
+        }
 
     /* Update instruction counter using pre-calculated word count */
     *current_ic += inst_data->word_count;
+    printf("DEBUG 2ND PASS: current_ic after += %d = %d\n", inst_data->word_count, *current_ic);
+
 }
 
 /**
@@ -281,6 +316,9 @@ static void handle_entry_directive_second_pass(const char *line, const char *fil
     char label[MAX_LABEL_LENGTH + 1];
     const Symbol *symbol;
 
+    printf("DEBUG ENTRY: Processing .entry directive: '%s'\n", line);
+
+
     /* Skip leading whitespace */
     while (isspace((unsigned char)*line))
         line++;
@@ -294,15 +332,20 @@ static void handle_entry_directive_second_pass(const char *line, const char *fil
         return;
     }
 
+    printf("DEBUG ENTRY: Looking for symbol '%s'\n", label);
+
     /* Find the symbol in the symbol table */
     symbol = get_symbol(label);
     if (!symbol)
     {
+        printf("DEBUG ENTRY: Symbol '%s' not found in symbol table\n", label);
         print_line_error(filename, line_num, ERROR_UNDEFINED_SYMBOL);
         err_found = TRUE;
         context->has_errors = TRUE;
         return;
     }
+
+    printf("DEBUG ENTRY: Found symbol '%s' at address %d\n", label, symbol->address);
 
     /* Check if it's an external symbol (can't be entry) */
     if (symbol->is_external)
@@ -316,6 +359,9 @@ static void handle_entry_directive_second_pass(const char *line, const char *fil
     /* Mark symbol as entry and add to entry list */
     mark_symbol_as_entry(label);
     add_entry_symbol(context, label, symbol->address);
+
+    printf("DEBUG ENTRY: Successfully added '%s' to entry list\n", label);
+
 }
 
 /**
@@ -362,11 +408,11 @@ static BOOL encode_instruction_with_stored_data(const Instruction *instruction, 
             context->has_errors = TRUE;
             return FALSE;
         }
-        return TRUE;
+        return TRUE;  /* Done - both registers handled */
     }
 
-    /* Encode source operand if exist */
-    if (instruction->has_source)
+    /* Encode source operand if exist AND it's not a single register */
+    if (instruction->has_source && instruction->source.mode != ADDRESSING_REGISTER)
     {
         if (instruction->source.mode == ADDRESSING_IMMEDIATE)
         {
@@ -402,15 +448,11 @@ static BOOL encode_instruction_with_stored_data(const Instruction *instruction, 
         case ADDRESSING_MATRIX:
             current_address += 2;
             break;
-
-        case ADDRESSING_REGISTER:
-            current_address += 1;
-            break;
         }
     }
 
-    /* Encode target operand if exist */
-    if (instruction->has_target)
+    /* Encode target operand if exist AND it's not a single register */
+    if (instruction->has_target && instruction->target.mode != ADDRESSING_REGISTER)
     {
         if (instruction->target.mode == ADDRESSING_IMMEDIATE)
         {
@@ -435,6 +477,9 @@ static BOOL encode_instruction_with_stored_data(const Instruction *instruction, 
                 return FALSE;
         }
     }
+    
+    /* Note: Single registers (source or target) are already encoded in the first word */
+    
     return TRUE;
 }
 
@@ -618,6 +663,9 @@ static BOOL init_instruction_image(InstructionImage *image)
  */
 static BOOL store_instruction_word(InstructionImage *image, int word, int address)
 {
+    printf("DEBUG STORE: Storing word %d at address %d (image size will be %d)\n", 
+           word, address, image->size + 1);
+
     if (!image)
         return FALSE;
 
