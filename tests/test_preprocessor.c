@@ -6,8 +6,6 @@
 #include "../include/preprocessor.h"
 #include "../include/constants.h"
 
-
-
 #define TEST_INPUT "tests/test1_preprocess"
 #define EXPECTED_OUTPUT_FILE "tests/expected_res/expected1_preprocess.am"
 #define GENERATED_OUTPUT_FILE "tests/test1_preprocess.am"

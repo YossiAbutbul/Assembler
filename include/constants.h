@@ -16,7 +16,6 @@
 #define MAX_INSTRUCTION_IMAGE_SIZE 1000 /* Generous limit for instruction image */
 #define MAX_SYMBOL_NAME_LENGTH 32       /* max 30 chars + /0 + /n */
 
-
 /* Define a Boolean type*/
 typedef enum
 {
