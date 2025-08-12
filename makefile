@@ -1,9 +1,13 @@
-# Assembler Project Makefile
-
 CFLAGS = -g -m32 -std=c90 -pedantic -Wall -ansi
+BUILD_DIR = build
 
-assembler: assembler.o main.o preprocessor.o first_pass.o second_pass.o symbol_table.o utils.o data_image.o data_parser.o instruction_parser.o output.o error.o
-	gcc $(CFLAGS) assembler.o main.o preprocessor.o first_pass.o second_pass.o symbol_table.o utils.o data_image.o data_parser.o instruction_parser.o output.o error.o -o assembler
+# Create build directory and build assembler
+$(BUILD_DIR)/assembler: $(BUILD_DIR) assembler.o main.o preprocessor.o first_pass.o second_pass.o symbol_table.o utils.o data_image.o data_parser.o instruction_parser.o output.o error.o
+	gcc $(CFLAGS) assembler.o main.o preprocessor.o first_pass.o second_pass.o symbol_table.o utils.o data_image.o data_parser.o instruction_parser.o output.o error.o -o $(BUILD_DIR)/assembler
+
+# Create build directory if it doesn't exist
+$(BUILD_DIR):
+	mkdir -p $(BUILD_DIR)
 
 assembler.o: src/assembler.c include/assembler.h include/preprocessor.h include/first_pass.h include/second_pass.h include/output.h include/symbol_table.h include/data_image.h include/error.h include/constants.h
 	gcc $(CFLAGS) -c src/assembler.c
@@ -41,5 +45,9 @@ output.o: src/output.c include/output.h include/error.h include/constants.h incl
 error.o: src/error.c include/error.h include/constants.h
 	gcc $(CFLAGS) -c src/error.c
 
+# Default target
+assembler: $(BUILD_DIR)/assembler
+
 clean:
-	rm -f *.o assembler
+	rm -f *.o
+	rm -rf $(BUILD_DIR)
