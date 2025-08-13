@@ -4,6 +4,7 @@
  */
 
 #include <string.h>
+#include <stdio.h>
 #include <ctype.h>
 #include <stdlib.h>
 
@@ -161,15 +162,15 @@ char *skip_label(const char *line)
     /* Skip label characters until ':' */
     while (*p && *p != ':')
         p++;
-        
+
     /* Skip the ':' character if found */
     if (*p == ':')
         p++;
-        
+
     /* Skip any whitespace after the label */
     while (isspace((unsigned char)*p))
         p++;
-        
+
     return (char *)p; /* Return pointer to the rest of the line */
 }
 
@@ -249,9 +250,9 @@ BOOL get_next_token(const char *src, char *token_out)
     }
 
     token_out[j] = '\0'; /* Null-terminate the token */
-    
+
     printf("DEBUG GET_NEXT_TOKEN: Output token: '%s'\n", token_out);
-    return TRUE;         /* Token successfully extracted */
+    return TRUE; /* Token successfully extracted */
 }
 
 /**
