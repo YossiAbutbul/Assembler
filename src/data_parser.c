@@ -37,6 +37,18 @@ void parse_data_values(const char *line, const char *filename, int line_num)
     if (!line)
         return;
 
+    /* Skip leading whitespaces */
+    while (isspace((unsigned char)*line))
+        line++;
+
+    /* Check if line is empty after directive */
+    if (*line == '\0')
+    {
+        print_line_error(filename, line_num, ERROR_SYNTAX);
+        err_found = TRUE;
+        return;
+    }
+
     /* Creates a copy of the line to not change it directly. */
     copy = (char *)malloc(strlen(line) + 1);
 

@@ -53,24 +53,29 @@ BOOL first_pass(FILE *am_file, const char *filename)
 {
     char line[MAX_LINE_LENGTH];
     int line_num;
+    int ICF, DCF;
 
-    printf("*** FIRST_PASS FUNCTION STARTED FOR: %s ***\n", filename);
+    /* Initialize counters */
+    IC = BASE_IC_ADDRESS;
+    DC = 0;
+    err_found = FALSE;
+    instruction_count = 0;
+    line_num = 0;
 
-    /* Step 1: Initialize IC <- BASE_IC_ADDRESS, DC <- 0 */
-    IC = BASE_IC_ADDRESS;  /* Reset instruction counter */
-    DC = 0;                /* Reset data counter */
-    err_found = FALSE;     /* Reset error flag */
-    instruction_count = 0; /* Initialize instruction storage */
-    line_num = 0;          /* Initialize line number to zero */
+    printf("=== STARTING FIRST PASS ===\n");
 
-    /* Step 2: Process each line in the file */
+    /* Process each line in the file */
     while (fgets(line, sizeof(line), am_file))
     {
         line_num++;
 
-        /* Checks if the line exceed MAX_LINE_LENGTH */
+        printf("=== PROCESSING LINE %d ===\n", line_num);
+        printf("Raw line: '%s'\n", line);
+
+        /* Check line length */
         if (strchr(line, '\n') == NULL && !feof(am_file))
         {
+            printf("ERROR: Line too long\n");
             print_line_error(filename, line_num, ERROR_SYNTAX);
             err_found = TRUE;
 
@@ -81,14 +86,27 @@ BOOL first_pass(FILE *am_file, const char *filename)
 
         /* Trim leading and trailing whitespace */
         trim_whitespace(line);
+        printf("After trimming: '%s'\n", line);
 
         /* Skip empty lines and comments */
         if (is_whitespace(line) || is_comment(line))
+        {
+            printf("Skipping empty/comment line\n");
             continue;
+        }
+
+        printf("About to call process_line...\n");
 
         /* Process the line */
         process_line(line, filename, line_num);
+
+        printf("Finished processing line %d\n", line_num);
+        printf("err_found = %s\n", err_found ? "TRUE" : "FALSE");
+        printf("========================\n");
     }
+
+    printf("=== FIRST PASS COMPLETE ===\n");
+    printf("err_found = %s\n", err_found ? "TRUE" : "FALSE");
 
     /* Step 17: if errors found in first pass, stop here */
     if (err_found)
@@ -98,16 +116,11 @@ BOOL first_pass(FILE *am_file, const char *filename)
     ICF = IC;
     DCF = DC;
 
-    printf("DEBUG FIRST PASS: IC=%d, DC=%d, ICF=%d, DCF=%d\n", IC, DC, ICF, DCF);
-    printf("DEBUG FIRST PASS: Instruction count = %d\n", ICF - BASE_IC_ADDRESS);
-
     /* Update data symbols with the current IC */
     update_data_symbols(ICF);
 
-    /* Step 20: Start second pass (handled by main assembler) */
     return TRUE;
 }
-
 /* === Internal Helper functions === */
 
 /**
@@ -157,87 +170,118 @@ static void process_line(const char *line, const char *filename, int line_num)
     BOOL has_label;
     char buffer[MAX_LINE_LENGTH + 1];
 
-    printf("*** PROCESS_LINE CALLED: line %d = '%s'\n", line_num, line);
+    /* Debug print */
+    printf("DEBUG: Line %d: '%s'\n", line_num, line);
 
     /* Initialization */
     has_label = FALSE;
+    label[0] = '\0';
 
-    /* Create copy of the line. */
+    /* Create copy of the line */
     strncpy(buffer, line, MAX_LINE_LENGTH);
-    buffer[MAX_LINE_LENGTH] = '\0'; /* Ensure null-termination */
+    buffer[MAX_LINE_LENGTH] = '\0';
     rest = buffer;
 
-    /* FIRST: Get the first token to check for directives */
+    /* Skip leading whitespace */
+    while (isspace((unsigned char)*rest))
+        rest++;
+
+    printf("DEBUG: After trimming: '%s'\n", rest);
+
+    /* Check if this line starts with a directive */
+    if (*rest == '.')
+    {
+        printf("DEBUG: Detected directive line\n");
+        has_label = FALSE;
+    }
+    else
+    {
+        /* Try to extract label */
+        if (extract_label(buffer, label))
+        {
+            printf("DEBUG: Extracted label: '%s'\n", label);
+            has_label = TRUE;
+
+            /* Validate the extracted label */
+            if (!is_valid_label(label))
+            {
+                printf("DEBUG: Label '%s' failed validation\n", label);
+                print_line_error(filename, line_num, ERROR_INVALID_LABEL);
+                err_found = TRUE;
+                return;
+            }
+
+            /* Check for duplicate label definition */
+            if (is_label_defined(label))
+            {
+                printf("DEBUG: Label '%s' is duplicate\n", label);
+                print_line_error(filename, line_num, ERROR_DUPLICATE_LABEL);
+                err_found = TRUE;
+                return;
+            }
+
+            /* Skip past the label for further processing */
+            rest = skip_label(buffer);
+            printf("DEBUG: After skipping label: '%s'\n", rest);
+        }
+        else
+        {
+            printf("DEBUG: No label found\n");
+        }
+    }
+
+    /* Extract first token (opcode or directive) */
     if (!get_next_token(rest, first_token))
     {
+        printf("DEBUG: Failed to get first token from: '%s'\n", rest);
         print_line_error(filename, line_num, ERROR_SYNTAX);
         err_found = TRUE;
         return;
     }
 
-    /* Handle .entry and .extern directives FIRST */
-    if (strcmp(first_token, ".entry") == 0)
+    printf("DEBUG: First token: '%s'\n", first_token);
+
+    /* Handle different types of statements */
+    if (strcmp(first_token, ".data") == 0 || strcmp(first_token, ".string") == 0 || strcmp(first_token, ".mat") == 0)
     {
+        printf("DEBUG: Handling data directive: %s\n", first_token);
+        handle_data_directive(has_label ? label : NULL, first_token, rest, filename, line_num);
+    }
+    else if (strcmp(first_token, ".entry") == 0)
+    {
+        printf("DEBUG: Handling .entry directive\n");
+        if (has_label)
+        {
+            printf("DEBUG: ERROR - .entry has label\n");
+            print_line_error(filename, line_num, ERROR_LABEL_ON_EXTERN);
+            err_found = TRUE;
+            return;
+        }
         handle_entry_directive(rest, filename, line_num);
-        return;
     }
     else if (strcmp(first_token, ".extern") == 0)
     {
+        printf("DEBUG: Handling .extern directive\n");
+        if (has_label)
+        {
+            printf("DEBUG: ERROR - .extern has label\n");
+            print_line_error(filename, line_num, ERROR_LABEL_ON_EXTERN);
+            err_found = TRUE;
+            return;
+        }
         handle_extern_directive(rest, filename, line_num);
-        return;
     }
-
-    /* Reset and check for labels on non-directive lines */
-    rest = buffer;
-
-    /* Extract label if exists */
-    if (extract_label(rest, label))
-    {
-        has_label = TRUE;
-
-        /* Validate the extracted label */
-        if (!is_valid_label(label))
-        {
-            print_line_error(filename, line_num, ERROR_INVALID_LABEL);
-            err_found = TRUE;
-            return;
-        }
-
-        /* Check for duplicate label definition */
-        if (is_label_defined(label))
-        {
-            print_line_error(filename, line_num, ERROR_DUPLICATE_LABEL);
-            err_found = TRUE;
-            return;
-        }
-
-        /* Remove label from the line */
-        rest = skip_label(rest);
-
-        /* Get next token after label */
-        if (!get_next_token(rest, first_token))
-        {
-            print_line_error(filename, line_num, ERROR_SYNTAX);
-            err_found = TRUE;
-            return;
-        }
-    }
-
-    /* Handle data directives */
-    if (strcmp(first_token, ".data") == 0 || strcmp(first_token, ".string") == 0 || strcmp(first_token, ".mat") == 0)
-    {
-        handle_data_directive(has_label ? label : NULL, first_token, rest, filename, line_num);
-    }
-    /* Handle instructions */
     else if (is_instruction(first_token))
     {
+        printf("DEBUG: Handling instruction: %s\n", first_token);
         handle_instruction(has_label ? label : NULL, line, filename, line_num);
     }
-    /* Handle unknown */
     else
     {
+        printf("DEBUG: Unknown instruction/directive: '%s'\n", first_token);
         print_line_error(filename, line_num, ERROR_UNKNOWN_INSTRUCTION);
         err_found = TRUE;
+        return;
     }
 }
 
@@ -391,52 +435,63 @@ static void encode_immediate_operands(const Instruction *instruction, Instructio
 static void handle_extern_directive(const char *line, const char *filename, int line_num)
 {
     char label[MAX_LABEL_LENGTH + 1];
+    const char *ptr = line;
 
-    printf("DEBUG EXTERN: handle_extern_directive called with: '%s'\n", line);
+    printf("DEBUG handle_extern_directive: Input line: '%s'\n", line);
 
-    /* Skip leading whitespace. */
-    while (isspace((unsigned char)*line))
-        line++;
+    /* Skip whitespace */
+    while (isspace((unsigned char)*ptr))
+        ptr++;
+
+    /* Find the start of .extern in the line and skip past it */
+    if (strncmp(ptr, ".extern", 7) == 0)
+    {
+        ptr += 7;
+        printf("DEBUG handle_extern_directive: Skipped past .extern, remaining: '%s'\n", ptr);
+    }
+    else
+    {
+        printf("DEBUG handle_extern_directive: Could not find .extern in line\n");
+    }
+
+    /* Skip whitespace after .extern */
+    while (isspace((unsigned char)*ptr))
+        ptr++;
+
+    printf("DEBUG handle_extern_directive: After trimming: '%s'\n", ptr);
 
     /* Extract the label name */
-    if (!get_next_token(line, label))
+    if (!get_next_token(ptr, label))
     {
-        printf("DEBUG EXTERN: Failed to extract label from line %d\n", line_num);
+        printf("DEBUG handle_extern_directive: Failed to get token\n");
         print_line_error(filename, line_num, ERROR_SYNTAX);
         err_found = TRUE;
-        return; /* Skip processing this line. */
+        return;
     }
 
-    printf("DEBUG EXTERN: Extracted label '%s' from line %d\n", label, line_num);
+    printf("DEBUG handle_extern_directive: Extracted label: '%s'\n", label);
 
-    /* Validate the label. */
+    /* Validate the label */
     if (!is_valid_label(label))
     {
-        printf("DEBUG EXTERN: Invalid label '%s' on line %d\n", label, line_num);
+        printf("DEBUG handle_extern_directive: Label '%s' is invalid\n", label);
         print_line_error(filename, line_num, ERROR_INVALID_LABEL);
         err_found = TRUE;
-        return; /* Skip processing this line. */
+        return;
     }
 
-    /* Check if the label already exists in the symbol table. */
+    /* Check if already defined */
     if (is_label_defined(label))
     {
-        printf("DEBUG EXTERN: Duplicate label '%s' on line %d\n", label, line_num);
-        print_line_error(filename, line_num, ERROR_DUPLICATE_LABEL);
-        err_found = TRUE;
-        return; /* Skip processing this line. */
-    }
-
-    /* Add the label to the symbol table as an external symbol. */
-    if (!add_symbol(label, 0, SYMBOL_EXTERNAL))
-    {
-        printf("DEBUG EXTERN: Failed to add symbol '%s' to table on line %d\n", label, line_num);
+        printf("DEBUG handle_extern_directive: Label '%s' already defined\n", label);
         print_line_error(filename, line_num, ERROR_DUPLICATE_LABEL);
         err_found = TRUE;
         return;
     }
 
-    printf("DEBUG EXTERN: Successfully processed .extern '%s' on line %d\n", label, line_num);
+    /* Add external symbol to table */
+    add_symbol(label, 0, SYMBOL_EXTERNAL);
+    printf("DEBUG handle_extern_directive: Successfully processed .extern %s\n", label);
 }
 
 /**
@@ -462,34 +517,52 @@ static void handle_extern_directive(const char *line, const char *filename, int 
 static void handle_entry_directive(const char *line, const char *filename, int line_num)
 {
     char label[MAX_LABEL_LENGTH + 1];
+    const char *ptr = line;
 
-    printf("DEBUG ENTRY: handle_entry_directive called with: '%s'\n", line);
+    printf("DEBUG handle_entry_directive: Input line: '%s'\n", line);
 
-    /* Skip leading whitespace. */
-    while (isspace((unsigned char)*line))
-        line++;
+    /* Skip whitespace */
+    while (isspace((unsigned char)*ptr))
+        ptr++;
+
+    /* Find the start of .entry in the line and skip past it */
+    if (strncmp(ptr, ".entry", 6) == 0)
+    {
+        ptr += 6;
+        printf("DEBUG handle_entry_directive: Skipped past .entry, remaining: '%s'\n", ptr);
+    }
+    else
+    {
+        printf("DEBUG handle_entry_directive: Could not find .entry in line\n");
+    }
+
+    /* Skip whitespace after .entry */
+    while (isspace((unsigned char)*ptr))
+        ptr++;
+
+    printf("DEBUG handle_entry_directive: After trimming: '%s'\n", ptr);
 
     /* Extract the label name */
-    if (!get_next_token(line, label))
+    if (!get_next_token(ptr, label))
     {
-        printf("DEBUG ENTRY: Failed to extract label from line %d\n", line_num);
+        printf("DEBUG handle_entry_directive: Failed to get token\n");
         print_line_error(filename, line_num, ERROR_SYNTAX);
         err_found = TRUE;
-        return; /* Skip processing this line. */
+        return;
     }
 
-    printf("DEBUG ENTRY: Extracted label '%s' from line %d\n", label, line_num);
+    printf("DEBUG handle_entry_directive: Extracted label: '%s'\n", label);
 
-    /* Validate the label. */
+    /* Validate the label */
     if (!is_valid_label(label))
     {
-        printf("DEBUG ENTRY: Invalid label '%s' on line %d\n", label, line_num);
+        printf("DEBUG handle_entry_directive: Label '%s' is invalid\n", label);
         print_line_error(filename, line_num, ERROR_INVALID_LABEL);
         err_found = TRUE;
-        return; /* Skip processing this line. */
+        return;
     }
 
-    printf("DEBUG ENTRY: Successfully processed .entry '%s' on line %d\n", label, line_num);
+    printf("DEBUG handle_entry_directive: Successfully processed .entry %s\n", label);
 }
 
 /**
@@ -513,48 +586,92 @@ static void handle_entry_directive(const char *line, const char *filename, int l
  */
 static void handle_data_directive(const char *label, const char *directive, const char *line, const char *filename, int line_num)
 {
-    /* step 6: Handle label if exists */
+    char *operands_start;
+    char line_copy[MAX_LINE_LENGTH + 1];
+
+    printf("DEBUG DATA DIRECTIVE: Starting handle_data_directive\n");
+    printf("DEBUG DATA DIRECTIVE: label='%s', directive='%s', line='%s'\n",
+           label ? label : "NULL", directive, line);
+
+    /* Handle label if exists */
     if (label != NULL && label[0] != '\0')
     {
+        printf("DEBUG DATA DIRECTIVE: Processing label '%s'\n", label);
 
-        /* Validate the label. */
+        /* Validate the label */
         if (!is_valid_label(label))
         {
+            printf("DEBUG DATA DIRECTIVE: Label '%s' is invalid\n", label);
             print_line_error(filename, line_num, ERROR_INVALID_LABEL);
             err_found = TRUE;
-            return; /* Skip processing this line */
+            return;
         }
 
-        /* Check if the label already exists in the symbol table. */
+        /* Check for duplicate label */
         if (is_label_defined(label))
         {
+            printf("DEBUG DATA DIRECTIVE: Label '%s' is duplicate\n", label);
             print_line_error(filename, line_num, ERROR_DUPLICATE_LABEL);
             err_found = TRUE;
-            return; /* Skip processing this line */
+            return;
         }
 
-        /* Add symbol to table with DC value */
+        /* Add symbol to table with current DC value */
+        printf("DEBUG DATA DIRECTIVE: Adding symbol '%s' with DC=%d\n", label, DC);
         add_symbol(label, DC, SYMBOL_DATA);
     }
 
-    /* step 7: Parse the directive based on its type and update DC */
-    if (strcmp(directive, ".data") == 0)
+    /* Make a copy of the line to work with */
+    strncpy(line_copy, line, MAX_LINE_LENGTH);
+    line_copy[MAX_LINE_LENGTH] = '\0';
+
+    /* Find where the directive starts in the line */
+    operands_start = strstr(line_copy, directive);
+    if (operands_start != NULL)
     {
-        parse_data_values(line, filename, line_num);
-    }
-    else if (strcmp(directive, ".string") == 0)
-    {
-        parse_string_value(line, filename, line_num);
-    }
-    else if (strcmp(directive, ".mat") == 0)
-    {
-        parse_matrix(line, filename, line_num);
+        /* Move past the directive name */
+        operands_start += strlen(directive);
+
+        /* Skip whitespace after directive */
+        while (isspace((unsigned char)*operands_start))
+            operands_start++;
+
+        printf("DEBUG DATA DIRECTIVE: Operands after directive: '%s'\n", operands_start);
     }
     else
     {
+        printf("DEBUG DATA DIRECTIVE: Could not find directive '%s' in line '%s'\n", directive, line_copy);
+        print_line_error(filename, line_num, ERROR_SYNTAX);
+        err_found = TRUE;
+        return;
+    }
+
+    printf("DEBUG DATA DIRECTIVE: About to parse directive type: %s\n", directive);
+
+    /* Parse based on directive type */
+    if (strcmp(directive, ".data") == 0)
+    {
+        printf("DEBUG DATA DIRECTIVE: Calling parse_data_values with: '%s'\n", operands_start);
+        parse_data_values(operands_start, filename, line_num);
+    }
+    else if (strcmp(directive, ".string") == 0)
+    {
+        printf("DEBUG DATA DIRECTIVE: Calling parse_string_value with: '%s'\n", operands_start);
+        parse_string_value(operands_start, filename, line_num);
+    }
+    else if (strcmp(directive, ".mat") == 0)
+    {
+        printf("DEBUG DATA DIRECTIVE: Calling parse_matrix with: '%s'\n", operands_start);
+        parse_matrix(operands_start, filename, line_num);
+    }
+    else
+    {
+        printf("DEBUG DATA DIRECTIVE: Unknown directive: %s\n", directive);
         print_line_error(filename, line_num, ERROR_INVALID_DIRECTIVE);
         err_found = TRUE;
     }
+
+    printf("DEBUG DATA DIRECTIVE: Finished handle_data_directive, DC=%d\n", DC);
 }
 
 /**

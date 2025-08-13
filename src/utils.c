@@ -119,32 +119,56 @@ BOOL extract_label(const char *line, char *label_out)
 
     /* Checks for null pointers */
     if (!line || !label_out)
+    {
+        printf("DEBUG extract_label: NULL pointer\n");
         return FALSE;
+    }
 
-    /* Skip leading whitespace. */
+    printf("DEBUG extract_label: Input line: '%s'\n", line);
+
+    /* Skip leading whitespace */
     while (isspace((unsigned char)line[i]))
         i++;
 
-    /* Check if the label starts with a letter. */
-    if (!isalpha((unsigned char)line[i]))
-        return FALSE;
+    printf("DEBUG extract_label: After skipping whitespace: '%s'\n", &line[i]);
 
-    /* Copy the label until we hit a ':' */
+    /* Check if the line starts with a directive (begins with '.') */
+    if (line[i] == '.')
+    {
+        printf("DEBUG extract_label: Line starts with '.', not a label\n");
+        return FALSE;
+    }
+
+    /* Check if the label starts with a letter */
+    if (!isalpha((unsigned char)line[i]))
+    {
+        printf("DEBUG extract_label: First char '%c' is not a letter\n", line[i]);
+        return FALSE;
+    }
+
+    /* Copy the label until we hit a ':' or whitespace */
     while (line[i] && !isspace((unsigned char)line[i]) && line[i] != ':' && j < MAX_LABEL_LENGTH)
     {
         label_out[j++] = line[i++];
     }
 
+    printf("DEBUG extract_label: Copied label so far: '%.*s', next char: '%c'\n", j, label_out, line[i]);
+
+    /* Skip any whitespace between label and ':' */
+    while (isspace((unsigned char)line[i]))
+        i++;
+
     /* Check if we found a valid label ending with ':' */
     if (line[i] == ':' && j > 0)
     {
         label_out[j] = '\0'; /* Null-terminate the label */
-        return TRUE;         /* Valid label found */
+        printf("DEBUG extract_label: Found valid label: '%s'\n", label_out);
+        return TRUE;
     }
 
-    return FALSE; /* No valid label found */
+    printf("DEBUG extract_label: No valid label found (next char: '%c', j: %d)\n", line[i], j);
+    return FALSE;
 }
-
 /**
  * @brief Skips a label (and ':') in a line and returns a pointer to the rest of the line.
  *
