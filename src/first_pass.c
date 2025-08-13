@@ -112,12 +112,20 @@ BOOL first_pass(FILE *am_file, const char *filename)
     if (err_found)
         return FALSE;
 
+    printf("=== SYMBOL TABLE BEFORE DATA UPDATE ===\n");
+    print_symbol_table();
+
     /* Step 18: Save final values of IC and DC */
     ICF = IC;
     DCF = DC;
 
+    printf("=== ICF = %d, DCF = %d ===\n", ICF, DCF);
+
     /* Update data symbols with the current IC */
     update_data_symbols(ICF);
+
+    printf("=== SYMBOL TABLE AFTER DATA UPDATE ===\n");
+    print_symbol_table();
 
     return TRUE;
 }
