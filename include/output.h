@@ -90,6 +90,27 @@ BOOL generate_externals_file(const char *filename, const AssemblyContext *contex
 void decimal_to_base4(int value, char *output);
 
 /**
+ * @brief Converts decimal value to base-4 without padding.
+ *
+ * Used for instruction and data counts in the header line.
+ * Does not pad with leading 'a' characters.
+ *
+ * @param value     Decimal value to convert.
+ * @param output    Buffer for result + null-terminator.
+ */
+void count_to_base4(int value, char *output);
+
+/**
+ * @brief Converts deciamk address to 4-character base-4 format.
+ *
+ * Used for memory addresses in the obkect file.
+ *
+ * @param value     Decimal value to convert.
+ * @param output    Buffer for result + null-terminator.
+ */
+void address_to_base4(int value, char *output);
+
+/**
  * @brief Convert base-4 format back to decimal.
  *
  * @param base4_str Base-4 string to convert (must be exactly 5 chars: a,b,c,d only).

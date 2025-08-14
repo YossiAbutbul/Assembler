@@ -129,8 +129,8 @@ BOOL generate_object_file(const char *filename, const AssemblyContext *context)
     actual_instruction_count = context->ICF - BASE_IC_ADDRESS;
 
     /* Write header line: instruction count and data count in base-4 */
-    decimal_to_base4(actual_instruction_count, inst_count_str);
-    decimal_to_base4(data_size, data_count_str);
+    count_to_base4(actual_instruction_count, inst_count_str);
+    count_to_base4(data_size, data_count_str);
 
     printf("DEBUG OB: Header - instructions: %d (%s), data: %d (%s)\n",
            actual_instruction_count, inst_count_str, data_size, data_count_str);
@@ -144,7 +144,7 @@ BOOL generate_object_file(const char *filename, const AssemblyContext *context)
         printf("DEBUG OB: Writing %d instruction words\n", inst_image->size);
         for (i = 0; i < inst_image->size; i++)
         {
-            decimal_to_base4(inst_image->addresses[i], address_str);
+            address_to_base4(inst_image->addresses[i], address_str);
             decimal_to_base4(inst_image->code[i], code_str);
             fprintf(ob_file, "%s %s\n", address_str, code_str);
             printf("DEBUG OB: Instruction %d: addr=%d (%s), code=%d (%s)\n",
@@ -159,7 +159,7 @@ BOOL generate_object_file(const char *filename, const AssemblyContext *context)
 
         for (i = 0; i < data_size; i++)
         {
-            decimal_to_base4(data_start_address + i, address_str);
+            address_to_base4(data_start_address + i, address_str);
             decimal_to_base4(data_array[i], code_str);
             fprintf(ob_file, "%s %s\n", address_str, code_str);
 
@@ -324,6 +324,91 @@ void decimal_to_base4(int value, char *output)
         output[j] = temp[4 - j];
 
     output[5] = '\0';
+}
+
+/**
+ * @brief Converts decimal value to base-4 without padding.
+ *
+ * Used for instruction and data counts in the header line.
+ * Does not pad with leading 'a' characters.
+ *
+ * @param value     Decimal value to convert.
+ * @param output    Buffer for result + null-terminator.
+ */
+void count_to_base4(int value, char *output)
+{
+    const char digits[] = "abcd";
+    char temp[10]; /* Enough for any IC or DC count */
+    int i = 0, j;
+
+    if (!output)
+        return;
+
+    /* Handle zero case */
+    if (value == 0)
+    {
+        strcpy(output, "a");
+        return;
+    }
+
+    /* Convert to base 4 digits (lsb first) */
+    while (value > 0)
+    {
+        temp[i++] = digits[value % 4];
+        value /= 4;
+    }
+
+    temp[i] = '\0';
+
+    /* Reverse string to get correct order (msb first) */
+    for (j = 0; j < i; j++)
+        output[j] = temp[i - 1 - j];
+
+    output[i] = '\0'; /* Ensure null terminate */
+}
+
+/**
+ * @brief Converts deciamk address to 4-character base-4 format.
+ *
+ * Used for memory addresses in the obkect file.
+ *
+ * @param value     Decimal value to convert.
+ * @param output    Buffer for result + null-terminator.
+ */
+void address_to_base4(int value, char *output)
+{
+    const char digits[] = "abcd";
+    char temp[5];
+    int i = 0, j;
+
+    if (!output)
+        return;
+
+    /* Convert to base 4 digits (lsb first) */
+    if (value == 0)
+    {
+        strcpy(output, "aaaa");
+        return;
+    }
+
+    /* Convert to base 4 digits (lsb first) */
+    while (value > 0 && i < 4)
+    {
+        temp[i++] = digits[value % 4];
+        value /= 4;
+    }
+
+    /* Pad with 'a' */
+    while (i < 4)
+        temp[i++] = 'a';
+
+    temp[i] = '\0';
+
+    /* Reverse string to get correct order (msb first) */
+    for (j = 0; j < i; j++)
+        output[j] = temp[i - 1 - j];
+
+    output[4] = '\0'; /* Ensure null terminate */
 }
 
 /**

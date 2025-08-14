@@ -512,7 +512,7 @@ int get_instruction_word_count(const Instruction *instruction)
         instruction->source.mode == ADDRESSING_REGISTER &&
         instruction->target.mode == ADDRESSING_REGISTER)
     {
-        return 1 + 1; /* Base instruction word + shared register word */
+        return 2; /* Base instruction word + shared register word */
     }
 
     /* Add source operand words */
@@ -528,7 +528,7 @@ int get_instruction_word_count(const Instruction *instruction)
         case ADDRESSING_MATRIX:
             count += 2;
             break;
-            
+
         case ADDRESSING_REGISTER:
             /* Single register - encoded in base word, no extra word */
             break;
@@ -548,13 +548,13 @@ int get_instruction_word_count(const Instruction *instruction)
         case ADDRESSING_MATRIX:
             count += 2;
             break;
-            
+
         case ADDRESSING_REGISTER:
-            /* Single register - encoded in base word, no extra word */
+            count += 1;
             break;
         }
     }
-    
+
     return count;
 }
 
