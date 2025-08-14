@@ -389,7 +389,10 @@ static BOOL encode_instruction_with_stored_data(const Instruction *instruction, 
     current_address = address;
     immediate_index = 0;
 
+    printf("DEBUG ENCODE: Starting instruction encoding at address %d\n", current_address);
+
     /* Store the pre-built first instruction word */
+    printf("DEBUG ENCODE: About to store first word at address %d\n", current_address);
     if (!store_instruction_word(context->instruction_image, inst_data->first_word, current_address++))
     {
         print_line_error(filename, line_num, ERROR_INSTRUCTION_IMAGE_OVERFLOW);
@@ -397,45 +400,52 @@ static BOOL encode_instruction_with_stored_data(const Instruction *instruction, 
         context->has_errors = TRUE;
         return FALSE;
     }
+    printf("DEBUG ENCODE: After storing first word, current_address = %d\n", current_address);
 
-    /* Handle register sharing optimization */
+    /* Special case: BOTH operands are simple registers - they share one word */
     if (instruction->has_source && instruction->has_target &&
         instruction->source.mode == ADDRESSING_REGISTER &&
         instruction->target.mode == ADDRESSING_REGISTER)
     {
         register_word = (instruction->source.value << 6) | (instruction->target.value << 2) | 0x00;
 
-        if (!store_instruction_word(context->instruction_image, register_word, current_address))
+        printf("DEBUG ENCODE: About to store shared register word at address %d\n", current_address);
+        if (!store_instruction_word(context->instruction_image, register_word, current_address++))
         {
             print_line_error(filename, line_num, ERROR_INSTRUCTION_IMAGE_OVERFLOW);
             err_found = TRUE;
             context->has_errors = TRUE;
             return FALSE;
         }
-        return TRUE; /* Done - both registers handled */
+        printf("DEBUG ENCODE: After storing shared register word, current_address = %d\n", current_address);
+        return TRUE; /* Done - both registers handled in shared word */
     }
 
-    /* Encode source operand if exist AND it's not a single register */
-    if (instruction->has_source && instruction->source.mode != ADDRESSING_REGISTER)
+    /* Encode source operand if exists */
+    if (instruction->has_source)
     {
+        printf("DEBUG ENCODE: Processing source operand (mode %d)\n", instruction->source.mode);
         if (instruction->source.mode == ADDRESSING_IMMEDIATE)
         {
             /* Use pre-encoded immediate word */
             if (immediate_index < inst_data->immediate_count)
             {
+                printf("DEBUG ENCODE: About to store source immediate at address %d\n", current_address);
                 if (!store_instruction_word(context->instruction_image,
                                             inst_data->immediate_word[immediate_index++],
-                                            current_address))
+                                            current_address++))
                 {
                     print_line_error(filename, line_num, ERROR_INSTRUCTION_IMAGE_OVERFLOW);
                     err_found = TRUE;
                     context->has_errors = TRUE;
                     return FALSE;
                 }
+                printf("DEBUG ENCODE: After storing source immediate, current_address = %d\n", current_address);
             }
         }
         else
         {
+            printf("DEBUG ENCODE: About to encode source operand at address %d\n", current_address);
             /* Use existing encode_operand for non-immediate operands */
             if (!encode_operand(&instruction->source, current_address, TRUE, filename, line_num, context))
                 return FALSE;
@@ -445,48 +455,71 @@ static BOOL encode_instruction_with_stored_data(const Instruction *instruction, 
         switch (instruction->source.mode)
         {
         case ADDRESSING_IMMEDIATE:
+            /* Already incremented above */
+            printf("DEBUG ENCODE: Source immediate - no additional increment\n");
+            break;
         case ADDRESSING_DIRECT:
-            current_address += 1;
-            break;
-
-        case ADDRESSING_MATRIX:
-            current_address += 2;
-            break;
         case ADDRESSING_REGISTER:
             current_address += 1;
+            printf("DEBUG ENCODE: Source direct/register - incremented to %d\n", current_address);
+            break;
+        case ADDRESSING_MATRIX:
+            current_address += 2;
+            printf("DEBUG ENCODE: Source matrix - incremented to %d\n", current_address);
             break;
         }
     }
 
-    /* Encode target operand if exist AND it's not a single register */
-    if (instruction->has_target && instruction->target.mode != ADDRESSING_REGISTER)
+    /* Encode target operand if exists */
+    if (instruction->has_target)
     {
+        printf("DEBUG ENCODE: Processing target operand (mode %d)\n", instruction->target.mode);
         if (instruction->target.mode == ADDRESSING_IMMEDIATE)
         {
             /* Use pre-encoded immediate word */
             if (immediate_index < inst_data->immediate_count)
             {
+                printf("DEBUG ENCODE: About to store target immediate at address %d\n", current_address);
                 if (!store_instruction_word(context->instruction_image,
                                             inst_data->immediate_word[immediate_index++],
-                                            current_address))
+                                            current_address++))
                 {
                     print_line_error(filename, line_num, ERROR_INSTRUCTION_IMAGE_OVERFLOW);
                     err_found = TRUE;
                     context->has_errors = TRUE;
                     return FALSE;
                 }
+                printf("DEBUG ENCODE: After storing target immediate, current_address = %d\n", current_address);
             }
         }
         else
         {
-            /* Use existing encode_operand for non-immediate operands */
+            printf("DEBUG ENCODE: About to encode target operand at address %d\n", current_address);
+            /* Use existing encode_operand for all other operands including registers */
             if (!encode_operand(&instruction->target, current_address, FALSE, filename, line_num, context))
                 return FALSE;
         }
+
+        /* Update address based on target operand encoding */
+        switch (instruction->target.mode)
+        {
+        case ADDRESSING_IMMEDIATE:
+            /* Already incremented above */
+            printf("DEBUG ENCODE: Target immediate - no additional increment\n");
+            break;
+        case ADDRESSING_DIRECT:
+        case ADDRESSING_REGISTER:
+            current_address += 1;
+            printf("DEBUG ENCODE: Target direct/register - incremented to %d\n", current_address);
+            break;
+        case ADDRESSING_MATRIX:
+            current_address += 2;
+            printf("DEBUG ENCODE: Target matrix - incremented to %d\n", current_address);
+            break;
+        }
     }
 
-    /* Note: Single registers (source or target) are already encoded in the first word */
-
+    printf("DEBUG ENCODE: Finished instruction encoding, final current_address = %d\n", current_address);
     return TRUE;
 }
 

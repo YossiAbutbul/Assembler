@@ -381,11 +381,15 @@ static int build_first_instruction_word(const Instruction *instruction)
 
     /* Bits 4-5: source addressing mode */
     if (instruction->has_source)
+    {
         word |= (instruction->source.mode << 4);
+    }
 
     /* Bits 2-3: target addressing mode */
     if (instruction->has_target)
+    {
         word |= (instruction->target.mode << 2);
+    }
 
     /* Bits 0-1: A,R,E = 00 for instruction words */
     word |= 0x00;
@@ -411,16 +415,16 @@ static void encode_immediate_operands(const Instruction *instruction, Instructio
     /* Check source operand for immediate addressing */
     if (instruction->has_source && instruction->source.mode == ADDRESSING_IMMEDIATE)
     {
-        /* Encode immediate value: shift left by 2 bits, A,R,E = 00 */
-        inst_data->immediate_word[inst_data->immediate_count] = (instruction->source.value << 2) | 0x00;
+        /* Store raw immediate value */
+        inst_data->immediate_word[inst_data->immediate_count] = instruction->source.value;
         inst_data->immediate_count++;
     }
 
     /* Check target operand for immediate addressing */
     if (instruction->has_target && instruction->target.mode == ADDRESSING_IMMEDIATE)
     {
-        /* Encode immediate value: shift left by 2 bits, A,R,E = 00 */
-        inst_data->immediate_word[inst_data->immediate_count] = (instruction->target.value << 2) | 0x00;
+        /* Store raw immediate value */
+        inst_data->immediate_word[inst_data->immediate_count] = instruction->target.value;
         inst_data->immediate_count++;
     }
 }
