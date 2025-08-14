@@ -415,7 +415,7 @@ static void encode_immediate_operands(const Instruction *instruction, Instructio
     /* Check source operand for immediate addressing */
     if (instruction->has_source && instruction->source.mode == ADDRESSING_IMMEDIATE)
     {
-        /* Store raw immediate value */
+        /* Store raw immediate value with A,R,E = 00 */
         inst_data->immediate_word[inst_data->immediate_count] = instruction->source.value;
         inst_data->immediate_count++;
     }

@@ -384,6 +384,7 @@ static BOOL encode_instruction_with_stored_data(const Instruction *instruction, 
     int current_address;
     int immediate_index;
     int register_word;
+    int immediate_word;
 
     /* Initialization */
     current_address = address;
@@ -431,8 +432,9 @@ static BOOL encode_instruction_with_stored_data(const Instruction *instruction, 
             if (immediate_index < inst_data->immediate_count)
             {
                 printf("DEBUG ENCODE: About to store source immediate at address %d\n", current_address);
+                immediate_word = (inst_data->immediate_word[immediate_index] << 2) | 0x00;
                 if (!store_instruction_word(context->instruction_image,
-                                            inst_data->immediate_word[immediate_index++],
+                                            immediate_word,
                                             current_address++))
                 {
                     print_line_error(filename, line_num, ERROR_INSTRUCTION_IMAGE_OVERFLOW);
@@ -480,8 +482,9 @@ static BOOL encode_instruction_with_stored_data(const Instruction *instruction, 
             if (immediate_index < inst_data->immediate_count)
             {
                 printf("DEBUG ENCODE: About to store target immediate at address %d\n", current_address);
+                immediate_word = (inst_data->immediate_word[immediate_index] << 2) | 0x00;
                 if (!store_instruction_word(context->instruction_image,
-                                            inst_data->immediate_word[immediate_index++],
+                                            immediate_word,
                                             current_address++))
                 {
                     print_line_error(filename, line_num, ERROR_INSTRUCTION_IMAGE_OVERFLOW);
@@ -542,19 +545,12 @@ static BOOL encode_operand(const Operand *operand, int address, BOOL is_source, 
     switch (operand->mode)
     {
     case ADDRESSING_IMMEDIATE:
-        /* Encode immediate value with A,R,E = 00 (the encoding is absolute) */
-        /* Shift left by 2 bits to make room for A,R,E bits and sets the A,R,E to 0 */
-        operand_word = (operand->value << 2) | 0x00;
-
-        /* store the word */
-        if (!store_instruction_word(context->instruction_image, operand_word, address))
-        {
-            print_line_error(filename, line_num, ERROR_INSTRUCTION_IMAGE_OVERFLOW);
-            err_found = TRUE;
-            context->has_errors = TRUE;
-            return FALSE;
-        }
-        return TRUE;
+        /* Immediate values are handled in encode_instruction_with_stored_data */
+        /* This case should never be reached */
+        print_line_error(filename, line_num, ERROR_GENERAL);
+        err_found = TRUE;
+        context->has_errors = TRUE;
+        return FALSE;
 
     case ADDRESSING_DIRECT:
         /* Look up symbol address in the symbol table */
