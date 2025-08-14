@@ -223,7 +223,6 @@ static void handle_instruction_second_pass(const char *line, const char *filenam
     char *instruction_part;
     char line_copy[MAX_LINE_LENGTH + 1];
     char label[MAX_LABEL_LENGTH + 1];
-    BOOL has_label = FALSE;
 
     printf("DEBUG 2ND PASS: Processing line %d: '%s'\n", line_num, line);
     printf("DEBUG 2ND PASS: current_ic before = %d\n", *current_ic);
@@ -261,7 +260,6 @@ static void handle_instruction_second_pass(const char *line, const char *filenam
     /* Skip label if exists */
     if (extract_label(line, label))
     {
-        has_label = TRUE;
         instruction_part = skip_label(instruction_part);
         printf("DEBUG 2ND PASS: Original line: '%s'\n", line);
         printf("DEBUG 2ND PASS: Found label '%s', instruction part: '%s'\n", label, instruction_part);
