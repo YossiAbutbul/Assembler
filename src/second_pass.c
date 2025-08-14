@@ -141,7 +141,7 @@ BOOL second_pass(FILE *am_file, const char *filename, AssemblyContext *context)
     context->DCF = DCF;
     context->has_errors = err_found;
 
-    printf("DEBUG SECOND PASS: current_ic=%d, DCF=%d\n", current_ic, DCF);
+    printf("DEBUG SECOND PASS: current_ic=%d, DCF=%d\n", current_ic, context->DCF);
     printf("DEBUG SECOND PASS: context->ICF=%d, context->DCF=%d\n", context->ICF, context->DCF);
 
     /* Validate we processed the expected number of instructions */

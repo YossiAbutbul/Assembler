@@ -98,6 +98,8 @@ BOOL generate_object_file(const char *filename, const AssemblyContext *context)
     int data_start_address;
     int actual_instruction_count;
 
+    printf("DEBUG OB: Starting object file generation\n");
+
     if (!filename || !context)
         return FALSE;
 
@@ -118,37 +120,56 @@ BOOL generate_object_file(const char *filename, const AssemblyContext *context)
     data_size = get_data_size();
     data_start_address = context->ICF; /* Data starts after instructions */
 
+    printf("DEBUG OB: inst_image size = %d\n", inst_image ? inst_image->size : 0);
+    printf("DEBUG OB: data_size = %d\n", data_size);
+    printf("DEBUG OB: context->ICF = %d\n", context->ICF);
+    printf("DEBUG OB: context->DCF = %d\n", context->DCF);
+
     /* Calculate actual instruction count (ICF - BASE_IC_ADDRESS) */
     actual_instruction_count = context->ICF - BASE_IC_ADDRESS;
 
     /* Write header line: instruction count and data count in base-4 */
     decimal_to_base4(actual_instruction_count, inst_count_str);
     decimal_to_base4(data_size, data_count_str);
+
+    printf("DEBUG OB: Header - instructions: %d (%s), data: %d (%s)\n",
+           actual_instruction_count, inst_count_str, data_size, data_count_str);
+
     fprintf(ob_file, "%s %s\n", inst_count_str, data_count_str);
+    printf("DEBUG OB: Header written successfully\n");
 
     /* Write instruction image */
     if (inst_image)
     {
+        printf("DEBUG OB: Writing %d instruction words\n", inst_image->size);
         for (i = 0; i < inst_image->size; i++)
         {
             decimal_to_base4(inst_image->addresses[i], address_str);
             decimal_to_base4(inst_image->code[i], code_str);
             fprintf(ob_file, "%s %s\n", address_str, code_str);
+            printf("DEBUG OB: Instruction %d: addr=%d (%s), code=%d (%s)\n",
+                   i, inst_image->addresses[i], address_str, inst_image->code[i], code_str);
         }
     }
 
     /* Write data image */
     if (data_array && data_size > 0)
     {
+        printf("DEBUG OB: Writing %d data words starting at address %d\n", data_size, data_start_address);
+
         for (i = 0; i < data_size; i++)
         {
             decimal_to_base4(data_start_address + i, address_str);
             decimal_to_base4(data_array[i], code_str);
             fprintf(ob_file, "%s %s\n", address_str, code_str);
+
+            printf("DEBUG OB: Data %d: addr=%d (%s), value=%d (%s)\n",
+                   i, data_start_address + i, address_str, data_array[i], code_str);
         }
     }
 
     fclose(ob_file);
+    printf("DEBUG OB: Object file generation complete\n");
     return TRUE;
 }
 

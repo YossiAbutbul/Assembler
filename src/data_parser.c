@@ -229,6 +229,8 @@ void parse_string_value(const char *line, const char *filename, int line_num)
  * - If fewer values are provided, the remaining elements are implicitly initialized to zero.
  * - Matrix values are stored row by row (left to right, top to bottom).
  *
+ * STORAGE_ORDER: dimensions first (rows, cols), then data values
+ *
  * Each valid value and dimension increments the data counter 'DC'.
  * The dimensions themselves occupy two words in the data image.
  *
@@ -360,6 +362,22 @@ void parse_matrix(const char *line, const char *filename, int line_num)
     /* Calculate the expected numbers in the matrix */
     exp_vals = rows * cols;
 
+    /* Store rows dimenstion first */
+    if (!store_data(rows, filename, line_num))
+    {
+        free(copy);
+        return;
+    }
+    DC++;
+
+    /* Store cols dimension */
+    if (!store_data(cols, filename, line_num))
+    {
+        free(copy);
+        return;
+    }
+    DC++;
+
     /* Skip to start of value list */
     values_part = p_end + 1;
 
@@ -377,7 +395,15 @@ void parse_matrix(const char *line, const char *filename, int line_num)
             while (isspace((unsigned char)*token))
                 token++;
 
-            /* Checks if empty */
+            /* Remove trailing whitespace */
+            endptr = token + strlen(token) - 1;
+            while (endptr > token && isspace((unsigned char)*endptr))
+            {
+                *endptr = '\0';
+                endptr--;
+            }
+
+            /* Check if empty */
             if (*token == '\0')
             {
                 print_line_error(filename, line_num, ERROR_SYNTAX);
@@ -385,8 +411,9 @@ void parse_matrix(const char *line, const char *filename, int line_num)
             }
             else
             {
-                /* Checks if valid integer */
+                /* Check if valid integer */
                 val = (int)strtol(token, &endptr, 10);
+
                 if (*endptr != '\0')
                 {
                     print_line_error(filename, line_num, ERROR_INVALID_OPERAND);
@@ -395,6 +422,15 @@ void parse_matrix(const char *line, const char *filename, int line_num)
                 else
                 {
                     actual_values++;
+
+                    /* Check if we have too many values */
+                    if (actual_values > exp_vals)
+                    {
+                        print_line_error(filename, line_num, ERROR_TOO_MANY_OPERANDS);
+                        err_found = TRUE;
+                        break;
+                    }
+
                     if (!store_data(val, filename, line_num))
                     {
                         free(copy);
@@ -403,7 +439,6 @@ void parse_matrix(const char *line, const char *filename, int line_num)
                     DC++;
                 }
             }
-            /* Gets the next token from the comma separated list of matrix values */
             token = strtok(NULL, ",");
         }
     }
@@ -423,30 +458,12 @@ void parse_matrix(const char *line, const char *filename, int line_num)
         }
     }
 
-    /* Report error if overfilled */
+    /* Report error if overfilled (should have caught above, here for safety) */
     if (actual_values > exp_vals)
     {
         print_line_error(filename, line_num, ERROR_TOO_MANY_OPERANDS);
         err_found = TRUE;
     }
-
-    /* Add space for dimensions */
-
-    /* Store rows dimension */
-    if (!store_data(rows, filename, line_num))
-    {
-        free(copy);
-        return;
-    }
-    DC++;
-
-    /* Store cols dimension */
-    if (!store_data(cols, filename, line_num))
-    {
-        free(copy);
-        return;
-    }
-    DC++;
 
     /* Free memory of copy */
     free(copy);
