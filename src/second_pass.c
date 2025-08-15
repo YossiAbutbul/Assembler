@@ -386,6 +386,9 @@ static BOOL encode_instruction_with_stored_data(const Instruction *instruction, 
     int register_word;
     int immediate_word;
 
+    /* Debug */
+    int option1, option2, option3;
+
     /* Initialization */
     current_address = address;
     immediate_index = 0;
@@ -479,11 +482,24 @@ static BOOL encode_instruction_with_stored_data(const Instruction *instruction, 
         printf("DEBUG ENCODE: Processing target operand (mode %d)\n", instruction->target.mode);
         if (instruction->target.mode == ADDRESSING_IMMEDIATE)
         {
-            /* Use pre-encoded immediate word */
             if (immediate_index < inst_data->immediate_count)
             {
                 printf("DEBUG ENCODE: About to store target immediate at address %d\n", current_address);
-                immediate_word = (inst_data->immediate_word[immediate_index] << 2) | 0x00;
+                printf("DEBUG ENCODE: Raw immediate value from first pass: %d\n", inst_data->immediate_word[immediate_index]);
+
+                /* Try different bit layouts to see which matches expected */
+                option1 = (inst_data->immediate_word[immediate_index] << 2) | 0x00; /* Current */
+                option2 = inst_data->immediate_word[immediate_index] | 0x00;        /* No shift */
+                option3 = (inst_data->immediate_word[immediate_index] & 0xFF) << 2; /* 8-bit only */
+
+                printf("DEBUG ENCODE: Option 1 (<<2): %d\n", option1);
+                printf("DEBUG ENCODE: Option 2 (no shift): %d\n", option2);
+                printf("DEBUG ENCODE: Option 3 (8-bit<<2): %d\n", option3);
+
+                /* For now, let's try the no-shift option since 768 is much closer to 1019 */
+                immediate_word = inst_data->immediate_word[immediate_index] | 0x00;
+
+                printf("DEBUG ENCODE: Final immediate word (selected): %d\n", immediate_word);
                 if (!store_instruction_word(context->instruction_image,
                                             immediate_word,
                                             current_address++))

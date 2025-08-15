@@ -128,6 +128,14 @@ BOOL generate_object_file(const char *filename, const AssemblyContext *context)
     /* Calculate actual instruction count (ICF - BASE_IC_ADDRESS) */
     actual_instruction_count = context->ICF - BASE_IC_ADDRESS;
 
+    printf("DEBUG OBJECT: Instruction image size = %d\n", inst_image ? inst_image->size : 0);
+    printf("DEBUG OBJECT: Data size = %d\n", data_size);
+    printf("DEBUG OBJECT: context->ICF = %d\n", context->ICF);
+    printf("DEBUG OBJECT: context->DCF = %d\n", context->DCF);
+    printf("DEBUG OBJECT: BASE_IC_ADDRESS = %d\n", BASE_IC_ADDRESS);
+    printf("DEBUG OBJECT: actual_instruction_count = %d\n", actual_instruction_count);
+    printf("DEBUG OBJECT: Expected total rows = %d\n", 1 + (inst_image ? inst_image->size : 0) + data_size);
+
     /* Write header line: instruction count and data count in base-4 */
     count_to_base4(actual_instruction_count, inst_count_str);
     count_to_base4(data_size, data_count_str);

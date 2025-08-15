@@ -410,21 +410,50 @@ static int build_first_instruction_word(const Instruction *instruction)
  */
 static void encode_immediate_operands(const Instruction *instruction, InstructionData *inst_data)
 {
+    int value;
+
     inst_data->immediate_count = 0;
 
     /* Check source operand for immediate addressing */
     if (instruction->has_source && instruction->source.mode == ADDRESSING_IMMEDIATE)
     {
-        /* Store raw immediate value with A,R,E = 00 */
-        inst_data->immediate_word[inst_data->immediate_count] = instruction->source.value;
+        /* Store source opernad for immediate addressing */
+        value = instruction->source.value;
+        printf("DEBUG IMMEDIATE: Source value before conversion: %d\n", value);
+
+        /* Convert negative values to 10-bit two's complement representation */
+        if (value < 0)
+        {
+            value = 1024 + value; /* 1024 = 2^10 for 10 bit two's complement */
+            printf("DEBUG IMMEDIATE: Source value after two's complement: %d\n", value);
+        }
+
+        /* Ensure value is within 10-bit range (0 to 1023) */
+        value = value & 1023; /* 1023 = 0x3FF = (2^10 - 1) */
+        printf("DEBUG IMMEDIATE: Source value after masking: %d\n", value);
+
+        inst_data->immediate_word[inst_data->immediate_count] = value;
         inst_data->immediate_count++;
     }
 
     /* Check target operand for immediate addressing */
     if (instruction->has_target && instruction->target.mode == ADDRESSING_IMMEDIATE)
     {
-        /* Store raw immediate value */
-        inst_data->immediate_word[inst_data->immediate_count] = instruction->target.value;
+        value = instruction->target.value;
+        printf("DEBUG IMMEDIATE: Target value before conversion: %d\n", value);
+
+        /* Convert negative values to 10-bit two's complement representation */
+        if (value < 0)
+        {
+            value = 1024 + value; /* 1024 = 2^10 for 10 bit two's complement */
+            printf("DEBUG IMMEDIATE: Target value after two's complement: %d\n", value);
+        }
+
+        /* Ensure value is within 10-bit range (0 to 1023) */
+        value = value & 1023; /* 1023 = 0x3FF = (2^10 - 1) */
+        printf("DEBUG IMMEDIATE: Target value after masking: %d\n", value);
+
+        inst_data->immediate_word[inst_data->immediate_count] = value;
         inst_data->immediate_count++;
     }
 }

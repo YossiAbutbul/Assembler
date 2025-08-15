@@ -359,15 +359,13 @@ void parse_matrix(const char *line, const char *filename, int line_num)
         return;
     }
 
-    /* Calculate the expected numbers in the matrix */
-    exp_vals = rows * cols;
-
     /* Store rows dimenstion first */
     if (!store_data(rows, filename, line_num))
     {
         free(copy);
         return;
     }
+    printf("DEBUG MATRIX: Stored rows dimension %d at DC=%d\n", rows, DC - 1);
     DC++;
 
     /* Store cols dimension */
@@ -376,7 +374,12 @@ void parse_matrix(const char *line, const char *filename, int line_num)
         free(copy);
         return;
     }
+    printf("DEBUG MATRIX: Stored cols dimension %d at DC=%d\n", cols, DC - 1);
     DC++;
+
+    /* Calculate the expected numbers in the matrix */
+    exp_vals = rows * cols;
+    printf("DEBUG MATRIX: Expected %d values for %dx%d matrix\n", exp_vals, rows, cols);
 
     /* Skip to start of value list */
     values_part = p_end + 1;
@@ -430,6 +433,7 @@ void parse_matrix(const char *line, const char *filename, int line_num)
                         err_found = TRUE;
                         break;
                     }
+                    printf("DEBUG MATRIX: Storing value %d at position %d (DC=%d)\n", val, actual_values - 1, DC);
 
                     if (!store_data(val, filename, line_num))
                     {
@@ -449,6 +453,8 @@ void parse_matrix(const char *line, const char *filename, int line_num)
         for (i = 0; i < (exp_vals - actual_values); i++)
         {
             /* Store 0 in the data image */
+            printf("DEBUG MATRIX: Filling with 0 at position %d (DC=%d)\n", actual_values + i, DC);
+
             if (!store_data(0, filename, line_num))
             {
                 free(copy);
