@@ -443,6 +443,7 @@ static BOOL encode_instruction_with_stored_data(const Instruction *instruction, 
                     return FALSE;
                 }
                 printf("DEBUG ENCODE: After storing source immediate, current_address = %d\n", current_address);
+                immediate_index++;
             }
         }
         else
@@ -493,6 +494,7 @@ static BOOL encode_instruction_with_stored_data(const Instruction *instruction, 
                     return FALSE;
                 }
                 printf("DEBUG ENCODE: After storing target immediate, current_address = %d\n", current_address);
+                immediate_index++;
             }
         }
         else
