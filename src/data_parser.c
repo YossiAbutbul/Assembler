@@ -359,24 +359,6 @@ void parse_matrix(const char *line, const char *filename, int line_num)
         return;
     }
 
-    /* Store rows dimenstion first */
-    if (!store_data(rows, filename, line_num))
-    {
-        free(copy);
-        return;
-    }
-    printf("DEBUG MATRIX: Stored rows dimension %d at DC=%d\n", rows, DC - 1);
-    DC++;
-
-    /* Store cols dimension */
-    if (!store_data(cols, filename, line_num))
-    {
-        free(copy);
-        return;
-    }
-    printf("DEBUG MATRIX: Stored cols dimension %d at DC=%d\n", cols, DC - 1);
-    DC++;
-
     /* Calculate the expected numbers in the matrix */
     exp_vals = rows * cols;
     printf("DEBUG MATRIX: Expected %d values for %dx%d matrix\n", exp_vals, rows, cols);

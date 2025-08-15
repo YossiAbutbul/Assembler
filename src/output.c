@@ -94,9 +94,11 @@ BOOL generate_object_file(const char *filename, const AssemblyContext *context)
     const InstructionImage *inst_image;
     const int *data_array;
     int data_size;
-    int i;
+    int i, debug_i;
     int data_start_address;
     int actual_instruction_count;
+
+    char test_inst[10], test_data[10];
 
     printf("DEBUG OB: Starting object file generation\n");
 
@@ -120,21 +122,29 @@ BOOL generate_object_file(const char *filename, const AssemblyContext *context)
     data_size = get_data_size();
     data_start_address = context->ICF; /* Data starts after instructions */
 
-    printf("DEBUG OB: inst_image size = %d\n", inst_image ? inst_image->size : 0);
-    printf("DEBUG OB: data_size = %d\n", data_size);
-    printf("DEBUG OB: context->ICF = %d\n", context->ICF);
-    printf("DEBUG OB: context->DCF = %d\n", context->DCF);
+    printf("=== DATA DEBUG ===\n");
+    printf("Total data_size = %d\n", data_size);
+    printf("Data values:\n");
+    for (debug_i = 0; debug_i < data_size; debug_i++)
+    {
+        printf("  data[%d] = %d\n", debug_i, data_array[debug_i]);
+    }
+    printf("=================\n");
 
     /* Calculate actual instruction count (ICF - BASE_IC_ADDRESS) */
     actual_instruction_count = context->ICF - BASE_IC_ADDRESS;
 
-    printf("DEBUG OBJECT: Instruction image size = %d\n", inst_image ? inst_image->size : 0);
-    printf("DEBUG OBJECT: Data size = %d\n", data_size);
-    printf("DEBUG OBJECT: context->ICF = %d\n", context->ICF);
-    printf("DEBUG OBJECT: context->DCF = %d\n", context->DCF);
-    printf("DEBUG OBJECT: BASE_IC_ADDRESS = %d\n", BASE_IC_ADDRESS);
-    printf("DEBUG OBJECT: actual_instruction_count = %d\n", actual_instruction_count);
-    printf("DEBUG OBJECT: Expected total rows = %d\n", 1 + (inst_image ? inst_image->size : 0) + data_size);
+    printf("=== HEADER DEBUG ===\n");
+    printf("context->ICF = %d\n", context->ICF);
+    printf("BASE_IC_ADDRESS = %d\n", BASE_IC_ADDRESS);
+    printf("actual_instruction_count = %d\n", actual_instruction_count);
+    printf("data_size = %d\n", data_size);
+
+    count_to_base4(actual_instruction_count, test_inst);
+    count_to_base4(data_size, test_data);
+    printf("Instruction count %d -> base4: '%s'\n", actual_instruction_count, test_inst);
+    printf("Data count %d -> base4: '%s'\n", data_size, test_data);
+    printf("===================\n");
 
     /* Write header line: instruction count and data count in base-4 */
     count_to_base4(actual_instruction_count, inst_count_str);

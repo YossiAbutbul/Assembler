@@ -16,6 +16,7 @@
 #include "../include/instruction_parser.h"
 #include "../include/first_pass.h"
 #include "../include/assembler_types.h"
+#include "../include/output.h"
 
 /* External variables from first pass */
 extern int IC;
@@ -387,7 +388,7 @@ static BOOL encode_instruction_with_stored_data(const Instruction *instruction, 
     int immediate_word;
 
     /* Debug */
-    int option1, option2, option3;
+    char addr_str[6], imm_str[6];
 
     /* Initialization */
     current_address = address;
@@ -434,8 +435,20 @@ static BOOL encode_instruction_with_stored_data(const Instruction *instruction, 
             /* Use pre-encoded immediate word */
             if (immediate_index < inst_data->immediate_count)
             {
-                printf("DEBUG ENCODE: About to store source immediate at address %d\n", current_address);
+                printf("=== SOURCE IMMEDIATE DEBUG ===\n");
+                printf("Raw immediate from first pass: %d\n", inst_data->immediate_word[immediate_index]);
+                printf("Address: %d\n", current_address);
+
+                address_to_base4(current_address, addr_str);
+                printf("Address in base-4: %s\n", addr_str);
+
                 immediate_word = (inst_data->immediate_word[immediate_index] << 2) | 0x00;
+                printf("Final immediate word: %d\n", immediate_word);
+
+                decimal_to_base4(immediate_word, imm_str);
+                printf("Immediate in base-4: %s\n", imm_str);
+                printf("==============================\n");
+
                 if (!store_instruction_word(context->instruction_image,
                                             immediate_word,
                                             current_address++))
@@ -445,7 +458,6 @@ static BOOL encode_instruction_with_stored_data(const Instruction *instruction, 
                     context->has_errors = TRUE;
                     return FALSE;
                 }
-                printf("DEBUG ENCODE: After storing source immediate, current_address = %d\n", current_address);
                 immediate_index++;
             }
         }
@@ -484,22 +496,20 @@ static BOOL encode_instruction_with_stored_data(const Instruction *instruction, 
         {
             if (immediate_index < inst_data->immediate_count)
             {
-                printf("DEBUG ENCODE: About to store target immediate at address %d\n", current_address);
-                printf("DEBUG ENCODE: Raw immediate value from first pass: %d\n", inst_data->immediate_word[immediate_index]);
+                printf("=== IMMEDIATE DEBUG ===\n");
+                printf("Raw immediate from first pass: %d\n", inst_data->immediate_word[immediate_index]);
+                printf("Address: %d\n", current_address);
 
-                /* Try different bit layouts to see which matches expected */
-                option1 = (inst_data->immediate_word[immediate_index] << 2) | 0x00; /* Current */
-                option2 = inst_data->immediate_word[immediate_index] | 0x00;        /* No shift */
-                option3 = (inst_data->immediate_word[immediate_index] & 0xFF) << 2; /* 8-bit only */
+                address_to_base4(current_address, addr_str);
+                printf("Address in base-4: %s\n", addr_str);
 
-                printf("DEBUG ENCODE: Option 1 (<<2): %d\n", option1);
-                printf("DEBUG ENCODE: Option 2 (no shift): %d\n", option2);
-                printf("DEBUG ENCODE: Option 3 (8-bit<<2): %d\n", option3);
+                immediate_word = (inst_data->immediate_word[immediate_index] << 2) | 0x00;
+                printf("Final immediate word: %d\n", immediate_word);
 
-                /* For now, let's try the no-shift option since 768 is much closer to 1019 */
-                immediate_word = inst_data->immediate_word[immediate_index] | 0x00;
+                decimal_to_base4(immediate_word, imm_str);
+                printf("Immediate in base-4: %s\n", imm_str);
+                printf("======================\n");
 
-                printf("DEBUG ENCODE: Final immediate word (selected): %d\n", immediate_word);
                 if (!store_instruction_word(context->instruction_image,
                                             immediate_word,
                                             current_address++))
@@ -509,7 +519,6 @@ static BOOL encode_instruction_with_stored_data(const Instruction *instruction, 
                     context->has_errors = TRUE;
                     return FALSE;
                 }
-                printf("DEBUG ENCODE: After storing target immediate, current_address = %d\n", current_address);
                 immediate_index++;
             }
         }

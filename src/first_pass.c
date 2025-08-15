@@ -376,23 +376,48 @@ static int build_first_instruction_word(const Instruction *instruction)
 {
     int word = 0;
 
+    printf("=== BUILDING FIRST WORD DEBUG ===\n");
+    printf("Opcode: %d\n", instruction->opcode);
+    printf("Has source: %d\n", instruction->has_source);
+    printf("Has target: %d\n", instruction->has_target);
+
+    if (instruction->has_source)
+        printf("Source mode: %d\n", instruction->source.mode);
+    if (instruction->has_target)
+        printf("Target mode: %d\n", instruction->target.mode);
+
     /* Bits 6-9: opcode */
     word |= (instruction->opcode << 6);
+    printf("After opcode: %d\n", word);
 
     /* Bits 4-5: source addressing mode */
     if (instruction->has_source)
     {
         word |= (instruction->source.mode << 4);
+        printf("After source mode: %d\n", word);
+    }
+    else
+    {
+        word |= (0 << 4); /* Explicitly set source mode to 0 when no source operand */
+        printf("After source mode (no source): %d\n", word);
     }
 
     /* Bits 2-3: target addressing mode */
     if (instruction->has_target)
     {
         word |= (instruction->target.mode << 2);
+        printf("After target mode: %d\n", word);
+    }
+    else
+    {
+        word |= (0 << 2); /* Explicitly set target mode to 0 when no target operand */
+        printf("After target mode (no target): %d\n", word);
     }
 
     /* Bits 0-1: A,R,E = 00 for instruction words */
     word |= 0x00;
+    printf("Final word: %d\n", word);
+    printf("================================\n");
 
     return word;
 }

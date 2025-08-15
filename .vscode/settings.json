@@ -10,6 +10,7 @@
         "first_pass.h": "c",
         "data_image.h": "c",
         "cstdlib": "c",
-        "assembler_types.h": "c"
+        "assembler_types.h": "c",
+        "output.h": "c"
     }
 }
