@@ -70,12 +70,15 @@ BOOL first_pass(FILE *am_file, const char *filename)
         /* Check line length */
         if (strchr(line, '\n') == NULL && !feof(am_file))
         {
-            print_line_error(filename, line_num, ERROR_SYNTAX);
+            print_line_error(filename, line_num, ERROR_LINE_TOO_LONG);
             err_found = TRUE;
 
             /* Skip the rest of the line */
             while (!feof(am_file) && fgetc(am_file) != '\n')
                 continue;
+
+            /* Skip processing this line and go to next iteration */
+            continue;
         }
 
         /* Trim leading and trailing whitespace */
@@ -95,16 +98,12 @@ BOOL first_pass(FILE *am_file, const char *filename)
     if (err_found)
         return FALSE;
 
-    print_symbol_table();
-
     /* Step 18: Save final values of IC and DC */
     ICF = IC;
     DCF = DC;
 
     /* Update data symbols with the current IC */
     update_data_symbols(ICF);
-
-    print_symbol_table();
 
     return TRUE;
 }
@@ -156,6 +155,9 @@ static void process_line(const char *line, const char *filename, int line_num)
     char *rest;
     BOOL has_label;
     char buffer[MAX_LINE_LENGTH + 1];
+    char *colon_pos;
+    char potential_label[MAX_LABEL_LENGTH + 1];
+    int j;
 
     /* Initialization */
     has_label = FALSE;
@@ -177,30 +179,62 @@ static void process_line(const char *line, const char *filename, int line_num)
     }
     else
     {
-        /* Try to extract label */
-        if (extract_label(buffer, label))
+        /* Check if there's a colon in the line (potential label) */
+        colon_pos = strchr(rest, ':');
+        if (colon_pos != NULL)
         {
-            has_label = TRUE;
-
-            /* Validate the extracted label */
-            if (!is_valid_label(label))
+            /* Extract the text before the colon to check if it's a valid label attempt */
+            j = 0;
+            while (rest + j < colon_pos && j < MAX_LABEL_LENGTH && !isspace((unsigned char)rest[j]))
             {
-                print_line_error(filename, line_num, ERROR_INVALID_LABEL);
+                potential_label[j] = rest[j];
+                j++;
+            }
+            potential_label[j] = '\0';
+
+            /* Check if the text before colon is a reserved word */
+            if (is_reserved_word(potential_label))
+            {
+                /* This is a reserved word followed by colon - syntax error */
+                print_line_error(filename, line_num, ERROR_RESERVED_WORD);
                 err_found = TRUE;
                 return;
             }
 
-            /* Check for duplicate label definition */
-            if (is_label_defined(label))
+            /* Try to extract valid label */
+            if (extract_label(buffer, label))
             {
-                print_line_error(filename, line_num, ERROR_DUPLICATE_LABEL);
+                /* Valid label extracted */
+                has_label = TRUE;
+
+                /* Validate the extracted label */
+                if (!is_valid_label(label))
+                {
+                    print_line_error(filename, line_num, ERROR_LABEL_SYNTAX);
+                    err_found = TRUE;
+                    return;
+                }
+
+                /* Check for duplicate label definition */
+                if (is_label_defined(label))
+                {
+                    print_line_error(filename, line_num, ERROR_DUPLICATE_LABEL);
+                    err_found = TRUE;
+                    return;
+                }
+
+                /* Skip past the label for further processing */
+                rest = skip_label(buffer);
+            }
+            else
+            {
+                /* Invalid label (extract_label failed but colon exists) */
+                print_line_error(filename, line_num, ERROR_LABEL_SYNTAX);
                 err_found = TRUE;
                 return;
             }
-
-            /* Skip past the label for further processing */
-            rest = skip_label(buffer);
         }
+        /* If no colon, then no label attempt, continue normally */
     }
 
     /* Extract first token (opcode or directive) */

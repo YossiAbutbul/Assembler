@@ -17,6 +17,7 @@
 #include "../include/first_pass.h"
 #include "../include/assembler_types.h"
 #include "../include/output.h"
+#include "../include/data_image.h"
 
 /* External variables from first pass */
 extern int IC;
@@ -126,7 +127,6 @@ BOOL second_pass(FILE *am_file, const char *filename, AssemblyContext *context)
     while (fgets(line, sizeof(line), am_file))
     {
         line_num++;
-
         /* Trim leading and trailing whitespaces */
         trim_whitespace(line);
 
@@ -152,6 +152,7 @@ BOOL second_pass(FILE *am_file, const char *filename, AssemblyContext *context)
     }
 
     /* Second pass completed if no errors found */
+
     return !err_found;
 }
 
@@ -825,8 +826,9 @@ void cleanup_assembly_context(AssemblyContext *context)
 static BOOL validate_first_pass_data(void)
 {
     int expected_insts = get_instruction_count();
+    int data_size = get_data_size();
 
-    if (expected_insts <= 0)
+    if (expected_insts <= 0 && data_size <= 0)
         return FALSE; /* No instructions found in first pass */
 
     /* todo: myabe insert another validation*/

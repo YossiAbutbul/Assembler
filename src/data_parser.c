@@ -100,14 +100,21 @@ void parse_data_values(const char *line, const char *filename, int line_num)
         }
         else
         {
-            /* Stores the value into the data image */
-            if (!store_data(value, filename, line_num))
+            if (value < -512 || value > 511)
             {
-                /* Error reported by store_data */
-                free(copy);
-                return;
+                print_line_error(filename, line_num, ERROR_DATA_OUT_OF_RANGE);
+                err_found = TRUE;
             }
-            DC++;
+            else
+            {
+                /* Stores the value into the data image */
+                if (!store_data(value, filename, line_num))
+                {
+                    free(copy);
+                    return;
+                }
+                DC++;
+            }
         }
 
         /* Get next token */

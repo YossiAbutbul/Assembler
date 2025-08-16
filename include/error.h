@@ -8,7 +8,9 @@
 
 #include "constants.h"
 
-/** @brief Exit codes for the assembler stages */
+/**
+ * @brief Exit codes for the assembler stages
+ */
 typedef enum
 {
     EXIT_SUCCESS_CODE = 0,
@@ -20,7 +22,9 @@ typedef enum
     EXIT_WRITE_ERROR
 } ExitCode;
 
-/** @brief Error types for the assembler */
+/**
+ * @brief Error types for the assembler
+ */
 typedef enum
 {
     /* === label and Syntax Erros === */
@@ -51,6 +55,8 @@ typedef enum
 
     /* === General Errors === */
     ERROR_SYNTAX,
+    ERROR_RESERVED_WORD,
+    ERROR_LINE_TOO_LONG,
     ERROR_GENERAL,
     ERROR_DATA_IMAGE_OVERFLOW,
 

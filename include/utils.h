@@ -96,4 +96,14 @@ BOOL is_reserved_word(const char *word);
  */
 BOOL is_instruction(const char *word);
 
+/**
+ * @brief Remove comments from a line (everything after a ';').
+ *
+ * This function remove any in line comments
+ * (comments on the same line as the assembler lines).
+ *
+ * @param line Pointer to the line to process.
+ */
+void remove_comments(char *line);
+
 #endif

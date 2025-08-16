@@ -119,9 +119,7 @@ BOOL extract_label(const char *line, char *label_out)
 
     /* Checks for null pointers */
     if (!line || !label_out)
-    {
         return FALSE;
-    }
 
     /* Skip leading whitespace */
     while (isspace((unsigned char)line[i]))
@@ -140,8 +138,13 @@ BOOL extract_label(const char *line, char *label_out)
     }
 
     /* Copy the label until we hit a ':' or whitespace */
+    /* Also validate that it contains only alphanumeric characters */
     while (line[i] && !isspace((unsigned char)line[i]) && line[i] != ':' && j < MAX_LABEL_LENGTH)
     {
+        if (!isalnum((unsigned char)line[i]) && line[i] != '_') /* Allow underscores */
+        {
+            return FALSE; /* Invalid character in label */
+        }
         label_out[j++] = line[i++];
     }
 
@@ -158,6 +161,7 @@ BOOL extract_label(const char *line, char *label_out)
 
     return FALSE;
 }
+
 /**
  * @brief Skips a label (and ':') in a line and returns a pointer to the rest of the line.
  *
@@ -213,7 +217,7 @@ BOOL is_valid_label(const char *label)
     /* Check if the label contains only alphanumeric characters. */
     for (i = 1; i < len && label[i] != '\0'; i++)
     {
-        if (!isalnum((unsigned char)label[i]))
+        if (!isalnum((unsigned char)label[i]) && label[i] != '_')
             return FALSE;
     }
 
@@ -338,4 +342,25 @@ BOOL is_instruction(const char *word)
     }
 
     return FALSE; /* Not a valid instruction name */
+}
+
+/**
+ * @brief Remove comments from a line (everything after a ';').
+ *
+ * This function remove any in line comments
+ * (comments on the same line as the assembler lines).
+ *
+ * @param line Pointer to the line to process.
+ */
+void remove_comments(char *line)
+{
+    char *comment_pos;
+
+    /* Check for empty line */
+    if (!line)
+        return;
+
+    comment_pos = strchr(line, ';');
+    if (comment_pos != NULL)
+        *comment_pos = '\0'; /* Truncate the string at the comment */
 }

@@ -76,6 +76,9 @@ BOOL parse_instruction(const char *line, const char *filename, int line_num, Ins
     }
     strcpy(line_copy, line);
 
+    /* Remove in line comments before parsing */
+    remove_comments(line_copy);
+
     /* Parse instruction name */
     token = strtok(line_copy, " \t");
     if (!token)
@@ -238,7 +241,7 @@ static BOOL parse_operand(const char *operand_str, Operand *operand, const char 
     char trimmed[MAX_LINE_LENGTH];
     int i, j;
 
-    /* Initalize operand struct */
+    /* Initialize operand struct */
     memset(operand, 0, sizeof(Operand));
 
     /* Trim whitespace by copying characters from the operand_str to the trimmed array */
@@ -252,7 +255,7 @@ static BOOL parse_operand(const char *operand_str, Operand *operand, const char 
 
     /* Determine addressing mode */
 
-    /* Check for immediate adressing (#value) */
+    /* Check for immediate addressing (#value) */
     if (is_immediate(trimmed, &operand->value))
     {
         operand->mode = ADDRESSING_IMMEDIATE;
@@ -260,7 +263,7 @@ static BOOL parse_operand(const char *operand_str, Operand *operand, const char 
         return TRUE;
     }
 
-    /* Check for register addressing (ro-r7) */
+    /* Check for register addressing (r0-r7) */
     if (is_register(trimmed, &operand->value))
     {
         operand->mode = ADDRESSING_REGISTER;
@@ -275,7 +278,7 @@ static BOOL parse_operand(const char *operand_str, Operand *operand, const char 
         return TRUE; /* is_symbol flag set by is_matrix_reference */
     }
 
-    /* Checks for direct addressing */
+    /* Check for direct addressing */
     if (is_valid_label(trimmed))
     {
         operand->mode = ADDRESSING_DIRECT;

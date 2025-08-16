@@ -47,27 +47,30 @@ void report_error(ExitCode exit_code, const char *filename)
 void print_line_error(const char *filename, int line_number, ErrorType err_type)
 {
     const char *error_messages[] = {
-        /*  0 */ "Invalid label",
-        /*  1 */ "Unknown instruction",
-        /*  2 */ "Invalid directive",
-        /*  3 */ "Duplicate label",
-        /*  4 */ "Syntax error",
-        /*  5 */ "Too many operands",
-        /*  6 */ "Too few operands",
-        /*  7 */ "Invalid operand",
-        /*  8 */ "Undefined symbol",
-        /*  9 */ "Entry not defined",
-        /* 10 */ "External conflict",
-        /* 11 */ "Memory allocation failed",
-        /* 12 */ "Label cannot be used on .extern",
-        /* 13 */ "Invalid matrix syntax",
-        /* 14 */ "Data value out of range",
-        /* 15 */ "String too long",
-        /* 16 */ "Label must start with a letter",
-        /* 17 */ "General error",
-        /* 18 */ "Data image overflow",
-        /* 19 */ "Instruction image overflow",
-        /* 20 */ "Memory address out of bounds"};
+        /*  0 */ "Invalid label",                                /* ERROR_INVALID_LABEL */
+        /*  1 */ "Label must start with a letter",               /* ERROR_LABEL_SYNTAX */
+        /*  2 */ "Duplicate label",                              /* ERROR_DUPLICATE_LABEL */
+        /*  3 */ "Unknown instruction",                          /* ERROR_UNKNOWN_INSTRUCTION */
+        /*  4 */ "Invalid directive",                            /* ERROR_INVALID_DIRECTIVE */
+        /*  5 */ "Too many operands",                            /* ERROR_TOO_MANY_OPERANDS */
+        /*  6 */ "Too few operands",                             /* ERROR_TOO_FEW_OPERANDS */
+        /*  7 */ "Invalid operand",                              /* ERROR_INVALID_OPERAND */
+        /*  8 */ "Invalid matrix syntax",                        /* ERROR_INVALID_MATRIX */
+        /*  9 */ "Data value out of range",                      /* ERROR_DATA_OUT_OF_RANGE */
+        /* 10 */ "Undefined symbol",                             /* ERROR_UNDEFINED_SYMBOL */
+        /* 11 */ "Entry not defined",                            /* ERROR_ENTRY_NOT_DEFINED */
+        /* 12 */ "Label cannot be used on .extern",              /* ERROR_LABEL_ON_EXTERN */
+        /* 13 */ "External conflict",                            /* ERROR_EXTERNAL_CONFLICT */
+        /* 14 */ "String too long",                              /* ERROR_STRING_TOO_LONG */
+        /* 15 */ "Memory allocation failed",                     /* ERROR_MEMORY_ALLOCATION_FAILED */
+        /* 16 */ "Syntax error",                                 /* ERROR_SYNTAX */
+        /* 17 */ "Reserved word cannot be used as label",        /* ERROR_RESERVED_WORD */
+        /* 18 */ "Line exceeds maximum length of 80 characters", /* ERROR_LINE_TOO_LONG */
+        /* 19 */ "General error",                                /* ERROR_GENERAL */
+        /* 20 */ "Data image overflow",                          /* ERROR_DATA_IMAGE_OVERFLOW */
+        /* 21 */ "Instruction image overflow",                   /* ERROR_INSTRUCTION_IMAGE_OVERFLOW */
+        /* 22 */ "Memory address out of bounds"                  /* ERROR_ADDRESS_OUT_OF_BOUNDS */
+    };
 
     size_t err_cnt = (sizeof(error_messages) / sizeof(error_messages[0]));
 

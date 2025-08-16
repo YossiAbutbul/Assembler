@@ -7,7 +7,7 @@
  * output files. It handles multiple input files and processes
  * each one independently.
  *
- * Usage: todo
+ * Usage: "./assembler ./filename1 ./ filename2 [...]"
  *
  * For each input "filename", the program:
  * 1. Reads filename.as (source file).
@@ -57,7 +57,10 @@ int main(int argc, char *argv[])
         if (result != EXIT_SUCCESS_CODE)
         {
             has_errors = TRUE;
-            printf("Continuing with next file...\n");
+
+            /* Only print if there are more files to process */
+            if (i < argc - 1)
+                printf("Continuing with next file...\n");
         }
         else
             printf("Successfully assembled %s.as\n", argv[i]);
