@@ -210,20 +210,15 @@ ExitCode preprocess(const char *filename)
 
     while (fgets(line, MAX_LINE_LENGTH, as_file))
     {
-        printf("PREPROCESSOR DEBUG: Processing line: '%s'", line);  /* Add debug */
-        
         if (strspn(line, " \t\r\n") == strlen(line))
             continue;
 
         strcpy(first_word, "");
         get_first_word(line, first_word);
 
-        printf("PREPROCESSOR DEBUG: First word: '%s'\n", first_word);  /* Add debug */
-
         /* Handle .entry and .extern directives - pass them through unchanged */
         if (strcmp(first_word, ".entry") == 0 || strcmp(first_word, ".extern") == 0)
         {
-            printf("PREPROCESSOR DEBUG: Passing directive through: %s", line);
             fputs(line, am_file);
             continue;
         }

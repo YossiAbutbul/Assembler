@@ -120,29 +120,22 @@ BOOL extract_label(const char *line, char *label_out)
     /* Checks for null pointers */
     if (!line || !label_out)
     {
-        printf("DEBUG extract_label: NULL pointer\n");
         return FALSE;
     }
-
-    printf("DEBUG extract_label: Input line: '%s'\n", line);
 
     /* Skip leading whitespace */
     while (isspace((unsigned char)line[i]))
         i++;
 
-    printf("DEBUG extract_label: After skipping whitespace: '%s'\n", &line[i]);
-
     /* Check if the line starts with a directive (begins with '.') */
     if (line[i] == '.')
     {
-        printf("DEBUG extract_label: Line starts with '.', not a label\n");
         return FALSE;
     }
 
     /* Check if the label starts with a letter */
     if (!isalpha((unsigned char)line[i]))
     {
-        printf("DEBUG extract_label: First char '%c' is not a letter\n", line[i]);
         return FALSE;
     }
 
@@ -152,8 +145,6 @@ BOOL extract_label(const char *line, char *label_out)
         label_out[j++] = line[i++];
     }
 
-    printf("DEBUG extract_label: Copied label so far: '%.*s', next char: '%c'\n", j, label_out, line[i]);
-
     /* Skip any whitespace between label and ':' */
     while (isspace((unsigned char)line[i]))
         i++;
@@ -162,11 +153,9 @@ BOOL extract_label(const char *line, char *label_out)
     if (line[i] == ':' && j > 0)
     {
         label_out[j] = '\0'; /* Null-terminate the label */
-        printf("DEBUG extract_label: Found valid label: '%s'\n", label_out);
         return TRUE;
     }
 
-    printf("DEBUG extract_label: No valid label found (next char: '%c', j: %d)\n", line[i], j);
     return FALSE;
 }
 /**
@@ -248,8 +237,6 @@ BOOL get_next_token(const char *src, char *token_out)
 {
     int i = 0, j = 0;
 
-    printf("DEBUG GET_NEXT_TOKEN: Input: '%s'\n", src ? src : "NULL");
-
     /* Checks for null pointers */
     if (!src || !token_out)
         return FALSE;
@@ -263,7 +250,6 @@ BOOL get_next_token(const char *src, char *token_out)
     /* Check if we reached the end of the string. */
     if (src[i] == '\0')
     {
-        printf("DEBUG GET_NEXT_TOKEN: No token found (empty after whitespace)\n");
         return FALSE; /* No more tokens available */
     }
 
@@ -275,7 +261,6 @@ BOOL get_next_token(const char *src, char *token_out)
 
     token_out[j] = '\0'; /* Null-terminate the token */
 
-    printf("DEBUG GET_NEXT_TOKEN: Output token: '%s'\n", token_out);
     return TRUE; /* Token successfully extracted */
 }
 

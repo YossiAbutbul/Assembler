@@ -41,10 +41,6 @@ BOOL generate_output_files(const char *filename, const AssemblyContext *context)
     if (context->has_errors)
         return FALSE;
 
-    printf("DEBUG OUTPUT: Starting output generation\n");
-    printf("DEBUG OUTPUT: context->entry_list = %p\n", (void *)context->entry_list);
-    printf("DEBUG OUTPUT: context->external_list = %p\n", (void *)context->external_list);
-
     /* Always generate .ob file */
     if (!generate_object_file(filename, context))
         return FALSE;
@@ -52,24 +48,16 @@ BOOL generate_output_files(const char *filename, const AssemblyContext *context)
     /* Generate .ent file only if entries exist */
     if (context->entry_list)
     {
-        printf("DEBUG OUTPUT: Generating .ent file\n");
         if (!generate_entries_file(filename, context))
             return FALSE;
     }
-    else
-        printf("DEBUG OUTPUT: No entries - skipping .ent file\n");
 
     /* Generate .ext file only if externals exist */
     if (context->external_list)
     {
-        printf("DEBUG OUTPUT: Generating .ext file\n");
         if (!generate_externals_file(filename, context))
             return FALSE;
     }
-    else
-        printf("DEBUG OUTPUT: No externals - skipping .ext file\n");
-
-    printf("DEBUG OUTPUT: Output generation complete\n");
     /* If all creations were successful, return TRUE */
     return TRUE;
 }
@@ -94,13 +82,11 @@ BOOL generate_object_file(const char *filename, const AssemblyContext *context)
     const InstructionImage *inst_image;
     const int *data_array;
     int data_size;
-    int i, debug_i;
+    int i;
     int data_start_address;
     int actual_instruction_count;
 
     char test_inst[10], test_data[10];
-
-    printf("DEBUG OB: Starting object file generation\n");
 
     if (!filename || !context)
         return FALSE;
@@ -122,72 +108,41 @@ BOOL generate_object_file(const char *filename, const AssemblyContext *context)
     data_size = get_data_size();
     data_start_address = context->ICF; /* Data starts after instructions */
 
-    printf("=== DATA DEBUG ===\n");
-    printf("Total data_size = %d\n", data_size);
-    printf("Data values:\n");
-    for (debug_i = 0; debug_i < data_size; debug_i++)
-    {
-        printf("  data[%d] = %d\n", debug_i, data_array[debug_i]);
-    }
-    printf("=================\n");
-
     /* Calculate actual instruction count (ICF - BASE_IC_ADDRESS) */
     actual_instruction_count = context->ICF - BASE_IC_ADDRESS;
 
-    printf("=== HEADER DEBUG ===\n");
-    printf("context->ICF = %d\n", context->ICF);
-    printf("BASE_IC_ADDRESS = %d\n", BASE_IC_ADDRESS);
-    printf("actual_instruction_count = %d\n", actual_instruction_count);
-    printf("data_size = %d\n", data_size);
-
     count_to_base4(actual_instruction_count, test_inst);
     count_to_base4(data_size, test_data);
-    printf("Instruction count %d -> base4: '%s'\n", actual_instruction_count, test_inst);
-    printf("Data count %d -> base4: '%s'\n", data_size, test_data);
-    printf("===================\n");
 
     /* Write header line: instruction count and data count in base-4 */
     count_to_base4(actual_instruction_count, inst_count_str);
     count_to_base4(data_size, data_count_str);
 
-    printf("DEBUG OB: Header - instructions: %d (%s), data: %d (%s)\n",
-           actual_instruction_count, inst_count_str, data_size, data_count_str);
-
     fprintf(ob_file, "%s %s\n", inst_count_str, data_count_str);
-    printf("DEBUG OB: Header written successfully\n");
 
     /* Write instruction image */
     if (inst_image)
     {
-        printf("DEBUG OB: Writing %d instruction words\n", inst_image->size);
         for (i = 0; i < inst_image->size; i++)
         {
             address_to_base4(inst_image->addresses[i], address_str);
             decimal_to_base4(inst_image->code[i], code_str);
             fprintf(ob_file, "%s %s\n", address_str, code_str);
-            printf("DEBUG OB: Instruction %d: addr=%d (%s), code=%d (%s)\n",
-                   i, inst_image->addresses[i], address_str, inst_image->code[i], code_str);
         }
     }
 
     /* Write data image */
     if (data_array && data_size > 0)
     {
-        printf("DEBUG OB: Writing %d data words starting at address %d\n", data_size, data_start_address);
-
         for (i = 0; i < data_size; i++)
         {
             address_to_base4(data_start_address + i, address_str);
             decimal_to_base4(data_array[i], code_str);
             fprintf(ob_file, "%s %s\n", address_str, code_str);
-
-            printf("DEBUG OB: Data %d: addr=%d (%s), value=%d (%s)\n",
-                   i, data_start_address + i, address_str, data_array[i], code_str);
         }
     }
 
     fclose(ob_file);
-    printf("DEBUG OB: Object file generation complete\n");
     return TRUE;
 }
 

@@ -75,11 +75,9 @@ ExitCode assemble(const char *filename)
     am_file = fopen(am_filename, "r");
     if (am_file != NULL)
     {
-        printf("=== Starting First Pass ===\n");
         /* Preforms first pass */
         if (first_pass(am_file, filename))
         {
-            printf("=== FIRST PASS COMPLETED SUCCESSFULLY ===\n");
             /* === Phase 3 - Second Pass === */
 
             /* Initialize assembly context for second pass */

@@ -142,9 +142,6 @@ BOOL second_pass(FILE *am_file, const char *filename, AssemblyContext *context)
     context->DCF = DCF;
     context->has_errors = err_found;
 
-    printf("DEBUG SECOND PASS: current_ic=%d, DCF=%d\n", current_ic, context->DCF);
-    printf("DEBUG SECOND PASS: context->ICF=%d, context->DCF=%d\n", context->ICF, context->DCF);
-
     /* Validate we processed the expected number of instructions */
     if (get_current_instruction_index() != get_instruction_count())
     {
@@ -172,9 +169,6 @@ static void process_line_second_pass(const char *line, const char *filename, int
     char first_token[MAX_LINE_LENGTH + 1];
     char *rest;
     char buffer[MAX_LINE_LENGTH + 1];
-
-    printf("MINIMAL DEBUG: Line %d: '%s'\n", line_num, line);
-    fflush(stdout); /* Force output to appear immediately */
 
     /* Creates a copy of the line */
     strncpy(buffer, line, MAX_LINE_LENGTH);
@@ -225,9 +219,6 @@ static void handle_instruction_second_pass(const char *line, const char *filenam
     char line_copy[MAX_LINE_LENGTH + 1];
     char label[MAX_LABEL_LENGTH + 1];
 
-    printf("DEBUG 2ND PASS: Processing line %d: '%s'\n", line_num, line);
-    printf("DEBUG 2ND PASS: current_ic before = %d\n", *current_ic);
-
     /* Get pre-calculated instruction data from first pass */
     inst_data = get_next_instruction_data();
     if (!inst_data)
@@ -238,14 +229,9 @@ static void handle_instruction_second_pass(const char *line, const char *filenam
         return;
     }
 
-    printf("DEBUG 2ND PASS: inst_data->ic_address = %d, inst_data->word_count = %d\n",
-           inst_data->ic_address, inst_data->word_count);
-
     /* Verify IC alignment with first pass */
     if (inst_data->ic_address != *current_ic)
     {
-        printf("DEBUG 2ND PASS: IC MISMATCH! Expected %d, got %d\n", inst_data->ic_address, *current_ic);
-
         print_line_error(filename, line_num, ERROR_GENERAL);
         err_found = TRUE;
         context->has_errors = TRUE;
@@ -262,29 +248,17 @@ static void handle_instruction_second_pass(const char *line, const char *filenam
     if (extract_label(line, label))
     {
         instruction_part = skip_label(instruction_part);
-        printf("DEBUG 2ND PASS: Original line: '%s'\n", line);
-        printf("DEBUG 2ND PASS: Found label '%s', instruction part: '%s'\n", label, instruction_part);
-    }
-    else
-    {
-        printf("DEBUG 2ND PASS: No label, instruction part: '%s'\n", instruction_part);
     }
 
     /* Parse the instruction (for operand details for symbol resolution) */
     if (!parse_instruction(instruction_part, filename, line_num, &instruction))
     {
-        printf("DEBUG 2ND PASS: Failed to parse instruction\n");
         return; /* The index incremented in get_next_instruction_data() */
     }
-
-    printf("DEBUG 2ND PASS: Parsed instruction opcode=%d, word_count=%d\n",
-           instruction.opcode, instruction.word_count);
 
     /* Verify word count consistency between passes */
     if (instruction.word_count != inst_data->word_count)
     {
-        printf("DEBUG 2ND PASS: WORD COUNT MISMATCH! Parsed=%d, Stored=%d\n",
-               instruction.word_count, inst_data->word_count);
         print_line_error(filename, line_num, ERROR_GENERAL);
         err_found = TRUE;
         context->has_errors = TRUE;
@@ -294,13 +268,11 @@ static void handle_instruction_second_pass(const char *line, const char *filenam
     /* Use pre-calculated data for encoding */
     if (!encode_instruction_with_stored_data(&instruction, inst_data, *current_ic, filename, line_num, context))
     {
-        printf("DEBUG 2ND PASS: Failed to encode instruction\n");
         return;
     }
 
     /* Update instruction counter using pre-calculated word count */
     *current_ic += inst_data->word_count;
-    printf("DEBUG 2ND PASS: current_ic after += %d = %d\n", inst_data->word_count, *current_ic);
 }
 
 /**
@@ -316,8 +288,6 @@ static void handle_entry_directive_second_pass(const char *line, const char *fil
     char label[MAX_LABEL_LENGTH + 1];
     const Symbol *symbol;
     const char *ptr = line;
-
-    printf("DEBUG ENTRY: Processing .entry directive: '%s'\n", line);
 
     /* Skip whitespace */
     while (isspace((unsigned char)*ptr))
@@ -341,8 +311,6 @@ static void handle_entry_directive_second_pass(const char *line, const char *fil
         return;
     }
 
-    printf("DEBUG ENTRY: Looking for symbol '%s'\n", label);
-
     /* Find the symbol in the symbol table */
     symbol = get_symbol(label);
     if (!symbol)
@@ -365,8 +333,6 @@ static void handle_entry_directive_second_pass(const char *line, const char *fil
     /* Mark symbol as entry and add to entry list */
     mark_symbol_as_entry(label);
     add_entry_symbol(context, label, symbol->address);
-
-    printf("DEBUG ENTRY: Successfully processed .entry %s at address %d\n", label, symbol->address);
 }
 
 /**
@@ -387,17 +353,13 @@ static BOOL encode_instruction_with_stored_data(const Instruction *instruction, 
     int register_word;
     int immediate_word;
 
-    /* Debug */
     char addr_str[6], imm_str[6];
 
     /* Initialization */
     current_address = address;
     immediate_index = 0;
 
-    printf("DEBUG ENCODE: Starting instruction encoding at address %d\n", current_address);
-
     /* Store the pre-built first instruction word */
-    printf("DEBUG ENCODE: About to store first word at address %d\n", current_address);
     if (!store_instruction_word(context->instruction_image, inst_data->first_word, current_address++))
     {
         print_line_error(filename, line_num, ERROR_INSTRUCTION_IMAGE_OVERFLOW);
@@ -405,7 +367,6 @@ static BOOL encode_instruction_with_stored_data(const Instruction *instruction, 
         context->has_errors = TRUE;
         return FALSE;
     }
-    printf("DEBUG ENCODE: After storing first word, current_address = %d\n", current_address);
 
     /* Special case: BOTH operands are simple registers - they share one word */
     if (instruction->has_source && instruction->has_target &&
@@ -414,7 +375,6 @@ static BOOL encode_instruction_with_stored_data(const Instruction *instruction, 
     {
         register_word = (instruction->source.value << 6) | (instruction->target.value << 2) | 0x00;
 
-        printf("DEBUG ENCODE: About to store shared register word at address %d\n", current_address);
         if (!store_instruction_word(context->instruction_image, register_word, current_address++))
         {
             print_line_error(filename, line_num, ERROR_INSTRUCTION_IMAGE_OVERFLOW);
@@ -422,32 +382,23 @@ static BOOL encode_instruction_with_stored_data(const Instruction *instruction, 
             context->has_errors = TRUE;
             return FALSE;
         }
-        printf("DEBUG ENCODE: After storing shared register word, current_address = %d\n", current_address);
-        return TRUE; /* Done - both registers handled in shared word */
+        return TRUE;
     }
 
     /* Encode source operand if exists */
     if (instruction->has_source)
     {
-        printf("DEBUG ENCODE: Processing source operand (mode %d)\n", instruction->source.mode);
         if (instruction->source.mode == ADDRESSING_IMMEDIATE)
         {
             /* Use pre-encoded immediate word */
             if (immediate_index < inst_data->immediate_count)
             {
-                printf("=== SOURCE IMMEDIATE DEBUG ===\n");
-                printf("Raw immediate from first pass: %d\n", inst_data->immediate_word[immediate_index]);
-                printf("Address: %d\n", current_address);
 
                 address_to_base4(current_address, addr_str);
-                printf("Address in base-4: %s\n", addr_str);
 
                 immediate_word = (inst_data->immediate_word[immediate_index] << 2) | 0x00;
-                printf("Final immediate word: %d\n", immediate_word);
 
                 decimal_to_base4(immediate_word, imm_str);
-                printf("Immediate in base-4: %s\n", imm_str);
-                printf("==============================\n");
 
                 if (!store_instruction_word(context->instruction_image,
                                             immediate_word,
@@ -463,7 +414,6 @@ static BOOL encode_instruction_with_stored_data(const Instruction *instruction, 
         }
         else
         {
-            printf("DEBUG ENCODE: About to encode source operand at address %d\n", current_address);
             /* Use existing encode_operand for non-immediate operands */
             if (!encode_operand(&instruction->source, current_address, TRUE, filename, line_num, context))
                 return FALSE;
@@ -474,16 +424,13 @@ static BOOL encode_instruction_with_stored_data(const Instruction *instruction, 
         {
         case ADDRESSING_IMMEDIATE:
             /* Already incremented above */
-            printf("DEBUG ENCODE: Source immediate - no additional increment\n");
             break;
         case ADDRESSING_DIRECT:
         case ADDRESSING_REGISTER:
             current_address += 1;
-            printf("DEBUG ENCODE: Source direct/register - incremented to %d\n", current_address);
             break;
         case ADDRESSING_MATRIX:
             current_address += 2;
-            printf("DEBUG ENCODE: Source matrix - incremented to %d\n", current_address);
             break;
         }
     }
@@ -491,24 +438,16 @@ static BOOL encode_instruction_with_stored_data(const Instruction *instruction, 
     /* Encode target operand if exists */
     if (instruction->has_target)
     {
-        printf("DEBUG ENCODE: Processing target operand (mode %d)\n", instruction->target.mode);
         if (instruction->target.mode == ADDRESSING_IMMEDIATE)
         {
             if (immediate_index < inst_data->immediate_count)
             {
-                printf("=== IMMEDIATE DEBUG ===\n");
-                printf("Raw immediate from first pass: %d\n", inst_data->immediate_word[immediate_index]);
-                printf("Address: %d\n", current_address);
 
                 address_to_base4(current_address, addr_str);
-                printf("Address in base-4: %s\n", addr_str);
 
                 immediate_word = (inst_data->immediate_word[immediate_index] << 2) | 0x00;
-                printf("Final immediate word: %d\n", immediate_word);
 
                 decimal_to_base4(immediate_word, imm_str);
-                printf("Immediate in base-4: %s\n", imm_str);
-                printf("======================\n");
 
                 if (!store_instruction_word(context->instruction_image,
                                             immediate_word,
@@ -524,7 +463,6 @@ static BOOL encode_instruction_with_stored_data(const Instruction *instruction, 
         }
         else
         {
-            printf("DEBUG ENCODE: About to encode target operand at address %d\n", current_address);
             /* Use existing encode_operand for all other operands including registers */
             if (!encode_operand(&instruction->target, current_address, FALSE, filename, line_num, context))
                 return FALSE;
@@ -535,21 +473,17 @@ static BOOL encode_instruction_with_stored_data(const Instruction *instruction, 
         {
         case ADDRESSING_IMMEDIATE:
             /* Already incremented above */
-            printf("DEBUG ENCODE: Target immediate - no additional increment\n");
             break;
         case ADDRESSING_DIRECT:
         case ADDRESSING_REGISTER:
             current_address += 1;
-            printf("DEBUG ENCODE: Target direct/register - incremented to %d\n", current_address);
             break;
         case ADDRESSING_MATRIX:
             current_address += 2;
-            printf("DEBUG ENCODE: Target matrix - incremented to %d\n", current_address);
             break;
         }
     }
 
-    printf("DEBUG ENCODE: Finished instruction encoding, final current_address = %d\n", current_address);
     return TRUE;
 }
 
@@ -726,8 +660,6 @@ static BOOL init_instruction_image(InstructionImage *image)
  */
 static BOOL store_instruction_word(InstructionImage *image, int word, int address)
 {
-    printf("DEBUG STORE: Storing word %d at address %d (image size will be %d)\n",
-           word, address, image->size + 1);
 
     if (!image)
         return FALSE;
