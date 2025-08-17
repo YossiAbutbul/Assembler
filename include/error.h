@@ -87,7 +87,8 @@ typedef enum
     /* === Macro Expansion Errors === */
     ERROR_MACRO_RESERVED_WORD,
     ERROR_MACRO_EXTRA_TEXT,
-    ERROR_MACRO_MISSING_END
+    ERROR_MACRO_MISSING_END,
+    ERROR_MACRO_MISSING_NAME
 } ErrorType;
 
 /**

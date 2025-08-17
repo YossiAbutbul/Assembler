@@ -188,13 +188,22 @@ ExitCode preprocess(const char *filename)
     FILE *as_file, *am_file;
     char line[MAX_LINE_LENGTH];
     char first_word[MAX_MACRO_NAME_LENGTH];
-    BOOL in_macro = FALSE;
-    BOOL file_has_content = FALSE;
+    BOOL in_macro, file_has_content;
     char current_macro_name[MAX_MACRO_NAME_LENGTH];
-    int line_num = 0;
+    int line_num;
+    char *ptr;
     char temp_line[MAX_LINE_LENGTH];
     char macro_name_check[MAX_MACRO_NAME_LENGTH];
     char extra_text[MAX_LINE_LENGTH];
+    char label[MAX_LABEL_LENGTH + 1];
+    char *instruction_part;
+    char line_copy[MAX_LINE_LENGTH];
+
+    /* Initialize variables */
+    in_macro = FALSE;
+    file_has_content = FALSE;
+    line_num = 0;
+    am_file = NULL;
 
     sprintf(as_filename, "%s.as", filename);
     sprintf(am_filename, "%s.am", filename);
@@ -229,7 +238,7 @@ ExitCode preprocess(const char *filename)
         return EXIT_FILE_EMPTY;
     }
 
-    /* FIRST PASS: Validate macros only (don't create .am file yet) */
+    /* FIRST PASS: Validate macros only (without creating .am file) */
     rewind(as_file);
     line_num = 0;
     in_macro = FALSE;
@@ -250,8 +259,26 @@ ExitCode preprocess(const char *filename)
 
         if (!in_macro && strcmp(first_word, "mcro") == 0)
         {
-            if (sscanf(line, "mcro %31s", current_macro_name) != 1)
+            /* Find the space after "mcro" */
+            ptr = line;
+            while (*ptr && !isspace((unsigned char)*ptr))
+                ptr++; /* Skip "mcro" */
+
+            while (*ptr && isspace((unsigned char)*ptr))
+                ptr++; /* Skip whitespace */
+
+            /* Check if we have a macro name */
+            if (*ptr == '\0' || *ptr == ';')
             {
+                print_line_error(as_filename, line_num, ERROR_MACRO_MISSING_NAME);
+                fclose(as_file);
+                return EXIT_MACRO_SYNTAX_ERROR;
+            }
+
+            /* Extract the macro name */
+            if (sscanf(ptr, "%31s", current_macro_name) != 1)
+            {
+                print_line_error(as_filename, line_num, ERROR_MACRO_MISSING_NAME);
                 fclose(as_file);
                 return EXIT_MACRO_SYNTAX_ERROR;
             }
@@ -280,6 +307,9 @@ ExitCode preprocess(const char *filename)
                 fclose(as_file);
                 free_macro_table();
                 return EXIT_MACRO_SYNTAX_ERROR;
+            }
+            else
+            {
             }
 
             in_macro = TRUE;
@@ -313,7 +343,7 @@ ExitCode preprocess(const char *filename)
         return EXIT_MACRO_MISSING_END;
     }
 
-    /* SECOND PASS: All macros are valid, now create .am file */
+    /* SECOND PASS: All macros are valid (create .am file if no errors) */
     rewind(as_file);
 
     am_file = fopen(am_filename, "w");
@@ -332,8 +362,30 @@ ExitCode preprocess(const char *filename)
         if (strspn(line, " \t\r\n") == strlen(line))
             continue;
 
-        strcpy(first_word, "");
-        get_first_word(line, first_word);
+        /* Make a copy of the line for processing */
+        strcpy(line_copy, line);
+        instruction_part = line_copy;
+
+        /* Check if there's a label at the beginning */
+        if (extract_label(line, label))
+        {
+            /* Write the label to the .am file */
+            fprintf(am_file, "%s: ", label);
+
+            /* Skip past the label in the instruction part */
+            instruction_part = skip_label(instruction_part);
+
+            /* Get the first word after the label */
+            strcpy(first_word, "");
+            get_first_word(instruction_part, first_word);
+        }
+        else
+        {
+            /* No label, get first word of the line */
+            strcpy(first_word, "");
+            get_first_word(line, first_word);
+            instruction_part = line;
+        }
 
         /* Handle .entry and .extern directives */
         if (strcmp(first_word, ".entry") == 0 || strcmp(first_word, ".extern") == 0)
@@ -344,7 +396,7 @@ ExitCode preprocess(const char *filename)
 
         if (!in_macro && strcmp(first_word, "mcro") == 0)
         {
-            sscanf(line, "mcro %31s", current_macro_name);
+            sscanf(instruction_part, "mcro %31s", current_macro_name);
             in_macro = TRUE;
             continue;
         }
@@ -359,16 +411,29 @@ ExitCode preprocess(const char *filename)
             continue;
         }
 
+        /* Check if the first word (after label) is a macro */
         if (find_macro(first_word) != -1)
         {
             write_macro_body(am_file, first_word);
         }
         else
         {
-            char *ptr = line;
-            while (*ptr && isspace((unsigned char)*ptr))
-                ptr++;
-            fputs(ptr, am_file);
+            /* If we already wrote a label, write the rest of the line */
+            if (extract_label(line, label))
+            {
+                ptr = instruction_part;
+                while (*ptr && isspace((unsigned char)*ptr))
+                    ptr++;
+                fputs(ptr, am_file);
+            }
+            else
+            {
+                /* No label, write the whole line */
+                ptr = line;
+                while (*ptr && isspace((unsigned char)*ptr))
+                    ptr++;
+                fputs(ptr, am_file);
+            }
         }
     }
 
