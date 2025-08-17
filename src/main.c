@@ -53,8 +53,13 @@ int main(int argc, char *argv[])
     {
         printf("Assembling file: %s.as\n", argv[i]);
         result = assemble(argv[i]);
+        if (result == EXIT_FILE_EMPTY)
+        {
+            /* Empty file - don't print "Successfully assembled" */
+            /* Continue to the next file */
+        }
 
-        if (result != EXIT_SUCCESS_CODE)
+        else if (result != EXIT_SUCCESS_CODE)
         {
             has_errors = TRUE;
 

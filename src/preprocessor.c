@@ -188,6 +188,7 @@ ExitCode preprocess(const char *filename)
     char line[MAX_LINE_LENGTH];
     char first_word[MAX_MACRO_NAME_LENGTH];
     BOOL in_macro = FALSE;
+    BOOL file_has_content = FALSE;
     char current_macro_name[MAX_MACRO_NAME_LENGTH];
 
     sprintf(as_filename, "%s.as", filename);
@@ -199,6 +200,35 @@ ExitCode preprocess(const char *filename)
         report_error(EXIT_FILE_NOT_FOUND, as_filename);
         return EXIT_FILE_NOT_FOUND;
     }
+
+    /* Check if the source file is empty or contains only whitespace/comments */
+    while (fgets(line, MAX_LINE_LENGTH, as_file))
+    {
+        /* Skip lines that are only whitespace */
+        if (strspn(line, " \t\r\n") == strlen(line))
+            continue;
+
+        strcpy(first_word, "");
+        get_first_word(line, first_word);
+
+        /* Check if line has meaningful content (not just a comment) */
+        if (strlen(first_word) > 0 && first_word[0] != ';')
+        {
+            file_has_content = TRUE;
+            break;
+        }
+    }
+
+    /* If file is empty, report and return */
+    if (!file_has_content)
+    {
+        printf("Warning: File %s is empty, no output files were created.\n", as_filename);
+        fclose(as_file);
+        return EXIT_FILE_EMPTY;
+    }
+
+    /* Rewind file to start processing from the beginning */
+    rewind(as_file);
 
     am_file = fopen(am_filename, "w");
     if (!am_file)
@@ -280,6 +310,5 @@ ExitCode preprocess(const char *filename)
     fclose(as_file);
     fclose(am_file);
     free_macro_table();
-    printf("DEBUG: Preprocess completed!\n");
     return EXIT_SUCCESS_CODE;
 }

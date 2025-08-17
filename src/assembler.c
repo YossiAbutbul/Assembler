@@ -56,6 +56,9 @@ ExitCode assemble(const char *filename)
 
     /* === Phase 1 - Preprocessing (Macro Expansion) === */
     result = preprocess(filename);
+    if (result == EXIT_FILE_EMPTY)
+        return EXIT_FILE_EMPTY;
+
     if (result != EXIT_SUCCESS_CODE)
     {
         report_error(result, filename);
