@@ -94,7 +94,7 @@ void print_line_error(const char *filename, int line_number, ErrorType err_type)
         /* 38 */ "Extra text after macro name",                                         /* ERROR_MACRO_EXTRA_TEXT */
         /* 39 */ "Missing 'mcroend' for macro",                                         /* ERROR_MACRO_MISSING_END */
         /* 40 */ "Missing macro name after 'mcro'",                                     /* ERROR_MACRO_MISSING_NAME */
-        /* 41 */ "Missing whitespace between instruction / directive and operands "};   /* ERROR_MISSING_WHITESPACE */
+        /* 41 */ "Missing whitespace between instruction / directive and operands"};    /* ERROR_MISSING_WHITESPACE */
 
     size_t err_cnt = (sizeof(error_messages) / sizeof(error_messages[0]));
 
