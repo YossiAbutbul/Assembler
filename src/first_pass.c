@@ -614,6 +614,9 @@ static void handle_data_directive(const char *label, const char *directive, cons
     strncpy(line_copy, line, MAX_LINE_LENGTH);
     line_copy[MAX_LINE_LENGTH] = '\0';
 
+    /* Remove comments from the line */
+    remove_comments(line_copy);
+
     /* Find where the directive starts in the line */
     operands_start = strstr(line_copy, directive);
     if (operands_start != NULL)

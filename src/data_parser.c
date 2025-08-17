@@ -282,11 +282,12 @@ void parse_matrix(const char *line, const char *filename, int line_num)
     strcpy(copy, line);
 
     /* Skip leading whitespaces */
-    while (isspace((unsigned char)*copy))
-        copy++;
+    p_start = copy;
+    while (isspace((unsigned char)*p_start))
+        p_start++;
 
     /* Checks for '[' after ".mat" */
-    if (*copy != '[')
+    if (*p_start != '[')
     {
         print_line_error(filename, line_num, ERROR_INVALID_MATRIX);
         err_found = TRUE;
@@ -294,11 +295,9 @@ void parse_matrix(const char *line, const char *filename, int line_num)
         return;
     }
 
-    /* Parse [rows] */
-    p_start = copy + 1;
+    /* Find first ']' for rows */
+    p_start++; /* Skip the '[' */
     p_mid = strchr(p_start, ']');
-
-    /* Check for closing rows bracket */
     if (!p_mid)
     {
         print_line_error(filename, line_num, ERROR_INVALID_MATRIX);
@@ -306,17 +305,29 @@ void parse_matrix(const char *line, const char *filename, int line_num)
         free(copy);
         return;
     }
-    *p_mid = '\0';
 
-    /* Skip whitespaces inside the rows brackets */
+    /* Parse rows directly from the string */
+    *p_mid = '\0'; /* Temporarily null-terminate */
+
+    /* Skip whitespace at the beginning of rows string */
     while (isspace((unsigned char)*p_start))
         p_start++;
 
-    /* Converts the string pointed to by p_start into an integer,
-    using base 10 (this is the rows value of the matrix) */
+    /* Check if empty after trimming whitespace */
+    if (*p_start == '\0')
+    {
+        print_line_error(filename, line_num, ERROR_INVALID_MATRIX);
+        err_found = TRUE;
+        free(copy);
+        return;
+    }
+
     rows = (int)strtol(p_start, &endptr, 10);
 
-    /* Check if there are leftover characters after the number or rows < 0 */
+    /* Trim trailing whitespace by checking endptr */
+    while (isspace((unsigned char)*endptr))
+        endptr++;
+
     if (*endptr != '\0' || rows < 0)
     {
         print_line_error(filename, line_num, ERROR_INVALID_MATRIX);
@@ -325,10 +336,10 @@ void parse_matrix(const char *line, const char *filename, int line_num)
         return;
     }
 
-    /* Parse [cols] */
-
-    /* Checks if immediately after the ']' there is a '[' */
-    if (*(p_mid + 1) != '[')
+    /* Restore the ']' and check for second '[' */
+    *p_mid = ']';
+    p_start = p_mid + 1;
+    if (*p_start != '[')
     {
         print_line_error(filename, line_num, ERROR_INVALID_MATRIX);
         err_found = TRUE;
@@ -336,8 +347,9 @@ void parse_matrix(const char *line, const char *filename, int line_num)
         return;
     }
 
-    /* Move a pointer 2 step forward (skips the ']' and the '[') */
-    p_end = strchr(p_mid + 2, ']');
+    /* Find second ']' for cols */
+    p_start++; /* Skip the '[' */
+    p_end = strchr(p_start, ']');
     if (!p_end)
     {
         print_line_error(filename, line_num, ERROR_INVALID_MATRIX);
@@ -345,19 +357,29 @@ void parse_matrix(const char *line, const char *filename, int line_num)
         free(copy);
         return;
     }
-    *p_end = '\0';
 
-    p_start = p_mid + 2;
+    /* Parse cols directly from the string */
+    *p_end = '\0'; /* Temporarily null-terminate */
 
-    /* Skip whitespaces inside the cols brackets */
+    /* Skip whitespace at the beginning of cols string */
     while (isspace((unsigned char)*p_start))
         p_start++;
 
-    /* Converts the string pointed to by p_start into an integer,
-    using base 10 (this is the cols value of the matrix) */
+    /* Check if empty after trimming whitespace */
+    if (*p_start == '\0')
+    {
+        print_line_error(filename, line_num, ERROR_INVALID_MATRIX);
+        err_found = TRUE;
+        free(copy);
+        return;
+    }
+
     cols = (int)strtol(p_start, &endptr, 10);
 
-    /* Checks if there are leftover characters after the number or cols < 0 */
+    /* Trim trailing whitespace by checking endptr */
+    while (isspace((unsigned char)*endptr))
+        endptr++;
+
     if (*endptr != '\0' || cols < 0)
     {
         print_line_error(filename, line_num, ERROR_INVALID_MATRIX);
@@ -365,6 +387,9 @@ void parse_matrix(const char *line, const char *filename, int line_num)
         free(copy);
         return;
     }
+
+    /* Restore the ']' */
+    *p_end = ']';
 
     /* Calculate the expected numbers in the matrix */
     exp_vals = rows * cols;
@@ -440,7 +465,6 @@ void parse_matrix(const char *line, const char *filename, int line_num)
         for (i = 0; i < (exp_vals - actual_values); i++)
         {
             /* Store 0 in the data image */
-
             if (!store_data(0, filename, line_num))
             {
                 free(copy);

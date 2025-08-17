@@ -5,7 +5,7 @@
 
 MAIN:   mov #10, r1          ; Two operand instruction
         add r1, r2
-        sub r3, #-5
+        sub #-5, r3
         cmp DATA_LABEL, r4
         lea STR, r5
 
