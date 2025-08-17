@@ -225,25 +225,23 @@ void parse_string_value(const char *line, const char *filename, int line_num)
  * @brief Parses a ".mat" directive, extracts matrix dimensions and values,
  * and stores them into the data image.
  *
- * The matrix format must follow the pattern:
+ * The matrix format must follow on of the patterns:
  * - [rows][cols] val1, val2, ..., valN
  * - [rows][cols]
  *
- * - The opening '[' must appear immediately aftee the directive name
+ * - The opening '[' must appear immediately after the directive name
  *   (no space between .mat and '[').
  * - Whitespace is permitted only inside the brackets.
  * - The number of values must not exceed rows * cols.
  * - If fewer values are provided, the remaining elements are implicitly initialized to zero.
  * - Matrix values are stored row by row (left to right, top to bottom).
  *
- * STORAGE_ORDER: dimensions first (rows, cols), then data values
- *
- * Each valid value and dimension increments the data counter 'DC'.
- * The dimensions themselves occupy two words in the data image.
+ * Each valid value increments the data counter 'DC'.
  *
  * Errors are reported if:
  * - Missing or malformed bracket structure.
  * - Non-numeric or invalid dimensions.
+ * - Zero or negative dimenstions.
  * - Invalid operands.
  * - Too many values are provided.
  *
@@ -254,7 +252,7 @@ void parse_string_value(const char *line, const char *filename, int line_num)
 void parse_matrix(const char *line, const char *filename, int line_num)
 {
     int rows, cols, exp_vals, val, i;
-    char *copy, *values_part;
+    char *copy, *values_part, *ptr;
     char *p_start, *p_mid, *p_end;
     char *token;
     int actual_values;
@@ -281,13 +279,15 @@ void parse_matrix(const char *line, const char *filename, int line_num)
     }
     strcpy(copy, line);
 
+    /* Use ptr for parsing, keep copy for free() */
+    ptr = copy;
+
     /* Skip leading whitespaces */
-    p_start = copy;
-    while (isspace((unsigned char)*p_start))
-        p_start++;
+    while (isspace((unsigned char)*ptr))
+        ptr++;
 
     /* Checks for '[' after ".mat" */
-    if (*p_start != '[')
+    if (*ptr != '[')
     {
         print_line_error(filename, line_num, ERROR_INVALID_MATRIX);
         err_found = TRUE;
@@ -296,8 +296,10 @@ void parse_matrix(const char *line, const char *filename, int line_num)
     }
 
     /* Find first ']' for rows */
-    p_start++; /* Skip the '[' */
+    p_start = ptr + 1; /* Skips the '[' */
     p_mid = strchr(p_start, ']');
+
+    /* Check for closing rows bracket */
     if (!p_mid)
     {
         print_line_error(filename, line_num, ERROR_INVALID_MATRIX);
@@ -322,15 +324,32 @@ void parse_matrix(const char *line, const char *filename, int line_num)
         return;
     }
 
+    /* Check for comma in rows (invalid syntax like [3,3]) */
+    if (strchr(p_start, ','))
+    {
+        print_line_error(filename, line_num, ERROR_INVALID_MATRIX);
+        err_found = TRUE;
+        free(copy);
+        return;
+    }
+
     rows = (int)strtol(p_start, &endptr, 10);
 
     /* Trim trailing whitespace by checking endptr */
     while (isspace((unsigned char)*endptr))
         endptr++;
 
-    if (*endptr != '\0' || rows < 0)
+    if (*endptr != '\0')
     {
         print_line_error(filename, line_num, ERROR_INVALID_MATRIX);
+        err_found = TRUE;
+        free(copy);
+        return;
+    }
+
+    if (rows <= 0)
+    {
+        print_line_error(filename, line_num, ERROR_INVALID_MATRIX_DIMENSIONS);
         err_found = TRUE;
         free(copy);
         return;
@@ -374,15 +393,33 @@ void parse_matrix(const char *line, const char *filename, int line_num)
         return;
     }
 
+    /* Check for comma in cols (invalid syntax like [3,3]) */
+    if (strchr(p_start, ','))
+    {
+        print_line_error(filename, line_num, ERROR_INVALID_MATRIX);
+        err_found = TRUE;
+        free(copy);
+        return;
+    }
+
     cols = (int)strtol(p_start, &endptr, 10);
 
     /* Trim trailing whitespace by checking endptr */
     while (isspace((unsigned char)*endptr))
         endptr++;
 
-    if (*endptr != '\0' || cols < 0)
+    if (*endptr != '\0')
     {
         print_line_error(filename, line_num, ERROR_INVALID_MATRIX);
+        err_found = TRUE;
+        free(copy);
+        return;
+    }
+
+    /* Validate cols dimension */
+    if (cols <= 0)
+    {
+        print_line_error(filename, line_num, ERROR_INVALID_MATRIX_DIMENSIONS);
         err_found = TRUE;
         free(copy);
         return;
@@ -442,7 +479,7 @@ void parse_matrix(const char *line, const char *filename, int line_num)
                     /* Check if we have too many values */
                     if (actual_values > exp_vals)
                     {
-                        print_line_error(filename, line_num, ERROR_TOO_MANY_OPERANDS);
+                        print_line_error(filename, line_num, ERROR_MATRIX_TOO_MANY_VALUES);
                         err_found = TRUE;
                         break;
                     }
@@ -472,13 +509,6 @@ void parse_matrix(const char *line, const char *filename, int line_num)
             }
             DC++;
         }
-    }
-
-    /* Report error if overfilled (should have caught above, here for safety) */
-    if (actual_values > exp_vals)
-    {
-        print_line_error(filename, line_num, ERROR_TOO_MANY_OPERANDS);
-        err_found = TRUE;
     }
 
     /* Free memory of copy */

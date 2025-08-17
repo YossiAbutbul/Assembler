@@ -197,7 +197,7 @@ ExitCode preprocess(const char *filename)
     as_file = fopen(as_filename, "r");
     if (!as_file)
     {
-        report_error(EXIT_FILE_NOT_FOUND, as_filename);
+        report_error(EXIT_FILE_NOT_FOUND, filename);
         return EXIT_FILE_NOT_FOUND;
     }
 

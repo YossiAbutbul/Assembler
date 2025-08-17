@@ -61,7 +61,6 @@ ExitCode assemble(const char *filename)
 
     if (result != EXIT_SUCCESS_CODE)
     {
-        report_error(result, filename);
         return result;
     }
 
