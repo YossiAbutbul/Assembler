@@ -14,6 +14,7 @@
 #include "../include/error.h"
 #include "../include/preprocessor.h"
 #include "../include/constants.h"
+#include "../include/utils.h"
 
 /**
  * @struct Macro
@@ -190,6 +191,10 @@ ExitCode preprocess(const char *filename)
     BOOL in_macro = FALSE;
     BOOL file_has_content = FALSE;
     char current_macro_name[MAX_MACRO_NAME_LENGTH];
+    int line_num = 0;
+    char temp_line[MAX_LINE_LENGTH];
+    char macro_name_check[MAX_MACRO_NAME_LENGTH];
+    char extra_text[MAX_LINE_LENGTH];
 
     sprintf(as_filename, "%s.as", filename);
     sprintf(am_filename, "%s.am", filename);
@@ -201,17 +206,15 @@ ExitCode preprocess(const char *filename)
         return EXIT_FILE_NOT_FOUND;
     }
 
-    /* Check if the source file is empty or contains only whitespace/comments */
+    /* Check if the source file is empty */
     while (fgets(line, MAX_LINE_LENGTH, as_file))
     {
-        /* Skip lines that are only whitespace */
         if (strspn(line, " \t\r\n") == strlen(line))
             continue;
 
         strcpy(first_word, "");
         get_first_word(line, first_word);
 
-        /* Check if line has meaningful content (not just a comment) */
         if (strlen(first_word) > 0 && first_word[0] != ';')
         {
             file_has_content = TRUE;
@@ -219,7 +222,6 @@ ExitCode preprocess(const char *filename)
         }
     }
 
-    /* If file is empty, report and return */
     if (!file_has_content)
     {
         printf("Warning: File %s is empty, no output files were created.\n", as_filename);
@@ -227,46 +229,56 @@ ExitCode preprocess(const char *filename)
         return EXIT_FILE_EMPTY;
     }
 
-    /* Rewind file to start processing from the beginning */
+    /* FIRST PASS: Validate macros only (don't create .am file yet) */
     rewind(as_file);
-
-    am_file = fopen(am_filename, "w");
-    if (!am_file)
-    {
-        fclose(as_file);
-        report_error(EXIT_WRITE_ERROR, am_filename);
-        return EXIT_WRITE_ERROR;
-    }
+    line_num = 0;
+    in_macro = FALSE;
 
     while (fgets(line, MAX_LINE_LENGTH, as_file))
     {
+        line_num++;
+
         if (strspn(line, " \t\r\n") == strlen(line))
             continue;
 
         strcpy(first_word, "");
         get_first_word(line, first_word);
 
-        /* Handle .entry and .extern directives - pass them through unchanged */
+        /* Skip .entry and .extern directives */
         if (strcmp(first_word, ".entry") == 0 || strcmp(first_word, ".extern") == 0)
-        {
-            fputs(line, am_file);
             continue;
-        }
 
         if (!in_macro && strcmp(first_word, "mcro") == 0)
         {
             if (sscanf(line, "mcro %31s", current_macro_name) != 1)
             {
                 fclose(as_file);
-                fclose(am_file);
                 return EXIT_MACRO_SYNTAX_ERROR;
+            }
+
+            /* Check if macro name is a reserved word */
+            if (is_reserved_word(current_macro_name))
+            {
+                print_line_error(as_filename, line_num, ERROR_MACRO_RESERVED_WORD);
+                fclose(as_file);
+                return EXIT_MACRO_RESERVED_WORD;
+            }
+
+            /* Check for extra text after macro name */
+            strcpy(temp_line, line);
+            remove_comments(temp_line);
+
+            if (sscanf(temp_line, "mcro %31s %s", macro_name_check, extra_text) == 2)
+            {
+                print_line_error(as_filename, line_num, ERROR_MACRO_EXTRA_TEXT);
+                fclose(as_file);
+                return EXIT_MACRO_EXTRA_TEXT;
             }
 
             if (!add_macro(current_macro_name))
             {
                 fclose(as_file);
-                fclose(am_file);
-                report_error(EXIT_MACRO_SYNTAX_ERROR, as_filename);
+                free_macro_table();
                 return EXIT_MACRO_SYNTAX_ERROR;
             }
 
@@ -285,11 +297,65 @@ ExitCode preprocess(const char *filename)
             if (!add_line_to_macro(current_macro_name, line))
             {
                 fclose(as_file);
-                fclose(am_file);
-                report_error(EXIT_MACRO_SYNTAX_ERROR, as_filename);
+                free_macro_table();
                 return EXIT_MACRO_SYNTAX_ERROR;
             }
+            continue;
+        }
+    }
 
+    /* Check if we're still in a macro at end of file */
+    if (in_macro)
+    {
+        print_line_error(as_filename, line_num, ERROR_MACRO_MISSING_END);
+        fclose(as_file);
+        free_macro_table();
+        return EXIT_MACRO_MISSING_END;
+    }
+
+    /* SECOND PASS: All macros are valid, now create .am file */
+    rewind(as_file);
+
+    am_file = fopen(am_filename, "w");
+    if (!am_file)
+    {
+        fclose(as_file);
+        report_error(EXIT_WRITE_ERROR, am_filename);
+        return EXIT_WRITE_ERROR;
+    }
+
+    /* Reset for actual processing */
+    in_macro = FALSE;
+
+    while (fgets(line, MAX_LINE_LENGTH, as_file))
+    {
+        if (strspn(line, " \t\r\n") == strlen(line))
+            continue;
+
+        strcpy(first_word, "");
+        get_first_word(line, first_word);
+
+        /* Handle .entry and .extern directives */
+        if (strcmp(first_word, ".entry") == 0 || strcmp(first_word, ".extern") == 0)
+        {
+            fputs(line, am_file);
+            continue;
+        }
+
+        if (!in_macro && strcmp(first_word, "mcro") == 0)
+        {
+            sscanf(line, "mcro %31s", current_macro_name);
+            in_macro = TRUE;
+            continue;
+        }
+
+        if (in_macro)
+        {
+            if (strcmp(first_word, "mcroend") == 0)
+            {
+                in_macro = FALSE;
+                continue;
+            }
             continue;
         }
 
@@ -302,7 +368,6 @@ ExitCode preprocess(const char *filename)
             char *ptr = line;
             while (*ptr && isspace((unsigned char)*ptr))
                 ptr++;
-
             fputs(ptr, am_file);
         }
     }

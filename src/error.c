@@ -22,6 +22,12 @@ void report_error(ExitCode exit_code, const char *filename)
     case EXIT_MACRO_SYNTAX_ERROR:
         fprintf(stderr, "Error: Macro syntax error in file %s.\n", filename);
         break;
+    case EXIT_MACRO_RESERVED_WORD:
+        fprintf(stderr, "ERROR: Macro syntax error in file %s.\n", filename);
+    case EXIT_MACRO_EXTRA_TEXT:
+        fprintf(stderr, "ERROR: Macro syntax error in file %s.\n", filename);
+    case EXIT_MACRO_MISSING_END:
+        fprintf(stderr, "ERROR: Macro syntax error in file %s.\n", filename);
     case EXIT_FIRST_PASS_ERROR:
         fprintf(stderr, "Error: First pass error in file %s.\n", filename);
         break;
@@ -83,7 +89,10 @@ void print_line_error(const char *filename, int line_number, ErrorType err_type)
         /* 33 */ "Too many values provided for matrix size",                            /* ERROR_MATRIX_TOO_MANY_VALUES */
         /* 34 */ "String must be enclosed in double quotes",                            /* ERROR_STRING_MISSING_QUOTES */
         /* 35 */ "String missing closing quote",                                        /* ERROR_STRING_UNCLOSED */
-        /* 36 */ "String contains invalid non-ASCII character"};                        /* ERROR_STRING_INVALID_CHARACTER */
+        /* 36 */ "String contains invalid non-ASCII character",                         /* ERROR_STRING_INVALID_CHARACTER */
+        /* 37 */ "Cannot use reserved word as macro name",                              /* ERROR_MACRO_RESERVED_WORD */
+        /* 38 */ "Extra text after macro name",                                         /* ERROR_MACRO_EXTRA_TEXT */
+        /* 39 */ "Missing 'mcroend' for macro"};                                        /* ERROR_MACRO_MISSING_END */
 
     size_t err_cnt = (sizeof(error_messages) / sizeof(error_messages[0]));
 
