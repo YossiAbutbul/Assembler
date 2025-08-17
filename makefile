@@ -1,14 +1,11 @@
 CFLAGS = -g -m32 -std=c90 -pedantic -Wall -ansi
 BUILD_DIR = build
 
-# Object files in build directory
 OBJS = $(BUILD_DIR)/assembler.o $(BUILD_DIR)/main.o $(BUILD_DIR)/preprocessor.o $(BUILD_DIR)/first_pass.o $(BUILD_DIR)/second_pass.o $(BUILD_DIR)/symbol_table.o $(BUILD_DIR)/utils.o $(BUILD_DIR)/data_image.o $(BUILD_DIR)/data_parser.o $(BUILD_DIR)/instruction_parser.o $(BUILD_DIR)/output.o $(BUILD_DIR)/error.o
 
-# Create assembler in current directory (not build directory)
 assembler: $(BUILD_DIR) $(OBJS)
 	gcc $(CFLAGS) $(OBJS) -o assembler
 
-# Create build directory if it doesn't exist
 $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)
 

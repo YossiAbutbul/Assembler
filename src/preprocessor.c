@@ -280,5 +280,6 @@ ExitCode preprocess(const char *filename)
     fclose(as_file);
     fclose(am_file);
     free_macro_table();
+    printf("DEBUG: Preprocess completed!\n");
     return EXIT_SUCCESS_CODE;
 }
