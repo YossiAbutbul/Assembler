@@ -194,7 +194,8 @@ char *skip_label(const char *line)
 /**
  * @brief Check if a label is valid according to assembler rules:
  * - Must start with a letter.
- * - Contain only alphanumeric characters
+ * - Contain only alphanumeric characters.
+ * - Not exceed MAX_LABEL_LENGTH (30 characters).
  * - Not be a reserved word.
  *
  * @param label Pointer to the label string to check.
@@ -204,28 +205,32 @@ BOOL is_valid_label(const char *label)
 {
     int i, len;
 
-    /* Check if a label starts with a letter. */
-    if (!label || !isalpha((unsigned char)label[0]))
+    /* Check for null or empty label */
+    if (!label || label[0] == '\0')
+        return FALSE;
+
+    /* Check if label starts with a letter */
+    if (!isalpha((unsigned char)label[0]))
         return FALSE;
 
     len = strlen(label);
 
-    /* Checks the label length. */
+    /* Check the label length - must not exceed MAX_LABEL_LENGTH */
     if (len > MAX_LABEL_LENGTH)
         return FALSE;
 
-    /* Check if the label contains only alphanumeric characters. */
-    for (i = 1; i < len && label[i] != '\0'; i++)
+    /* Check if the label contains only alphanumeric characters and underscores */
+    for (i = 0; i < len; i++)
     {
         if (!isalnum((unsigned char)label[i]) && label[i] != '_')
             return FALSE;
     }
 
-    /* Check if the label is a reserved word. */
+    /* Check if the label is a reserved word */
     if (is_reserved_word(label))
         return FALSE;
 
-    return TRUE; /* Valid label. */
+    return TRUE;
 }
 
 /* === Tokenization === */

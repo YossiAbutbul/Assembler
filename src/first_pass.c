@@ -81,6 +81,9 @@ BOOL first_pass(FILE *am_file, const char *filename)
             continue;
         }
 
+        /* Remove comments BEFORE trimming whitespace */
+        remove_comments(line);
+
         /* Trim leading and trailing whitespace */
         trim_whitespace(line);
 
@@ -107,6 +110,7 @@ BOOL first_pass(FILE *am_file, const char *filename)
 
     return TRUE;
 }
+
 /* === Internal Helper functions === */
 
 /**
@@ -156,7 +160,7 @@ static void process_line(const char *line, const char *filename, int line_num)
     BOOL has_label;
     char buffer[MAX_LINE_LENGTH + 1];
     char *colon_pos;
-    char potential_label[MAX_LABEL_LENGTH + 1];
+    char potential_label[MAX_LABEL_LENGTH + 10]; /* Extra space for overflow detection */
     int j;
 
     /* Initialization */
@@ -185,17 +189,53 @@ static void process_line(const char *line, const char *filename, int line_num)
         {
             /* Extract the text before the colon to check if it's a valid label attempt */
             j = 0;
-            while (rest + j < colon_pos && j < MAX_LABEL_LENGTH && !isspace((unsigned char)rest[j]))
+            while (rest + j < colon_pos && j < sizeof(potential_label) - 1 && !isspace((unsigned char)rest[j]))
             {
                 potential_label[j] = rest[j];
                 j++;
             }
             potential_label[j] = '\0';
 
+            /* Check for label validation errors */
+
+            /* Check if label is too long */
+            if (strlen(potential_label) > MAX_LABEL_LENGTH)
+            {
+                print_line_error(filename, line_num, ERROR_LABEL_SYNTAX);
+                err_found = TRUE;
+                return;
+            }
+
+            /* Check if label starts with digit */
+            if (potential_label[0] != '\0' && isdigit((unsigned char)potential_label[0]))
+            {
+                print_line_error(filename, line_num, ERROR_LABEL_SYNTAX);
+                err_found = TRUE;
+                return;
+            }
+
+            /* Check if label starts with non-letter (but not digit - already checked) */
+            if (potential_label[0] != '\0' && !isalpha((unsigned char)potential_label[0]))
+            {
+                print_line_error(filename, line_num, ERROR_LABEL_SYNTAX);
+                err_found = TRUE;
+                return;
+            }
+
+            /* Check for invalid characters in label */
+            for (j = 0; potential_label[j] != '\0'; j++)
+            {
+                if (!isalnum((unsigned char)potential_label[j]) && potential_label[j] != '_')
+                {
+                    print_line_error(filename, line_num, ERROR_LABEL_SYNTAX);
+                    err_found = TRUE;
+                    return;
+                }
+            }
+
             /* Check if the text before colon is a reserved word */
             if (is_reserved_word(potential_label))
             {
-                /* This is a reserved word followed by colon - syntax error */
                 print_line_error(filename, line_num, ERROR_RESERVED_WORD);
                 err_found = TRUE;
                 return;
@@ -207,7 +247,7 @@ static void process_line(const char *line, const char *filename, int line_num)
                 /* Valid label extracted */
                 has_label = TRUE;
 
-                /* Validate the extracted label */
+                /* Double-check label validity */
                 if (!is_valid_label(label))
                 {
                     print_line_error(filename, line_num, ERROR_LABEL_SYNTAX);
@@ -234,7 +274,6 @@ static void process_line(const char *line, const char *filename, int line_num)
                 return;
             }
         }
-        /* If no colon, then no label attempt, continue normally */
     }
 
     /* Extract first token (opcode or directive) */

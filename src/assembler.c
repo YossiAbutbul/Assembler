@@ -37,12 +37,13 @@
 ExitCode assemble(const char *filename)
 {
     char am_filename[MAX_FILE_NAME_LENGTH];
+    char as_filename[MAX_FILE_NAME_LENGTH];
     FILE *am_file;
     AssemblyContext context;
     ExitCode result;
     BOOL context_initialized;
 
-    /* Initialize am file and result */
+    /* Initialize variables */
     am_file = NULL;
     result = EXIT_SUCCESS_CODE;
     context_initialized = FALSE;
@@ -54,6 +55,9 @@ ExitCode assemble(const char *filename)
         return EXIT_GENERAL_ERROR;
     }
 
+    /* Create full .as filename for error reporting */
+    sprintf(as_filename, "%s.as", filename);
+
     /* === Phase 1 - Preprocessing (Macro Expansion) === */
     result = preprocess(filename);
     if (result == EXIT_FILE_EMPTY)
@@ -64,38 +68,27 @@ ExitCode assemble(const char *filename)
         return result;
     }
 
-    /* === Phase 2 - Preprocessing (Macro Expansion) === */
-
-    /* Initialize symbol table for this file */
+    /* === Phase 2 - First Pass === */
     init_symbol_table();
-
-    /* Initialize data image for this file */
     init_data_image();
 
-    /* Open the .am file created by the preprocessor */
     sprintf(am_filename, "%s.am", filename);
     am_file = fopen(am_filename, "r");
     if (am_file != NULL)
     {
-        /* Preforms first pass */
-        if (first_pass(am_file, filename))
+        /* Pass as_filename instead of filename for error reporting */
+        if (first_pass(am_file, as_filename))
         {
             /* === Phase 3 - Second Pass === */
-
-            /* Initialize assembly context for second pass */
             if (init_assembly_context(&context))
             {
                 context_initialized = TRUE;
-
-                /* Rewind the file pointer to the beginning for second pass */
                 rewind(am_file);
 
-                /* Preforms second pass */
-                if (second_pass(am_file, filename, &context))
+                /* Pass as_filename instead of filename for error reporting */
+                if (second_pass(am_file, as_filename, &context))
                 {
                     /* === Phase 4 - Output Generation === */
-
-                    /* Generate all output files (.ob, .ent, .ext) */
                     if (!generate_output_files(filename, &context))
                     {
                         report_error(EXIT_WRITE_ERROR, filename);
@@ -126,14 +119,13 @@ ExitCode assemble(const char *filename)
         result = EXIT_FILE_NOT_FOUND;
     }
 
-    /* Cleanup section */
+    /* Cleanup */
     if (context_initialized)
         cleanup_assembly_context(&context);
 
     if (am_file)
         fclose(am_file);
 
-    /* Clean up global data structures */
     free_symbol_table();
     free_data_image();
     cleanup_first_pass_data();
