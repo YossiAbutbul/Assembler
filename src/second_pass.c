@@ -135,6 +135,13 @@ BOOL second_pass(FILE *am_file, const char *filename, AssemblyContext *context)
             continue;
 
         process_line_second_pass(line, filename, line_num, &current_ic, context);
+
+        /* Stop processing if we encountered an error */
+        if (err_found)
+        {
+            context->has_errors = TRUE;
+            break;
+        }
     }
 
     /* Update final counters */
@@ -143,15 +150,13 @@ BOOL second_pass(FILE *am_file, const char *filename, AssemblyContext *context)
     context->has_errors = err_found;
 
     /* Validate we processed the expected number of instructions */
-    if (get_current_instruction_index() != get_instruction_count())
+    if (!err_found && get_current_instruction_index() != get_instruction_count())
     {
         print_line_error(filename, 0, ERROR_GENERAL);
         err_found = TRUE;
         context->has_errors = TRUE;
         return FALSE;
     }
-
-    /* Second pass completed if no errors found */
 
     return !err_found;
 }
@@ -251,10 +256,12 @@ static void handle_instruction_second_pass(const char *line, const char *filenam
         instruction_part = skip_label(instruction_part);
     }
 
-    /* Parse the instruction (for operand details for symbol resolution) */
+    /* Parse the instruction */
     if (!parse_instruction(instruction_part, filename, line_num, &instruction))
     {
-        return; /* The index incremented in get_next_instruction_data() */
+        err_found = TRUE;
+        context->has_errors = TRUE;
+        return;
     }
 
     /* Verify word count consistency between passes */
@@ -269,6 +276,8 @@ static void handle_instruction_second_pass(const char *line, const char *filenam
     /* Use pre-calculated data for encoding */
     if (!encode_instruction_with_stored_data(&instruction, inst_data, *current_ic, filename, line_num, context))
     {
+        err_found = TRUE;
+        context->has_errors = TRUE;
         return;
     }
 
@@ -508,7 +517,6 @@ static BOOL encode_operand(const Operand *operand, int address, BOOL is_source, 
     {
     case ADDRESSING_IMMEDIATE:
         /* Immediate values are handled in encode_instruction_with_stored_data */
-        /* This case should never be reached */
         print_line_error(filename, line_num, ERROR_GENERAL);
         err_found = TRUE;
         context->has_errors = TRUE;

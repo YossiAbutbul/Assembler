@@ -63,7 +63,14 @@ typedef enum
 
     /* === Instruction Generation Erros === */
     ERROR_INSTRUCTION_IMAGE_OVERFLOW,
-    ERROR_ADDRESS_OUT_OF_BOUNDS
+    ERROR_ADDRESS_OUT_OF_BOUNDS,
+
+    /* === Invalid Operands Errors === */
+    ERROR_INVALID_IMMEDIATE_VALUE,
+    ERROR_INVALID_REGISTER,
+    ERROR_INVALID_MATRIX_ACCESS,
+    ERROR_MATRIX_MISSING_REGISTER,
+    ERROR_MATRIX_INVALID_REGISTER
 } ErrorType;
 
 /**

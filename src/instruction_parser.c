@@ -244,38 +244,60 @@ static BOOL parse_operand(const char *operand_str, Operand *operand, const char 
     /* Initialize operand struct */
     memset(operand, 0, sizeof(Operand));
 
-    /* Trim whitespace by copying characters from the operand_str to the trimmed array */
+    /* Trim whitespace */
     for (i = 0, j = 0; operand_str[i] && j < MAX_LINE_LENGTH - 1; i++)
     {
         if (!isspace((unsigned char)operand_str[i]))
             trimmed[j++] = operand_str[i];
     }
-    /* Null terminate the trimmed str */
     trimmed[j] = '\0';
 
-    /* Determine addressing mode */
-
     /* Check for immediate addressing (#value) */
-    if (is_immediate(trimmed, &operand->value))
+    if (trimmed[0] == '#')
     {
-        operand->mode = ADDRESSING_IMMEDIATE;
-        operand->is_symbol = FALSE;
-        return TRUE;
+        if (is_immediate(trimmed, &operand->value))
+        {
+            operand->mode = ADDRESSING_IMMEDIATE;
+            operand->is_symbol = FALSE;
+            return TRUE;
+        }
+        else
+        {
+            print_line_error(filename, line_num, ERROR_INVALID_IMMEDIATE_VALUE);
+            err_found = TRUE;
+            return FALSE;
+        }
     }
 
     /* Check for register addressing (r0-r7) */
-    if (is_register(trimmed, &operand->value))
+    if (trimmed[0] == 'r')
     {
-        operand->mode = ADDRESSING_REGISTER;
-        operand->is_symbol = FALSE;
-        return TRUE;
+        if (is_register(trimmed, &operand->value))
+        {
+            operand->mode = ADDRESSING_REGISTER;
+            operand->is_symbol = FALSE;
+            return TRUE;
+        }
+        else
+        {
+            print_line_error(filename, line_num, ERROR_INVALID_REGISTER);
+            err_found = TRUE;
+            return FALSE;
+        }
     }
 
     /* Check for matrix addressing (label[reg][reg]) */
-    if (is_matrix_reference(trimmed, operand, filename, line_num))
+    if (strchr(trimmed, '['))
     {
-        operand->mode = ADDRESSING_MATRIX;
-        return TRUE; /* is_symbol flag set by is_matrix_reference */
+        if (is_matrix_reference(trimmed, operand, filename, line_num))
+        {
+            operand->mode = ADDRESSING_MATRIX;
+            return TRUE;
+        }
+        else
+        {
+            return FALSE;
+        }
     }
 
     /* Check for direct addressing */
@@ -283,12 +305,12 @@ static BOOL parse_operand(const char *operand_str, Operand *operand, const char 
     {
         operand->mode = ADDRESSING_DIRECT;
         strncpy(operand->symbol_name, trimmed, MAX_LABEL_LENGTH);
-        operand->symbol_name[MAX_LABEL_LENGTH] = '\0'; /* Null terminate */
+        operand->symbol_name[MAX_LABEL_LENGTH] = '\0';
         operand->is_symbol = TRUE;
         return TRUE;
     }
 
-    /* Invalid operand */
+    /* If we get here, it's an invalid operand */
     print_line_error(filename, line_num, ERROR_INVALID_OPERAND);
     err_found = TRUE;
     return FALSE;
@@ -328,9 +350,15 @@ static BOOL is_register(const char *str, int *reg_num)
 static BOOL is_immediate(const char *str, int *value)
 {
     char *endptr;
+    const char *num_start;
 
     /* Check empty str or str not staring with'#' (e.g.: #5 represents the value 5) */
     if (!str || str[0] != '#')
+        return FALSE;
+
+    /* Check if there is anything after the '#' */
+    num_start = str + 1;
+    if (*num_start == '\0')
         return FALSE;
 
     /* Parse the nu,ber after the '#' */
@@ -359,30 +387,46 @@ static BOOL is_matrix_reference(const char *str, Operand *operand, const char *f
     int label_len;
     int i, j;
 
-    /* Find bracket postions */
+    /* Find first '[' */
     br1 = strchr(str, '[');
     if (!br1)
         return FALSE;
 
-    /* Move the pointer to the start of the str after the first '['*/
+    /* find first ']'*/
     br2 = strchr(br1 + 1, ']');
     if (!br2)
+    {
+        print_line_error(filename, line_num, ERROR_MATRIX_MISSING_REGISTER);
+        err_found = TRUE;
         return FALSE;
+    }
 
-    /* Move the pointer to the start of the str after the first ']'*/
+    /* Find second '[' */
     br3 = strchr(br2, '[');
     if (!br3)
+    {
+        print_line_error(filename, line_num, ERROR_MATRIX_MISSING_REGISTER);
+        err_found = TRUE;
         return FALSE;
+    }
 
-    /* Move the pointer to the start of the str after the second '['*/
+    /* Find seccond ']' */
     br4 = strchr(br3, ']');
     if (!br4)
+    {
+        print_line_error(filename, line_num, ERROR_MATRIX_MISSING_REGISTER);
+        err_found = TRUE;
         return FALSE;
+    }
 
     /* Extract label part */
     label_len = br1 - str;
     if (label_len <= 0 || label_len > MAX_LABEL_LENGTH)
+    {
+        print_line_error(filename, line_num, ERROR_INVALID_MATRIX_ACCESS);
+        err_found = TRUE;
         return FALSE;
+    }
 
     /* Create a copy */
     strncpy(label_part, str, label_len);
@@ -392,7 +436,11 @@ static BOOL is_matrix_reference(const char *str, Operand *operand, const char *f
     for (i = label_len - 1; i >= 0; i--)
     {
         if (isspace((unsigned char)label_part[i]))
+        {
+            print_line_error(filename, line_num, ERROR_INVALID_MATRIX_ACCESS);
+            err_found = TRUE;
             return FALSE; /* Found space before first '[' */
+        }
         break;
     }
 
@@ -400,6 +448,8 @@ static BOOL is_matrix_reference(const char *str, Operand *operand, const char *f
     if (br2 - br1 - 1 >= sizeof(reg1_str) ||
         br4 - br3 - 1 >= sizeof(reg2_str))
     {
+        print_line_error(filename, line_num, ERROR_INVALID_MATRIX_ACCESS);
+        err_found = TRUE;
         return FALSE;
     }
 
@@ -429,11 +479,27 @@ static BOOL is_matrix_reference(const char *str, Operand *operand, const char *f
     /* Null terminate the string */
     trimmed_reg2[j] = '\0';
 
-    /* Validate label and registers */
-    if (!is_valid_label(label_part) ||
-        !is_register(trimmed_reg1, &operand->reg1) ||
-        !is_register(trimmed_reg2, &operand->reg2))
+    /* Validate label */
+    if (!is_valid_label(label_part))
     {
+        print_line_error(filename, line_num, ERROR_INVALID_LABEL);
+        err_found = TRUE;
+        return FALSE;
+    }
+
+    /* Validate first register */
+    if (!is_register(trimmed_reg1, &operand->reg1))
+    {
+        print_line_error(filename, line_num, ERROR_MATRIX_INVALID_REGISTER);
+        err_found = TRUE;
+        return FALSE;
+    }
+
+    /* Validate second register */
+    if (!is_register(trimmed_reg2, &operand->reg2))
+    {
+        print_line_error(filename, line_num, ERROR_MATRIX_INVALID_REGISTER);
+        err_found = TRUE;
         return FALSE;
     }
 
