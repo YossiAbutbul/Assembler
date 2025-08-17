@@ -253,7 +253,7 @@ static void handle_instruction_second_pass(const char *line, const char *filenam
     /* Skip label if exists */
     if (extract_label(line, label))
     {
-        instruction_part = skip_label(instruction_part);
+        instruction_part = skip_label(line_copy); /* FIXED: Use line_copy instead of instruction_part */
     }
 
     /* Parse the instruction */

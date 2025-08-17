@@ -373,7 +373,7 @@ ExitCode preprocess(const char *filename)
             fprintf(am_file, "%s: ", label);
 
             /* Skip past the label in the instruction part */
-            instruction_part = skip_label(instruction_part);
+            instruction_part = skip_label(line_copy);
 
             /* Get the first word after the label */
             strcpy(first_word, "");
@@ -390,7 +390,7 @@ ExitCode preprocess(const char *filename)
         /* Handle .entry and .extern directives */
         if (strcmp(first_word, ".entry") == 0 || strcmp(first_word, ".extern") == 0)
         {
-            fputs(line, am_file);
+            fputs(instruction_part, am_file);
             continue;
         }
 

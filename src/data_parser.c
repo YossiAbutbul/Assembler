@@ -14,6 +14,62 @@
 #include "../include/utils.h"
 
 /**
+ * @brief Check if the data line has missing commas between numbers
+ *
+ * @param line The line to check.
+ * @return TRUE if missing commas detected, FALSE otherwise.
+ * @note This is an internal function used only in this file.
+ */
+static BOOL has_missing_commas(const char *line)
+{
+    const char *p = line;
+    int number_count = 0;
+    int comma_count = 0;
+    BOOL in_number = FALSE;
+
+    /* Skip leading whitespace */
+    while (isspace((unsigned char)*p))
+        p++;
+
+    while (*p && *p != ';') /* Stop at comment */
+    {
+        if (isdigit((unsigned char)*p) || (*p == '-' && isdigit((unsigned char)*(p + 1))))
+        {
+            /* Found start of a number */
+            if (!in_number)
+            {
+                number_count++;
+                in_number = TRUE;
+            }
+        }
+        else if (*p == ',')
+        {
+            comma_count++;
+            in_number = FALSE;
+        }
+        else if (isspace((unsigned char)*p))
+        {
+            in_number = FALSE;
+        }
+        else
+        {
+            /* Invalid character - let other validation handle it */
+            in_number = FALSE;
+        }
+        p++;
+    }
+
+    /* If we have multiple numbers, we should have (number_count - 1) commas */
+    /* Example: "1 2 3" has 3 numbers, should have 2 commas, but has 0 */
+    if (number_count > 1 && comma_count != (number_count - 1))
+    {
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+/**
  * @brief Parses the operand list of a ".data" directive.
  *
  * This function extracts a comma-separated list of integers and adds
@@ -35,6 +91,8 @@ void parse_data_values(const char *line, const char *filename, int line_num)
     int value;
     BOOL found_comma = FALSE;
     const char *p;
+    char *endptr;
+    long temp_value;
 
     /* Check for null line pointer */
     if (!line)
@@ -90,6 +148,14 @@ void parse_data_values(const char *line, const char *filename, int line_num)
         }
     }
 
+    /* Check for missing commas between numbers */
+    if (has_missing_commas(line))
+    {
+        print_line_error(filename, line_num, ERROR_SYNTAX);
+        err_found = TRUE;
+        return;
+    }
+
     /* Creates a copy of the line to not change it directly. */
     copy = (char *)malloc(strlen(line) + 1);
 
@@ -113,15 +179,15 @@ void parse_data_values(const char *line, const char *filename, int line_num)
         /* Assign a ptr to the end of the token. */
         ptr = token + strlen(token) - 1;
 
-        /* Remove trailing whitespaces from the end. */
+        /* Trim trailing whitespaces */
         while (ptr > token && isspace((unsigned char)*ptr))
         {
             *ptr = '\0';
             ptr--;
         }
 
-        /* Check if empty string after trimming */
-        if (strlen(token) == 0)
+        /* Check if the token is empty after trimming */
+        if (*token == '\0')
         {
             print_line_error(filename, line_num, ERROR_SYNTAX);
             err_found = TRUE;
@@ -129,39 +195,45 @@ void parse_data_values(const char *line, const char *filename, int line_num)
             return;
         }
 
-        /* Convert to int */
-        value = (int)strtol(token, &ptr, 10);
+        /* Validate that token is a valid number */
+        temp_value = strtol(token, &endptr, 10);
 
         /* Check if conversion was successful */
-        if (*ptr != '\0')
+        if (*endptr != '\0' || endptr == token)
         {
             print_line_error(filename, line_num, ERROR_INVALID_OPERAND);
             err_found = TRUE;
+            free(copy);
+            return;
+        }
+
+        /* Convert to integer */
+        value = (int)temp_value;
+
+        /* Validate range (-512 to +511) */
+        if (value < -512 || value > 511)
+        {
+            print_line_error(filename, line_num, ERROR_DATA_OUT_OF_RANGE);
+            err_found = TRUE;
+            /* Continue to check other values and report all range errors */
         }
         else
         {
-            if (value < -512 || value > 511)
+            /* Store the data value only if no errors */
+            if (!store_data(value, filename, line_num))
             {
-                print_line_error(filename, line_num, ERROR_DATA_OUT_OF_RANGE);
-                err_found = TRUE;
+                free(copy);
+                return;
             }
-            else
-            {
-                /* Stores the value into the data image */
-                if (!store_data(value, filename, line_num))
-                {
-                    free(copy);
-                    return;
-                }
-                DC++;
-            }
+
+            /* Increment data counter */
+            DC++;
         }
 
-        /* Get next token */
+        /* Get the next token */
         token = strtok(NULL, ",");
     }
 
-    /* Free all allocated memory */
     free(copy);
 }
 

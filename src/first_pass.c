@@ -204,134 +204,77 @@ static void process_line(const char *line, const char *filename, int line_num)
 {
     char label[MAX_LABEL_LENGTH + 1];
     char first_token[MAX_LINE_LENGTH + 1];
-    char *rest;
-    BOOL has_label;
+    const char *rest;
+    BOOL has_label = FALSE;
     char buffer[MAX_LINE_LENGTH + 1];
-    char *colon_pos;
-    char potential_label[MAX_LABEL_LENGTH + 10]; /* Extra space for overflow detection */
-    int j;
-
-    /* Initialization */
-    has_label = FALSE;
-    label[0] = '\0';
 
     /* Create copy of the line */
     strncpy(buffer, line, MAX_LINE_LENGTH);
     buffer[MAX_LINE_LENGTH] = '\0';
+
+    /* DO NOT call remove_comments here since it's already done in first_pass() */
+    /* remove_comments(buffer); // REMOVE THIS LINE */
+
     rest = buffer;
 
     /* Skip leading whitespace */
     while (isspace((unsigned char)*rest))
         rest++;
 
-    /* Check if this line starts with a directive */
-    if (*rest == '.')
+    /* Check if line is empty after removing comments and whitespace */
+    if (*rest == '\0')
+        return;
+
+    /* Check for label by looking for ':' */
+    if (strchr(rest, ':') != NULL)
     {
-        has_label = FALSE;
-    }
-    else
-    {
-        /* Check if there's a colon in the line (potential label) */
-        colon_pos = strchr(rest, ':');
-        if (colon_pos != NULL)
+        if (extract_label(rest, label))
         {
-            /* Extract the text before the colon to check if it's a valid label attempt */
-            j = 0;
-            while (rest + j < colon_pos && j < sizeof(potential_label) - 1 && !isspace((unsigned char)rest[j]))
-            {
-                potential_label[j] = rest[j];
-                j++;
-            }
-            potential_label[j] = '\0';
+            has_label = TRUE;
 
-            /* Check for label validation errors */
-
-            /* Check if label is too long */
-            if (strlen(potential_label) > MAX_LABEL_LENGTH)
+            /* Validate the label */
+            if (!is_valid_label(label))
             {
                 print_line_error(filename, line_num, ERROR_LABEL_SYNTAX);
                 err_found = TRUE;
                 return;
             }
 
-            /* Check if label starts with digit */
-            if (potential_label[0] != '\0' && isdigit((unsigned char)potential_label[0]))
+            /* Check for duplicate label definition */
+            if (is_label_defined(label))
             {
-                print_line_error(filename, line_num, ERROR_LABEL_SYNTAX);
+                print_line_error(filename, line_num, ERROR_DUPLICATE_LABEL);
                 err_found = TRUE;
                 return;
             }
 
-            /* Check if label starts with non-letter (but not digit - already checked) */
-            if (potential_label[0] != '\0' && !isalpha((unsigned char)potential_label[0]))
-            {
-                print_line_error(filename, line_num, ERROR_LABEL_SYNTAX);
-                err_found = TRUE;
-                return;
-            }
+            /* Skip past the label for further processing */
+            rest = skip_label(rest);
 
-            /* Check for invalid characters in label */
-            for (j = 0; potential_label[j] != '\0'; j++)
-            {
-                if (!isalnum((unsigned char)potential_label[j]) && potential_label[j] != '_')
-                {
-                    print_line_error(filename, line_num, ERROR_LABEL_SYNTAX);
-                    err_found = TRUE;
-                    return;
-                }
-            }
-
-            /* Check if the text before colon is a reserved word */
-            if (is_reserved_word(potential_label))
-            {
-                print_line_error(filename, line_num, ERROR_RESERVED_WORD);
-                err_found = TRUE;
-                return;
-            }
-
-            /* Try to extract valid label */
-            if (extract_label(buffer, label))
-            {
-                /* Valid label extracted */
-                has_label = TRUE;
-
-                /* Double-check label validity */
-                if (!is_valid_label(label))
-                {
-                    print_line_error(filename, line_num, ERROR_LABEL_SYNTAX);
-                    err_found = TRUE;
-                    return;
-                }
-
-                /* Check for duplicate label definition */
-                if (is_label_defined(label))
-                {
-                    print_line_error(filename, line_num, ERROR_DUPLICATE_LABEL);
-                    err_found = TRUE;
-                    return;
-                }
-
-                /* Skip past the label for further processing */
-                rest = skip_label(buffer);
-            }
-            else
-            {
-                /* Invalid label (extract_label failed but colon exists) */
-                print_line_error(filename, line_num, ERROR_LABEL_SYNTAX);
-                err_found = TRUE;
-                return;
-            }
+            /* Skip any additional whitespace after the label */
+            while (isspace((unsigned char)*rest))
+                rest++;
+        }
+        else
+        {
+            /* Invalid label (extract_label failed but colon exists) */
+            print_line_error(filename, line_num, ERROR_LABEL_SYNTAX);
+            err_found = TRUE;
+            return;
         }
     }
 
     /* Extract first token (opcode or directive) */
     if (!get_next_token(rest, first_token))
     {
-        print_line_error(filename, line_num, ERROR_SYNTAX);
-        err_found = TRUE;
+        /* If we have a label but no directive/instruction, that's an error */
+        if (has_label)
+        {
+            print_line_error(filename, line_num, ERROR_SYNTAX);
+            err_found = TRUE;
+        }
         return;
     }
-    printf("DEBUG: Line %d, first_token='%s', has_label=%d\n", line_num, first_token, has_label ? 1 : 0);
 
     /* Handle different types of statements */
     if (strcmp(first_token, ".data") == 0 || strcmp(first_token, ".string") == 0 || strcmp(first_token, ".mat") == 0)
@@ -364,11 +307,11 @@ static void process_line(const char *line, const char *filename, int line_num)
     }
     else
     {
-        /* Check for missing whitepsace before trating as unknown instruction */
+        /* Check for missing whitespace before treating as unknown instruction */
         if (check_missing_whitespace_error(first_token, filename, line_num))
             return;
 
-        /* If not a whitespace issue, then it;s unknown instruction */
+        /* If not a whitespace issue, then it's unknown instruction */
         print_line_error(filename, line_num, ERROR_UNKNOWN_INSTRUCTION);
         err_found = TRUE;
         return;
