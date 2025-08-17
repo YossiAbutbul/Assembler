@@ -11,6 +11,7 @@
 #include "../include/constants.h"
 #include "../include/first_pass.h"
 #include "../include/data_image.h"
+#include "../include/utils.h"
 
 /**
  * @brief Parses the operand list of a ".data" directive.
@@ -151,31 +152,47 @@ void parse_string_value(const char *line, const char *filename, int line_num)
     const char *start, *end;
     const char *p;
     unsigned char ch;
+    char *line_copy;
+    BOOL has_invalid_char = FALSE;
 
     /* Check for null line pointer*/
     if (!line)
         return;
 
-    /* Skip leading whitespaces. */
-    while (isspace((unsigned char)*line))
-        line++;
-
-    /* Checks if a line starts with a quote */
-    if (*line != '"')
+    /* Creates a copy of the line and remove comments */
+    line_copy = (char *)malloc(strlen(line) + 1);
+    if (!line_copy)
     {
-        print_line_error(filename, line_num, ERROR_SYNTAX);
+        print_line_error(filename, line_num, ERROR_MEMORY_ALLOCATION_FAILED);
         err_found = TRUE;
         return;
     }
 
-    /* Skip opening quote */
-    start = line + 1;
+    strcpy(line_copy, line);
+    remove_comments(line_copy);
 
-    /* Find last quote (search from the end of the start string) */
+    /* Skip leading whitespaces */
+    p = line_copy;
+    while (isspace((unsigned char)*line))
+        p++;
+
+    /* Checks if a line starts with a quote */
+    if (*p != '"')
+    {
+        print_line_error(filename, line_num, ERROR_STRING_MISSING_QUOTES);
+        err_found = TRUE;
+        free(line_copy);
+        return;
+    }
+
+    /* Skip opening quote */
+    start = p + 1;
+
+    /* Find last quote (search from the end) */
     end = strrchr(start, '"');
     if (!end)
     {
-        print_line_error(filename, line_num, ERROR_SYNTAX);
+        print_line_error(filename, line_num, ERROR_STRING_UNCLOSED);
         err_found = TRUE;
         return;
     }
@@ -188,24 +205,34 @@ void parse_string_value(const char *line, const char *filename, int line_num)
         /* Check if a character is valid ASCII (0-127) */
         if (ch > 127)
         {
-            print_line_error(filename, line_num, ERROR_DATA_OUT_OF_RANGE);
-            err_found = TRUE;
+            if (!has_invalid_char)
+            {
+                print_line_error(filename, line_num, ERROR_STRING_INVALID_CHARACTER);
+                err_found = TRUE;
+                has_invalid_char = TRUE;
+            }
         }
-        else
+        else if (!has_invalid_char)
         {
             if (!store_data((int)ch, filename, line_num))
+            {
+                free(line_copy);
                 return;
-
+            }
             DC++;
         }
     }
 
-    /* Append null terminator */
-    if (!store_data(0, filename, line_num))
-        return;
-
-    /*Increment the DC */
-    DC++;
+    /* Append null terminator only if no errors occurred */
+    if (!has_invalid_char && !err_found)
+    {
+        if (!store_data(0, filename, line_num))
+        {
+            free(line_copy);
+            return;
+        }
+        DC++;
+    }
 
     /* Check for extra characters after the closing quote */
     p = end + 1;
@@ -213,12 +240,18 @@ void parse_string_value(const char *line, const char *filename, int line_num)
     {
         if (!isspace((unsigned char)*p))
         {
+            /* We hit semicolon - it is a comment */
+            if (*p == ';')
+                break;
+
+            /* Otherwise, invalid ending */
             print_line_error(filename, line_num, ERROR_SYNTAX);
             err_found = TRUE;
             return;
         }
         p++;
     }
+    free(line_copy);
 }
 
 /**
