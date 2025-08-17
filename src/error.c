@@ -74,7 +74,11 @@ void print_line_error(const char *filename, int line_number, ErrorType err_type)
         /* 24 */ "Invalid register - only r0 through r7 are allowed",         /* ERROR_INVALID_REGISTER */
         /* 25 */ "Invalid matrix access - must be label[register][register]", /* ERROR_INVALID_MATRIX_ACCESS */
         /* 26 */ "Matrix access missing register index - need [reg][reg]",    /* ERROR_MATRIX_MISSING_REGISTER */
-        /* 27 */ "Invalid register in matrix access - must be r0-r7"};        /* ERROR_MATRIX_INVALID_REGISTER */
+        /* 27 */ "Invalid register in matrix access - must be r0-r7",         /* ERROR_MATRIX_INVALID_REGISTER */
+        /* 28 */ "Matrix register field too long - excessive whitespace",     /* ERROR_MATRIX_REGISTER_TOO_LONG */
+        /* 29 */ "Invalid addressing mode combination for instruction",       /* ERROR_INVALID_ADDRESSING_MODE */
+        /* 30 */ "Invalid source operand addressing mode",                    /* ERROR_INVALID_SOURCE_ADDRESSING */
+        /* 31 */ "Invalid target operand addressing mode"};                   /* ERROR_INVALID_TARGET_ADDRESSING */
 
     size_t err_cnt = (sizeof(error_messages) / sizeof(error_messages[0]));
 

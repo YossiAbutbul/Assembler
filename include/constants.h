@@ -22,5 +22,6 @@ typedef enum
 #define MAX_DATA_IMAGE_SIZE 1000        /* Generous limit for image size */
 #define MAX_INSTRUCTION_IMAGE_SIZE 1000 /* Generous limit for instruction image */
 #define MAX_SYMBOL_NAME_LENGTH 32       /* max 30 chars + /0 + /n */
+#define MAX_REG_STR_LEN 25              /* Enough for register name + excessive whitespace */
 
 #endif

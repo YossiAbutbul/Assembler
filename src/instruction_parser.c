@@ -213,7 +213,34 @@ BOOL parse_instruction(const char *line, const char *filename, int line_num, Ins
                                    instruction->has_target ? instruction->target.mode : 0,
                                    instruction->has_source, instruction->has_target))
     {
-        print_line_error(filename, line_num, ERROR_INVALID_OPERAND);
+        if (instruction->opcode == 0) /* mov */
+        {
+            if (instruction->target.mode == ADDRESSING_IMMEDIATE)
+                print_line_error(filename, line_num, ERROR_INVALID_TARGET_ADDRESSING);
+            else
+                print_line_error(filename, line_num, ERROR_INVALID_ADDRESSING_MODE);
+        }
+        else if (instruction->opcode == 4) /* lea */
+        {
+            if (instruction->source.mode == ADDRESSING_IMMEDIATE)
+                print_line_error(filename, line_num, ERROR_INVALID_SOURCE_ADDRESSING);
+            else if (instruction->target.mode == ADDRESSING_IMMEDIATE)
+                print_line_error(filename, line_num, ERROR_INVALID_TARGET_ADDRESSING);
+            else
+                print_line_error(filename, line_num, ERROR_INVALID_ADDRESSING_MODE);
+        }
+        else if (instruction->opcode == 2 || instruction->opcode == 3) /* add/sub */
+        {
+            if (instruction->target.mode == ADDRESSING_IMMEDIATE)
+                print_line_error(filename, line_num, ERROR_INVALID_TARGET_ADDRESSING);
+            else
+                print_line_error(filename, line_num, ERROR_INVALID_ADDRESSING_MODE);
+        }
+        else
+        {
+            print_line_error(filename, line_num, ERROR_INVALID_ADDRESSING_MODE);
+        }
+
         err_found = TRUE;
         return FALSE;
     }
@@ -382,8 +409,8 @@ static BOOL is_matrix_reference(const char *str, Operand *operand, const char *f
 {
     char *br1, *br2, *br3, *br4;
     char label_part[MAX_LABEL_LENGTH + 1];
-    char reg1_str[20], reg2_str[20]; /*ToDo: adjust maybe to a define value */
-    char trimmed_reg1[10], trimmed_reg2[10];
+    char reg1_str[MAX_REG_STR_LEN], reg2_str[MAX_REG_STR_LEN];
+    char trimmed_reg1[MAX_REG_STR_LEN], trimmed_reg2[MAX_REG_STR_LEN];
     int label_len;
     int i, j;
 
@@ -448,7 +475,7 @@ static BOOL is_matrix_reference(const char *str, Operand *operand, const char *f
     if (br2 - br1 - 1 >= sizeof(reg1_str) ||
         br4 - br3 - 1 >= sizeof(reg2_str))
     {
-        print_line_error(filename, line_num, ERROR_INVALID_MATRIX_ACCESS);
+        print_line_error(filename, line_num, ERROR_MATRIX_REGISTER_TOO_LONG);
         err_found = TRUE;
         return FALSE;
     }
@@ -462,7 +489,7 @@ static BOOL is_matrix_reference(const char *str, Operand *operand, const char *f
     reg2_str[br4 - br3 - 1] = '\0'; /* Null terminate the reg2_str */
 
     /* Trim spaces from registers (allowed inside brackets) */
-    for (i = 0, j = 0; reg1_str[i] && j < sizeof(trimmed_reg1) - 1; i++)
+    for (i = 0, j = 0; reg1_str[i] && j < MAX_REG_STR_LEN - 1; i++)
     {
         if (!isspace((unsigned char)reg1_str[i]))
             trimmed_reg1[j++] = reg1_str[i];

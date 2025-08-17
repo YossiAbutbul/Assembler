@@ -1,0 +1,5 @@
+START:  mov r1                   ; Too few operands (mov needs 2)
+        mov r1, r2, r3           ; Too many operands (mov needs 2)
+        inc                      ; Too few operands (inc needs 1)
+        inc r1, r2               ; Too many operands (inc needs 1)
+        stop r1                  ; Too many operands (stop needs 0)
