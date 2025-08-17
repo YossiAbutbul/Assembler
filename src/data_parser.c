@@ -33,6 +33,8 @@ void parse_data_values(const char *line, const char *filename, int line_num)
 {
     char *copy, *token, *ptr;
     int value;
+    BOOL found_comma = FALSE;
+    const char *p;
 
     /* Check for null line pointer */
     if (!line)
@@ -48,6 +50,44 @@ void parse_data_values(const char *line, const char *filename, int line_num)
         print_line_error(filename, line_num, ERROR_SYNTAX);
         err_found = TRUE;
         return;
+    }
+
+    /* Check for leading comma */
+    if (*line == ',')
+    {
+        print_line_error(filename, line_num, ERROR_SYNTAX);
+        err_found = TRUE;
+        return;
+    }
+
+    /* Check for trailing comma */
+    p = line + strlen(line) - 1;
+    while (p > line && isspace((unsigned char)*p))
+        p--;
+    if (*p == ',')
+    {
+        print_line_error(filename, line_num, ERROR_SYNTAX);
+        err_found = TRUE;
+        return;
+    }
+
+    /* Check for double commas */
+    for (p = line; *p; p++)
+    {
+        if (*p == ',')
+        {
+            if (found_comma)
+            {
+                print_line_error(filename, line_num, ERROR_SYNTAX);
+                err_found = TRUE;
+                return;
+            }
+            found_comma = TRUE;
+        }
+        else if (!isspace((unsigned char)*p))
+        {
+            found_comma = FALSE;
+        }
     }
 
     /* Creates a copy of the line to not change it directly. */
@@ -85,9 +125,8 @@ void parse_data_values(const char *line, const char *filename, int line_num)
         {
             print_line_error(filename, line_num, ERROR_SYNTAX);
             err_found = TRUE;
-            /* Moves to the next token in the comma separated list. */
-            token = strtok(NULL, ",");
-            continue;
+            free(copy);
+            return;
         }
 
         /* Convert to int */
@@ -176,7 +215,16 @@ void parse_string_value(const char *line, const char *filename, int line_num)
     while (isspace((unsigned char)*line))
         p++;
 
-    /* Checks if a line starts with a quote */
+    /* Check for any non-whitespace characters before the first quote */
+    if (*p != '"' && *p != '\0')
+    {
+        print_line_error(filename, line_num, ERROR_STRING_MISSING_QUOTES);
+        err_found = TRUE;
+        free(line_copy);
+        return;
+    }
+
+    /* Check if line starts with a quote */
     if (*p != '"')
     {
         print_line_error(filename, line_num, ERROR_STRING_MISSING_QUOTES);
@@ -194,6 +242,7 @@ void parse_string_value(const char *line, const char *filename, int line_num)
     {
         print_line_error(filename, line_num, ERROR_STRING_UNCLOSED);
         err_found = TRUE;
+        free(line_copy);
         return;
     }
 
@@ -203,7 +252,7 @@ void parse_string_value(const char *line, const char *filename, int line_num)
         ch = (unsigned char)*p;
 
         /* Check if a character is valid ASCII (0-127) */
-        if (ch > 127)
+        if (ch < 32 || ch > 126) /* Printable ASCII characters */
         {
             if (!has_invalid_char)
             {
@@ -247,6 +296,7 @@ void parse_string_value(const char *line, const char *filename, int line_num)
             /* Otherwise, invalid ending */
             print_line_error(filename, line_num, ERROR_SYNTAX);
             err_found = TRUE;
+            free(line_copy);
             return;
         }
         p++;

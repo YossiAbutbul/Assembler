@@ -143,6 +143,54 @@ int get_instruction_count(void)
 }
 
 /**
+ * @brief Check if a token appears to be an instruction/directive missing whitespace
+ *
+ * @param token     The token to check.
+ * @param filename  Source filename (for error reporting).
+ * @param line_num  Current line number (for error reporting).
+ * @return TRUE if it is missing whitespace, FALSE otherwise.
+ * @note This is static internal function, used only in this file.
+ */
+static BOOL check_missing_whitespace_error(const char *token, const char *filename, int line_num)
+{
+    /* Array of all valid instructions */
+    const char *instructions[] = {
+        "mov", "cmp", "add", "sub", "lea", "clr", "not", "inc", "dec",
+        "jmp", "bne", "jsr", "red", "prn", "rts", "stop"};
+
+    /* Array of all valid directives */
+    const char *directives[] = {
+        ".data", ".string", ".mat", ".entry", ".extern"};
+
+    int i, len;
+
+    /* Check if token starts with any instruction name but has extra chars */
+    for (i = 0; i < 16; i++)
+    {
+        len = strlen(instructions[i]);
+        if (strncmp(token, instructions[i], len) == 0 && strlen(token) > len)
+        {
+            print_line_error(filename, line_num, ERROR_MISSING_WHITESPACE);
+            err_found = TRUE;
+            return TRUE;
+        }
+    }
+
+    /* Check if token starts with any directive name but has extra characters */
+    for (i = 0; i < 5; i++)
+    {
+        len = strlen(directives[i]);
+        if (strncmp(token, directives[i], len) == 0 && strlen(token) > len)
+        {
+            print_line_error(filename, line_num, ERROR_MISSING_WHITESPACE);
+            err_found = TRUE;
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
+/**
  * @brief Processes a single line during the first pass.
  *
  * Identifies the line type and delegates to appropriate handler functions.
@@ -283,6 +331,7 @@ static void process_line(const char *line, const char *filename, int line_num)
         err_found = TRUE;
         return;
     }
+    printf("DEBUG: Line %d, first_token='%s', has_label=%d\n", line_num, first_token, has_label ? 1 : 0);
 
     /* Handle different types of statements */
     if (strcmp(first_token, ".data") == 0 || strcmp(first_token, ".string") == 0 || strcmp(first_token, ".mat") == 0)
@@ -315,6 +364,11 @@ static void process_line(const char *line, const char *filename, int line_num)
     }
     else
     {
+        /* Check for missing whitepsace before trating as unknown instruction */
+        if (check_missing_whitespace_error(first_token, filename, line_num))
+            return;
+
+        /* If not a whitespace issue, then it;s unknown instruction */
         print_line_error(filename, line_num, ERROR_UNKNOWN_INSTRUCTION);
         err_found = TRUE;
         return;
@@ -502,7 +556,23 @@ static void encode_immediate_operands(const Instruction *instruction, Instructio
 static void handle_extern_directive(const char *line, const char *filename, int line_num)
 {
     char label[MAX_LABEL_LENGTH + 1];
+    char extra_token[MAX_LINE_LENGTH];
     const char *ptr = line;
+    char *line_copy;
+
+    /* Create a copy to work with */
+    line_copy = (char *)malloc(strlen(line) + 1);
+    if (!line_copy)
+    {
+        print_line_error(filename, line_num, ERROR_MEMORY_ALLOCATION_FAILED);
+        err_found = TRUE;
+        return;
+    }
+    strcpy(line_copy, line);
+
+    /* Remove comments */
+    remove_comments(line_copy);
+    ptr = line_copy;
 
     /* Skip whitespace */
     while (isspace((unsigned char)*ptr))
@@ -523,6 +593,7 @@ static void handle_extern_directive(const char *line, const char *filename, int 
     {
         print_line_error(filename, line_num, ERROR_SYNTAX);
         err_found = TRUE;
+        free(line_copy);
         return;
     }
 
@@ -531,6 +602,7 @@ static void handle_extern_directive(const char *line, const char *filename, int 
     {
         print_line_error(filename, line_num, ERROR_INVALID_LABEL);
         err_found = TRUE;
+        free(line_copy);
         return;
     }
 
@@ -539,11 +611,29 @@ static void handle_extern_directive(const char *line, const char *filename, int 
     {
         print_line_error(filename, line_num, ERROR_DUPLICATE_LABEL);
         err_found = TRUE;
+        free(line_copy);
+        return;
+    }
+
+    /* Skip past the label we just extracted */
+    while (*ptr && !isspace((unsigned char)*ptr))
+        ptr++;
+    while (isspace((unsigned char)*ptr))
+        ptr++;
+
+    /* Check for extra text after the label */
+    if (get_next_token(ptr, extra_token))
+    {
+        print_line_error(filename, line_num, ERROR_SYNTAX);
+        err_found = TRUE;
+        free(line_copy);
         return;
     }
 
     /* Add external symbol to table */
     add_symbol(label, 0, SYMBOL_EXTERNAL);
+
+    free(line_copy);
 }
 
 /**
@@ -569,27 +659,43 @@ static void handle_extern_directive(const char *line, const char *filename, int 
 static void handle_entry_directive(const char *line, const char *filename, int line_num)
 {
     char label[MAX_LABEL_LENGTH + 1];
+    char extra_token[MAX_LINE_LENGTH];
     const char *ptr = line;
+    char *line_copy;
+
+    /* Create a copy to work with */
+    line_copy = (char *)malloc(strlen(line) + 1);
+    if (!line_copy)
+    {
+        print_line_error(filename, line_num, ERROR_MEMORY_ALLOCATION_FAILED);
+        err_found = TRUE;
+        return;
+    }
+    strcpy(line_copy, line);
+
+    /* Remove comments */
+    remove_comments(line_copy);
+    ptr = line_copy;
 
     /* Skip whitespace */
     while (isspace((unsigned char)*ptr))
         ptr++;
 
-    /* Find the start of .entry in the line and skip past it */
+    /* Find and skip past the .entry directive */
     if (strncmp(ptr, ".entry", 6) == 0)
     {
         ptr += 6;
+        /* Skip whitespace after .entry */
+        while (isspace((unsigned char)*ptr))
+            ptr++;
     }
-
-    /* Skip whitespace after .entry */
-    while (isspace((unsigned char)*ptr))
-        ptr++;
 
     /* Extract the label name */
     if (!get_next_token(ptr, label))
     {
         print_line_error(filename, line_num, ERROR_SYNTAX);
         err_found = TRUE;
+        free(line_copy);
         return;
     }
 
@@ -598,8 +704,26 @@ static void handle_entry_directive(const char *line, const char *filename, int l
     {
         print_line_error(filename, line_num, ERROR_INVALID_LABEL);
         err_found = TRUE;
+        free(line_copy);
         return;
     }
+
+    /* Skip past the label we just extracted */
+    while (*ptr && !isspace((unsigned char)*ptr))
+        ptr++;
+    while (isspace((unsigned char)*ptr))
+        ptr++;
+
+    /* Check for extra text after the label */
+    if (get_next_token(ptr, extra_token))
+    {
+        print_line_error(filename, line_num, ERROR_SYNTAX);
+        err_found = TRUE;
+        free(line_copy);
+        return;
+    }
+
+    free(line_copy);
 }
 
 /**

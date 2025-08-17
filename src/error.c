@@ -62,7 +62,7 @@ void print_line_error(const char *filename, int line_number, ErrorType err_type)
         /*  6 */ "Too few operands",                                                    /* ERROR_TOO_FEW_OPERANDS */
         /*  7 */ "Invalid operand",                                                     /* ERROR_INVALID_OPERAND */
         /*  8 */ "Invalid matrix syntax",                                               /* ERROR_INVALID_MATRIX */
-        /*  9 */ "Data value out of range",                                             /* ERROR_DATA_OUT_OF_RANGE */
+        /*  9 */ "Immediate value out of range (must be -512 to +511)",                 /* ERROR_DATA_OUT_OF_RANGE */
         /* 10 */ "Undefined symbol",                                                    /* ERROR_UNDEFINED_SYMBOL */
         /* 11 */ "Entry not defined",                                                   /* ERROR_ENTRY_NOT_DEFINED */
         /* 12 */ "Label cannot be used on .extern",                                     /* ERROR_LABEL_ON_EXTERN */
@@ -76,7 +76,7 @@ void print_line_error(const char *filename, int line_number, ErrorType err_type)
         /* 20 */ "Data image overflow",                                                 /* ERROR_DATA_IMAGE_OVERFLOW */
         /* 21 */ "Instruction image overflow",                                          /* ERROR_INSTRUCTION_IMAGE_OVERFLOW */
         /* 22 */ "Memory address out of bounds",                                        /* ERROR_ADDRESS_OUT_OF_BOUNDS */
-        /* 23 */ "Invalid immediate value - missing number after #",                    /* ERROR_INVALID_IMMEDIATE_VALUE */
+        /* 23 */ "Invalid immediate value format (must be #number)",                    /* ERROR_INVALID_IMMEDIATE_VALUE */
         /* 24 */ "Invalid register - only r0 through r7 are allowed",                   /* ERROR_INVALID_REGISTER */
         /* 25 */ "Invalid matrix access - must be label[register][register]",           /* ERROR_INVALID_MATRIX_ACCESS */
         /* 26 */ "Matrix access missing register index - need [reg][reg]",              /* ERROR_MATRIX_MISSING_REGISTER */
@@ -93,7 +93,8 @@ void print_line_error(const char *filename, int line_number, ErrorType err_type)
         /* 37 */ "Cannot use reserved word as macro name",                              /* ERROR_MACRO_RESERVED_WORD */
         /* 38 */ "Extra text after macro name",                                         /* ERROR_MACRO_EXTRA_TEXT */
         /* 39 */ "Missing 'mcroend' for macro",                                         /* ERROR_MACRO_MISSING_END */
-        /* 40 */ "Missing macro name after 'mcro'"};                                    /* ERROR_MACRO_MISSING_NAME */
+        /* 40 */ "Missing macro name after 'mcro'",                                     /* ERROR_MACRO_MISSING_NAME */
+        /* 41 */ "Missing whitespace between instruction / directive and operands "};   /* ERROR_MISSING_WHITESPACE */
 
     size_t err_cnt = (sizeof(error_messages) / sizeof(error_messages[0]));
 

@@ -263,10 +263,24 @@ BOOL parse_instruction(const char *line, const char *filename, int line_num, Ins
  * @param line_num      Current line number (for error reporting).
  * @return TRUE if parsing successful, FALSE if error occured.
  */
+/**
+ * @brief Parse a single operand string into Operand struct.
+ *
+ * This function determines the addressing mode and extracts the necessary
+ * information from operand string.
+ *
+ * @param operand_str   The operand string to parse.
+ * @param operand       Output operand struct.
+ * @param filename      Source filename (for error reporting).
+ * @param line_num      Current line number (for error reporting).
+ * @return TRUE if parsing successful, FALSE if error occurred.
+ */
 static BOOL parse_operand(const char *operand_str, Operand *operand, const char *filename, int line_num)
 {
     char trimmed[MAX_LINE_LENGTH];
     int i, j;
+    char *endptr;
+    long parsed_value;
 
     /* Initialize operand struct */
     memset(operand, 0, sizeof(Operand));
@@ -282,6 +296,28 @@ static BOOL parse_operand(const char *operand_str, Operand *operand, const char 
     /* Check for immediate addressing (#value) */
     if (trimmed[0] == '#')
     {
+        /* Check for specific error cases that is_immediate might not catch */
+
+        /* Check for space after # in original string */
+        i = 0;
+        while (operand_str[i] && operand_str[i] != '#')
+            i++;
+        if (operand_str[i] == '#' && (operand_str[i + 1] == ' ' || operand_str[i + 1] == '\t'))
+        {
+            print_line_error(filename, line_num, ERROR_INVALID_IMMEDIATE_VALUE);
+            err_found = TRUE;
+            return FALSE;
+        }
+
+        /* Check for double # */
+        if (trimmed[1] == '#')
+        {
+            print_line_error(filename, line_num, ERROR_INVALID_IMMEDIATE_VALUE);
+            err_found = TRUE;
+            return FALSE;
+        }
+
+        /* Use is_immediate function for main validation */
         if (is_immediate(trimmed, &operand->value))
         {
             operand->mode = ADDRESSING_IMMEDIATE;
@@ -290,15 +326,33 @@ static BOOL parse_operand(const char *operand_str, Operand *operand, const char 
         }
         else
         {
-            print_line_error(filename, line_num, ERROR_INVALID_IMMEDIATE_VALUE);
+            /* Check specifically for range errors vs format errors */
+            if (trimmed[1] != '\0')
+            {
+                /* Try to parse to see if it's a range error */
+                parsed_value = strtol(&trimmed[1], &endptr, 10);
+                if (*endptr == '\0' && (parsed_value < -512 || parsed_value > 511))
+                {
+                    print_line_error(filename, line_num, ERROR_DATA_OUT_OF_RANGE);
+                }
+                else
+                {
+                    print_line_error(filename, line_num, ERROR_INVALID_IMMEDIATE_VALUE);
+                }
+            }
+            else
+            {
+                print_line_error(filename, line_num, ERROR_INVALID_IMMEDIATE_VALUE);
+            }
             err_found = TRUE;
             return FALSE;
         }
     }
 
-    /* Check for register addressing (r0-r7) */
-    if (trimmed[0] == 'r')
+    /* Check for register addressing - including invalid register formats */
+    if (trimmed[0] == 'r' || trimmed[0] == 'R')
     {
+        /* Check for valid register first */
         if (is_register(trimmed, &operand->value))
         {
             operand->mode = ADDRESSING_REGISTER;
@@ -307,6 +361,7 @@ static BOOL parse_operand(const char *operand_str, Operand *operand, const char 
         }
         else
         {
+            /* It starts with 'r' or 'R' but is not a valid register */
             print_line_error(filename, line_num, ERROR_INVALID_REGISTER);
             err_found = TRUE;
             return FALSE;
@@ -353,7 +408,7 @@ static BOOL parse_operand(const char *operand_str, Operand *operand, const char 
 static BOOL is_register(const char *str, int *reg_num)
 {
     /* Valide basic register params */
-    if (!str || strlen(str) != 2)
+    if (!str || strlen(str) != 2) /* 2 is the len og register (e.g. r2) */
         return FALSE;
 
     if (str[0] == 'r' && str[1] >= '0' && str[1] <= '7')
@@ -378,22 +433,37 @@ static BOOL is_immediate(const char *str, int *value)
 {
     char *endptr;
     const char *num_start;
+    long parsed_value; /* strtol uses long */
 
-    /* Check empty str or str not staring with'#' (e.g.: #5 represents the value 5) */
+    /* Check empty str or str not starting with '#' */
     if (!str || str[0] != '#')
         return FALSE;
 
-    /* Check if there is anything after the '#' */
+    /* Set num_start to point after the '#' */
     num_start = str + 1;
+
+    /* Check if there is anything after the '#' */
     if (*num_start == '\0')
         return FALSE;
 
-    /* Parse the nu,ber after the '#' */
-    *value = (int)strtol(str + 1, &endptr, 10);
+    /* Check for space immediately after # */
+    if (isspace((unsigned char)*num_start))
+        return FALSE;
 
-    /* This would return TRUE only if the entire string after the '#' is a valid integer,
-     with nothing left over */
-    return (*endptr == '\0');
+    /* Parse the number after the '#' */
+    parsed_value = strtol(num_start, &endptr, 10);
+
+    /* Check if the entire string after '#' is a valid integer */
+    if (*endptr != '\0')
+        return FALSE;
+
+    /* Check if value is within valid 10-bit range (-512 to +511) */
+    if (parsed_value < -512 || parsed_value > 511)
+        return FALSE;
+
+    /* Store the value */
+    *value = (int)parsed_value;
+    return TRUE;
 }
 
 /**

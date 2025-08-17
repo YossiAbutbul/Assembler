@@ -88,7 +88,11 @@ typedef enum
     ERROR_MACRO_RESERVED_WORD,
     ERROR_MACRO_EXTRA_TEXT,
     ERROR_MACRO_MISSING_END,
-    ERROR_MACRO_MISSING_NAME
+    ERROR_MACRO_MISSING_NAME,
+
+    /* === White Space Error === */
+    ERROR_MISSING_WHITESPACE
+
 } ErrorType;
 
 /**
