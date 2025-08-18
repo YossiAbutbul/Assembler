@@ -22,6 +22,7 @@
 #include "../include/assembler.h"
 #include "../include/error.h"
 #include "../include/constants.h"
+#include "../include/utils.h"
 
 /**
  * @brief Main entry point for assembler program.

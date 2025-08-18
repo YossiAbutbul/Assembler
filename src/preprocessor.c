@@ -198,12 +198,14 @@ ExitCode preprocess(const char *filename)
     char label[MAX_LABEL_LENGTH + 1];
     char *instruction_part;
     char line_copy[MAX_LINE_LENGTH];
+    int macro_start_line;
 
     /* Initialize variables */
     in_macro = FALSE;
     file_has_content = FALSE;
     line_num = 0;
     am_file = NULL;
+    macro_start_line = 0;
 
     sprintf(as_filename, "%s.as", filename);
     sprintf(am_filename, "%s.am", filename);
@@ -218,9 +220,6 @@ ExitCode preprocess(const char *filename)
     /* Check if the source file is empty */
     while (fgets(line, MAX_LINE_LENGTH, as_file))
     {
-        if (strspn(line, " \t\r\n") == strlen(line))
-            continue;
-
         strcpy(first_word, "");
         get_first_word(line, first_word);
 
@@ -248,7 +247,9 @@ ExitCode preprocess(const char *filename)
         line_num++;
 
         if (strspn(line, " \t\r\n") == strlen(line))
+        {
             continue;
+        }
 
         strcpy(first_word, "");
         get_first_word(line, first_word);
@@ -259,6 +260,7 @@ ExitCode preprocess(const char *filename)
 
         if (!in_macro && strcmp(first_word, "mcro") == 0)
         {
+            macro_start_line = line_num;
             /* Find the space after "mcro" */
             ptr = line;
             while (*ptr && !isspace((unsigned char)*ptr))
@@ -337,7 +339,7 @@ ExitCode preprocess(const char *filename)
     /* Check if we're still in a macro at end of file */
     if (in_macro)
     {
-        print_line_error(as_filename, line_num, ERROR_MACRO_MISSING_END);
+        print_line_error(as_filename, macro_start_line, ERROR_MACRO_MISSING_END);
         fclose(as_file);
         free_macro_table();
         return EXIT_MACRO_MISSING_END;
@@ -360,7 +362,10 @@ ExitCode preprocess(const char *filename)
     while (fgets(line, MAX_LINE_LENGTH, as_file))
     {
         if (strspn(line, " \t\r\n") == strlen(line))
+        {
+            fputs(line, am_file);
             continue;
+        }
 
         /* Make a copy of the line for processing */
         strcpy(line_copy, line);

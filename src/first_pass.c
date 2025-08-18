@@ -205,15 +205,15 @@ static void process_line(const char *line, const char *filename, int line_num)
     char label[MAX_LABEL_LENGTH + 1];
     char first_token[MAX_LINE_LENGTH + 1];
     const char *rest;
-    BOOL has_label = FALSE;
+    BOOL has_label;
     char buffer[MAX_LINE_LENGTH + 1];
+
+    /* Initialize variables (ANSI C90 compatible) */
+    has_label = FALSE;
 
     /* Create copy of the line */
     strncpy(buffer, line, MAX_LINE_LENGTH);
     buffer[MAX_LINE_LENGTH] = '\0';
-
-    /* DO NOT call remove_comments here since it's already done in first_pass() */
-    /* remove_comments(buffer); // REMOVE THIS LINE */
 
     rest = buffer;
 
@@ -232,10 +232,17 @@ static void process_line(const char *line, const char *filename, int line_num)
         {
             has_label = TRUE;
 
-            /* Validate the label */
+            /* Validate the label with specific error messages */
             if (!is_valid_label(label))
             {
-                print_line_error(filename, line_num, ERROR_LABEL_SYNTAX);
+                if (is_reserved_word(label))
+                {
+                    print_line_error(filename, line_num, ERROR_RESERVED_WORD);
+                }
+                else
+                {
+                    print_line_error(filename, line_num, ERROR_INVALID_LABEL);
+                }
                 err_found = TRUE;
                 return;
             }
@@ -257,8 +264,44 @@ static void process_line(const char *line, const char *filename, int line_num)
         }
         else
         {
-            /* Invalid label (extract_label failed but colon exists) */
-            print_line_error(filename, line_num, ERROR_LABEL_SYNTAX);
+            /* extract_label failed but colon exists - do manual validation */
+            char potential_label[MAX_LABEL_LENGTH + 1];
+            const char *colon_pos;
+            int i;
+
+            /* Initialize variables (ANSI C90 compatible) */
+            colon_pos = strchr(rest, ':');
+            i = 0;
+
+            /* Extract text before colon */
+            while (rest + i < colon_pos && i < MAX_LABEL_LENGTH && !isspace((unsigned char)rest[i]))
+            {
+                potential_label[i] = rest[i];
+                i++;
+            }
+            potential_label[i] = '\0';
+
+            /* Check specific validation rules and give appropriate error */
+            if (potential_label[0] == '\0')
+            {
+                print_line_error(filename, line_num, ERROR_LABEL_SYNTAX);
+            }
+            else if (!isalpha((unsigned char)potential_label[0]))
+            {
+                /* Doesn't start with letter (digit, underscore, etc.) */
+                print_line_error(filename, line_num, ERROR_LABEL_SYNTAX);
+            }
+            else if (is_reserved_word(potential_label))
+            {
+                /* Starts with letter but is reserved word */
+                print_line_error(filename, line_num, ERROR_RESERVED_WORD);
+            }
+            else
+            {
+                /* Other validation issue (length, invalid characters, etc.) */
+                print_line_error(filename, line_num, ERROR_INVALID_LABEL);
+            }
+
             err_found = TRUE;
             return;
         }

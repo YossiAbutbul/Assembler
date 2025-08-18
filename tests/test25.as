@@ -19,7 +19,7 @@ PROCESS_LOOP:
             bne CONTINUE         ; Continue if not done
             jmp DONE             ; Exit if done
 
-CONTINUE:   mov ARRAY[r1][r1], r3 ; Get diagonal element
+CONTINUE:   mov ARRAY[r0][r0], r0 ; Get diagonal element
             add r3, RESULT       ; Add to result
             inc r1               ; Increment counter
             jmp PROCESS_LOOP     ; Continue loop

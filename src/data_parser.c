@@ -151,7 +151,7 @@ void parse_data_values(const char *line, const char *filename, int line_num)
     /* Check for missing commas between numbers */
     if (has_missing_commas(line))
     {
-        print_line_error(filename, line_num, ERROR_SYNTAX);
+        print_line_error(filename, line_num, ERROR_MISSING_COMMA);
         err_found = TRUE;
         return;
     }
