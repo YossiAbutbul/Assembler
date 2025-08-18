@@ -1,19 +1,14 @@
-; Test 2: External Conflict  
-; Expected: ERROR_EXTERNAL_CONFLICT
+; Test 5: Multiple Undefined Symbols
+; Expected: Multiple ERROR_UNDEFINED_SYMBOL (or stops at first)
 
 ; === Valid definitions ===
 VALID_DATA: .data 42
 TEST_MATRIX: .mat [2][2] 1,2,3,4
 
-; === External symbol definition ===
-.extern EXT_SYMBOL
-
-; === Instructions to ensure first pass succeeds ===
-MAIN: mov r0, r1
-      add r1, r2
-
-; === Test entry on external symbol (should conflict) ===
-.entry EXT_SYMBOL
+; === Instructions with multiple undefined symbols ===
+MAIN: mov FIRST_UNDEFINED, r0     ; First undefined symbol
+      add SECOND_UNDEFINED, r1    ; Second undefined symbol  
+      lea THIRD_UNDEFINED, r2     ; Third undefined symbol
 
 ; === End ===
 END: stop

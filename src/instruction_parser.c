@@ -709,7 +709,7 @@ int get_instruction_word_count(const Instruction *instruction)
         {
         case ADDRESSING_IMMEDIATE:
         case ADDRESSING_DIRECT:
-        case ADDRESSING_REGISTER: /* FIX: Registers need their own word */
+        case ADDRESSING_REGISTER:
             count += 1;
             break;
 

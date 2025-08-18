@@ -28,7 +28,6 @@ extern BOOL err_found;
 static int current_instruction_index = 0;
 
 /* === Internal Helper Function Prototypes === */
-
 static void process_line_second_pass(const char *line, const char *filename, int line_num, int *current_ic, AssemblyContext *context);
 static void handle_instruction_second_pass(const char *line, const char *filename, int line_num, int *current_ic, AssemblyContext *context);
 static void handle_entry_directive_second_pass(const char *line, const char *filename, int line_num, AssemblyContext *context);
@@ -234,6 +233,7 @@ static void handle_instruction_second_pass(const char *line, const char *filenam
     char *instruction_part;
     char line_copy[MAX_LINE_LENGTH + 1];
     char label[MAX_LABEL_LENGTH + 1];
+    BOOL should_encode = TRUE;
 
     /* Get pre-calculated instruction data from first pass */
     inst_data = get_next_instruction_data();
@@ -256,14 +256,14 @@ static void handle_instruction_second_pass(const char *line, const char *filenam
 
     /* Creates a copy of the line for processing */
     strncpy(line_copy, line, MAX_LINE_LENGTH);
-    line_copy[MAX_LINE_LENGTH] = '\0'; /* Null terminate the copy */
+    line_copy[MAX_LINE_LENGTH] = '\0';
 
     instruction_part = line_copy;
 
     /* Skip label if exists */
     if (extract_label(line, label))
     {
-        instruction_part = skip_label(line_copy); /* FIXED: Use line_copy instead of instruction_part */
+        instruction_part = skip_label(line_copy);
     }
 
     /* Parse the instruction */
@@ -271,7 +271,7 @@ static void handle_instruction_second_pass(const char *line, const char *filenam
     {
         err_found = TRUE;
         context->has_errors = TRUE;
-        return;
+        should_encode = FALSE;
     }
 
     /* Verify word count consistency between passes */
@@ -280,18 +280,20 @@ static void handle_instruction_second_pass(const char *line, const char *filenam
         print_line_error(filename, line_num, ERROR_GENERAL);
         err_found = TRUE;
         context->has_errors = TRUE;
-        return;
+        should_encode = FALSE;
     }
 
-    /* Use pre-calculated data for encoding */
-    if (!encode_instruction_with_stored_data(&instruction, inst_data, *current_ic, filename, line_num, context))
+    /* Use pre-calculated data for encoding only if no errors occurred */
+    if (should_encode)
     {
-        err_found = TRUE;
-        context->has_errors = TRUE;
-        return;
+        if (!encode_instruction_with_stored_data(&instruction, inst_data, *current_ic, filename, line_num, context))
+        {
+            err_found = TRUE;
+            context->has_errors = TRUE;
+        }
     }
 
-    /* Update instruction counter using pre-calculated word count */
+    /* Always update instruction counter using pre-calculated word count */
     *current_ic += inst_data->word_count;
 }
 
