@@ -182,7 +182,7 @@ BOOL generate_entries_file(const char *filename, const AssemblyContext *context)
     current = context->entry_list;
     while (current)
     {
-        decimal_to_base4(current->address, address_str);
+        count_to_base4(current->address, address_str);
         fprintf(ent_file, "%s %s\n", current->name, address_str);
         current = current->next;
     }
@@ -227,7 +227,7 @@ BOOL generate_externals_file(const char *filename, const AssemblyContext *contex
     current = context->external_list;
     while (current)
     {
-        decimal_to_base4(current->address, address_str);
+        count_to_base4(current->address, address_str);
         fprintf(ext_file, "%s %s\n", current->name, address_str);
         current = current->next;
     }

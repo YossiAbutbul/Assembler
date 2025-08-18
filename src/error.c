@@ -58,33 +58,34 @@ static const char *error_messages[] = {
     /* 34 */ "External conflict",               /* ERROR_EXTERNAL_CONFLICT */
 
     /* === Macro Expansion Errors === */
-    /* 35 */ "Cannot use reserved word as macro name", /* ERROR_MACRO_RESERVED_WORD */
-    /* 36 */ "Extra text after macro name",            /* ERROR_MACRO_EXTRA_TEXT */
-    /* 37 */ "Missing 'mcroend' for macro",            /* ERROR_MACRO_MISSING_END */
-    /* 38 */ "Missing macro name after 'mcro'",        /* ERROR_MACRO_MISSING_NAME */
+    /* 35 */ "Cannot use reserved word as macro name",  /* ERROR_MACRO_RESERVED_WORD */
+    /* 36 */ "Extra text after macro name",             /* ERROR_MACRO_EXTRA_TEXT */
+    /* 37 */ "Missing 'mcroend' for macro",             /* ERROR_MACRO_MISSING_END */
+    /* 38 */ "Missing macro name after 'mcro'",         /* ERROR_MACRO_MISSING_NAME */
+    /* 39 */ "Macro and label name cannot be the same", /* ERROR_MACRO_LABEL_CONFLICT */
 
     /* === Memory and System Errors === */
-    /* 39 */ "Memory allocation failed",     /* ERROR_MEMORY_ALLOCATION_FAILED */
-    /* 40 */ "Data image overflow",          /* ERROR_DATA_IMAGE_OVERFLOW */
-    /* 41 */ "Instruction image overflow",   /* ERROR_INSTRUCTION_IMAGE_OVERFLOW */
-    /* 42 */ "Memory address out of bounds", /* ERROR_ADDRESS_OUT_OF_BOUNDS */
+    /* 40 */ "Memory allocation failed",     /* ERROR_MEMORY_ALLOCATION_FAILED */
+    /* 41 */ "Data image overflow",          /* ERROR_DATA_IMAGE_OVERFLOW */
+    /* 42 */ "Instruction image overflow",   /* ERROR_INSTRUCTION_IMAGE_OVERFLOW */
+    /* 43 */ "Memory address out of bounds", /* ERROR_ADDRESS_OUT_OF_BOUNDS */
 
     /* === Data Directive Specific Errors === */
-    /* 43 */ ".data directive requires at least one value",    /* ERROR_DATA_NO_VALUES */
-    /* 44 */ ".data directive cannot end with comma",          /* ERROR_DATA_TRAILING_COMMA */
-    /* 45 */ ".data directive cannot start with comma",        /* ERROR_DATA_LEADING_COMMA */
-    /* 46 */ ".data directive cannot have consecutive commas", /* ERROR_DATA_DOUBLE_COMMA */
-    /* 47 */ ".data directive has empty value between commas", /* ERROR_DATA_EMPTY_VALUE */
+    /* 44 */ ".data directive requires at least one value",    /* ERROR_DATA_NO_VALUES */
+    /* 45 */ ".data directive cannot end with comma",          /* ERROR_DATA_TRAILING_COMMA */
+    /* 46 */ ".data directive cannot start with comma",        /* ERROR_DATA_LEADING_COMMA */
+    /* 47 */ ".data directive cannot have consecutive commas", /* ERROR_DATA_DOUBLE_COMMA */
+    /* 48 */ ".data directive has empty value between commas", /* ERROR_DATA_EMPTY_VALUE */
 
     /* === Entry/Extern Directive Specific Errors === */
-    /* 48 */ ".entry directive requires a symbol name",                    /* ERROR_ENTRY_MISSING_SYMBOL */
-    /* 49 */ ".extern directive requires a symbol name",                   /* ERROR_EXTERN_MISSING_SYMBOL */
-    /* 50 */ ".entry directive cannot have extra text after symbol name",  /* ERROR_ENTRY_EXTRA_TEXT */
-    /* 51 */ ".extern directive cannot have extra text after symbol name", /* ERROR_EXTERN_EXTRA_TEXT */
+    /* 49 */ ".entry directive requires a symbol name",                    /* ERROR_ENTRY_MISSING_SYMBOL */
+    /* 50 */ ".extern directive requires a symbol name",                   /* ERROR_EXTERN_MISSING_SYMBOL */
+    /* 51 */ ".entry directive cannot have extra text after symbol name",  /* ERROR_ENTRY_EXTRA_TEXT */
+    /* 52 */ ".extern directive cannot have extra text after symbol name", /* ERROR_EXTERN_EXTRA_TEXT */
 
     /* === General Errors === */
-    /* 52 */ "General error",                 /* ERROR_GENERAL */
-    /* 53 */ "Missing comma between operands" /* ERROR_MISSING_COMMA */
+    /* 53 */ "General error",                 /* ERROR_GENERAL */
+    /* 54 */ "Missing comma between operands" /* ERROR_MISSING_COMMA */
 };
 
 /**
@@ -103,32 +104,32 @@ void report_error(ExitCode exit_code, const char *filename)
     switch (exit_code)
     {
     case EXIT_FILE_NOT_FOUND:
-        fprintf(stderr, "Error: File %s.as not found.\n", filename);
+        fprintf(stdout, "Error: File %s.as not found.\n", filename);
         break;
     case EXIT_MACRO_SYNTAX_ERROR:
-        fprintf(stderr, "Error: Macro syntax error in file %s.as.\n", filename);
+        fprintf(stdout, "Error: Macro syntax error in file %s.as.\n", filename);
         break;
     case EXIT_MACRO_RESERVED_WORD:
-        fprintf(stderr, "ERROR: Macro syntax error in file %s.as.\n", filename);
+        fprintf(stdout, "ERROR: Macro syntax error in file %s.as.\n", filename);
         break;
     case EXIT_MACRO_EXTRA_TEXT:
-        fprintf(stderr, "ERROR: Macro syntax error in file %s.as.\n", filename);
+        fprintf(stdout, "ERROR: Macro syntax error in file %s.as.\n", filename);
         break;
     case EXIT_MACRO_MISSING_END:
-        fprintf(stderr, "ERROR: Macro syntax error in file %s.as.\n", filename);
+        fprintf(stdout, "ERROR: Macro syntax error in file %s.as.\n", filename);
         break;
     case EXIT_FIRST_PASS_ERROR:
-        fprintf(stderr, "Error: First pass error in file %s.am.\n", filename); /* .am */
+        fprintf(stdout, "Error: First pass error in file %s.am.\n", filename); /* .am */
         break;
     case EXIT_SECOND_PASS_ERROR:
-        fprintf(stderr, "Error: Second pass error in file %s.am.\n", filename); /* .am */
+        fprintf(stdout, "Error: Second pass error in file %s.am.\n", filename); /* .am */
         break;
     case EXIT_WRITE_ERROR:
-        fprintf(stderr, "Error: Failed writing output files for %s.\n", filename);
+        fprintf(stdout, "Error: Failed writing output files for %s.\n", filename);
         break;
 
     default:
-        fprintf(stderr, "Error: General error occurred while processing %s.\n", filename);
+        fprintf(stdout, "Error: General error occurred while processing %s.\n", filename);
     }
 }
 
@@ -143,10 +144,10 @@ void print_line_error(const char *filename, int line_number, ErrorType err_type)
 {
     if ((int)err_type < 0 || (size_t)err_type >= error_messages_count)
     {
-        fprintf(stderr, "Error: Unknown error type %d in file %s at line %d.\n", (int)err_type, filename, line_number);
+        fprintf(stdout, "Error: Unknown error type %d in file %s at line %d.\n", (int)err_type, filename, line_number);
     }
     else
     {
-        fprintf(stderr, "Error in file %s at line %d: %s.\n", filename, line_number, error_messages[err_type]);
+        fprintf(stdout, "Error in file %s at line %d: %s.\n", filename, line_number, error_messages[err_type]);
     }
 }

@@ -328,7 +328,7 @@ static void process_line(const char *line, const char *filename, int line_num)
     {
         if (has_label)
         {
-            fprintf(stderr, "Warning in file %s at line %d: Label on .entry directive is ignored.\n",
+            fprintf(stdout, "Warning in file %s at line %d: Label on .entry directive is ignored.\n",
                     filename, line_num);
         }
         handle_entry_directive(rest, filename, line_num);
@@ -337,7 +337,7 @@ static void process_line(const char *line, const char *filename, int line_num)
     {
         if (has_label)
         {
-            fprintf(stderr, "Warning in file %s at line %d: Label on .extern directive is ignored.\n",
+            fprintf(stdout, "Warning in file %s at line %d: Label on .extern directive is ignored.\n",
                     filename, line_num);
         }
         handle_extern_directive(rest, filename, line_num);

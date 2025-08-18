@@ -348,6 +348,9 @@ ExitCode preprocess(const char *filename)
     /* SECOND PASS: All macros are valid (create .am file if no errors) */
     rewind(as_file);
 
+    /* Reset line number for accurate error reporting */
+    line_num = 0;
+
     am_file = fopen(am_filename, "w");
     if (!am_file)
     {
@@ -361,6 +364,7 @@ ExitCode preprocess(const char *filename)
 
     while (fgets(line, MAX_LINE_LENGTH, as_file))
     {
+        line_num++;
         if (strspn(line, " \t\r\n") == strlen(line))
         {
             fputs(line, am_file);
@@ -374,6 +378,15 @@ ExitCode preprocess(const char *filename)
         /* Check if there's a label at the beginning */
         if (extract_label(line, label))
         {
+            /* Disallow labels that match a macro name */
+            if (find_macro(label) != -1)
+            {
+                print_line_error(as_filename, line_num, ERROR_MACRO_LABEL_CONFLICT);
+                fclose(as_file);
+                fclose(am_file);
+                free_macro_table();
+                return EXIT_MACRO_SYNTAX_ERROR;
+            }
             /* Write the label to the .am file */
             fprintf(am_file, "%s: ", label);
 

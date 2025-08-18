@@ -50,7 +50,7 @@ void init_data_image(void)
     if (data_image.data == NULL)
     {
         /*toDo: update error handling*/
-        fprintf(stderr, "Error: Failed to initialize data image\n");
+        fprintf(stdout, "Error: Failed to initialize data image\n");
         exit(EXIT_GENERAL_ERROR);
     }
 
