@@ -1,14 +1,31 @@
-; Test 5: Multiple Undefined Symbols
-; Expected: Multiple ERROR_UNDEFINED_SYMBOL (or stops at first)
+; Test 8: Valid References (Should Pass Second Pass)
+; Expected: No errors, successful assembly
 
-; === Valid definitions ===
-VALID_DATA: .data 42
-TEST_MATRIX: .mat [2][2] 1,2,3,4
+; === External symbols ===
+.extern PRINT_FUNC
+.extern INPUT_FUNC
 
-; === Instructions with multiple undefined symbols ===
-MAIN: mov FIRST_UNDEFINED, r0     ; First undefined symbol
-      add SECOND_UNDEFINED, r1    ; Second undefined symbol  
-      lea THIRD_UNDEFINED, r2     ; Third undefined symbol
+; === Data definitions ===
+COUNTER_1: .data 10
+RESULT: .data 0
+MATRIX: .mat [2][2] 1,2,3,4
+MESSAGE: .string "Hello"
+
+; === Instructions with valid references ===
+MAIN: mov COUNTER, r0          ; Valid data reference
+      add #1, r0               ; Valid immediate
+      mov r0, RESULT           ; Valid data reference
+      mov MATRIX[r0][r1], r2   ; Valid matrix reference
+      jsr PRINT_FUNC           ; Valid external reference
+      jmp END                  ; Valid label reference
+
+LOOP: cmp #10, r0              ; Valid immediate
+      bne MAIN                 ; Valid label reference
+      
+; === Entry declarations for defined symbols ===
+.entry MAIN
+.entry COUNTER
+.entry RESULT
 
 ; === End ===
 END: stop

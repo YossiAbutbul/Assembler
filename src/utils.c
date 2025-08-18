@@ -141,7 +141,7 @@ BOOL extract_label(const char *line, char *label_out)
     /* Also validate that it contains only alphanumeric characters */
     while (line[i] && !isspace((unsigned char)line[i]) && line[i] != ':' && j < MAX_LABEL_LENGTH)
     {
-        if (!isalnum((unsigned char)line[i]) && line[i] != '_') /* Allow underscores */
+        if (!isalnum((unsigned char)line[i]))
         {
             return FALSE; /* Invalid character in label */
         }
@@ -222,7 +222,7 @@ BOOL is_valid_label(const char *label)
     /* Check if the label contains only alphanumeric characters and underscores */
     for (i = 0; i < len; i++)
     {
-        if (!isalnum((unsigned char)label[i]) && label[i] != '_')
+        if (!isalnum((unsigned char)label[i]))
             return FALSE;
     }
 

@@ -106,6 +106,9 @@ BOOL second_pass(FILE *am_file, const char *filename, AssemblyContext *context)
     line_num = 0;
     current_ic = BASE_IC_ADDRESS;
 
+    /* Intialize err_found to FALSE (if we get to second pass, no errors were detected on first pass) */
+    err_found = FALSE;
+
     if (!am_file || !filename || !context)
         return FALSE;
 
@@ -135,11 +138,10 @@ BOOL second_pass(FILE *am_file, const char *filename, AssemblyContext *context)
 
         process_line_second_pass(line, filename, line_num, &current_ic, context);
 
-        /* Stop processing if we encountered an error */
+        /* Contunue processing if we encountered an error to identify multy errors */
         if (err_found)
         {
             context->has_errors = TRUE;
-            break;
         }
     }
 
