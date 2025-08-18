@@ -282,8 +282,6 @@ static BOOL parse_operand(const char *operand_str, Operand *operand, const char 
     char *endptr;
     long parsed_value;
 
-    printf("DEBUG: ENTERING parse_operand() with: '%s'\n", operand_str);
-
     /* Initialize operand struct */
     memset(operand, 0, sizeof(Operand));
 
@@ -295,13 +293,9 @@ static BOOL parse_operand(const char *operand_str, Operand *operand, const char 
     }
     trimmed[j] = '\0';
 
-    printf("DEBUG: After trimming: '%s'\n", trimmed);
-
     /* Check for immediate addressing (#value) */
     if (trimmed[0] == '#')
     {
-        printf("DEBUG: Taking immediate path\n");
-
         /* Check for space after # in original string */
         i = 0;
         while (operand_str[i] && operand_str[i] != '#')
@@ -353,18 +347,9 @@ static BOOL parse_operand(const char *operand_str, Operand *operand, const char 
         }
     }
 
-    printf("DEBUG: Checking register condition for '%s'\n", trimmed);
-    printf("DEBUG: trimmed[0] = '%c' (ASCII %d)\n", trimmed[0], (int)trimmed[0]);
-    printf("DEBUG: 'r' = '%c' (ASCII %d)\n", 'r', (int)'r');
-    printf("DEBUG: 'R' = '%c' (ASCII %d)\n", 'R', (int)'R');
-    printf("DEBUG: trimmed[0] == 'r': %s\n", (trimmed[0] == 'r') ? "TRUE" : "FALSE");
-    printf("DEBUG: trimmed[0] == 'R': %s\n", (trimmed[0] == 'R') ? "TRUE" : "FALSE");
-    printf("DEBUG: Full condition: %s\n", (trimmed[0] == 'r' || trimmed[0] == 'R') ? "TRUE" : "FALSE");
-
     /* Check for register addressing - including invalid register formats */
-    if (trimmed[0] == 'r' || trimmed[0] == 'R')
+    if (trimmed[0] == 'r')
     {
-        printf("DEBUG: Taking register path for '%s'\n", trimmed);
 
         /* Check for valid register first */
         if (is_register(trimmed, &operand->value))
@@ -385,7 +370,6 @@ static BOOL parse_operand(const char *operand_str, Operand *operand, const char 
     /* Check for matrix addressing (label[reg][reg]) */
     if (strchr(trimmed, '['))
     {
-        printf("DEBUG: Taking matrix path\n");
 
         if (is_matrix_reference(trimmed, operand, filename, line_num))
         {
@@ -401,16 +385,12 @@ static BOOL parse_operand(const char *operand_str, Operand *operand, const char 
     /* Check for direct addressing */
     if (is_valid_label(trimmed))
     {
-        printf("DEBUG: Taking direct addressing path\n");
-
         operand->mode = ADDRESSING_DIRECT;
         strncpy(operand->symbol_name, trimmed, MAX_LABEL_LENGTH);
         operand->symbol_name[MAX_LABEL_LENGTH] = '\0';
         operand->is_symbol = TRUE;
         return TRUE;
     }
-
-    printf("DEBUG: Falling through to invalid operand\n");
 
     /* It's an invalid operand */
     print_line_error(filename, line_num, ERROR_INVALID_OPERAND);
@@ -503,8 +483,6 @@ static BOOL is_matrix_reference(const char *str, Operand *operand, const char *f
     char trimmed_reg1[MAX_REG_STR_LEN], trimmed_reg2[MAX_REG_STR_LEN];
     int label_len;
     int i, j;
-
-    printf("DEBUG: ENTERING is_matrix_reference() with: '%s'\n", str);
 
     /* Find first '[' */
     br1 = strchr(str, '[');
@@ -606,20 +584,9 @@ static BOOL is_matrix_reference(const char *str, Operand *operand, const char *f
         return FALSE;
     }
 
-    printf("DEBUG: Matrix parsing line %d\n", line_num);
-    printf("DEBUG: Original string: '%s'\n", str);
-    printf("DEBUG: Label part: '%s'\n", label_part);
-    printf("DEBUG: Raw reg1_str: '%s'\n", reg1_str);
-    printf("DEBUG: Raw reg2_str: '%s'\n", reg2_str);
-    printf("DEBUG: Trimmed reg1: '%s'\n", trimmed_reg1);
-    printf("DEBUG: Trimmed reg2: '%s'\n", trimmed_reg2);
-    printf("DEBUG: About to validate registers...\n");
-
     /* Check for immediate values in indices (not allowed) */
     if (trimmed_reg1[0] == '#')
     {
-        printf("DEBUG: reg1 starts with #\n");
-
         print_line_error(filename, line_num, ERROR_MATRIX_IMMEDIATE_NOT_ALLOWED);
         err_found = TRUE;
         return FALSE;
@@ -627,8 +594,6 @@ static BOOL is_matrix_reference(const char *str, Operand *operand, const char *f
 
     if (trimmed_reg2[0] == '#')
     {
-        printf("DEBUG: reg2 starts with #\n");
-
         print_line_error(filename, line_num, ERROR_MATRIX_IMMEDIATE_NOT_ALLOWED);
         err_found = TRUE;
         return FALSE;
@@ -637,8 +602,6 @@ static BOOL is_matrix_reference(const char *str, Operand *operand, const char *f
     /* Validate first register */
     if (!is_register(trimmed_reg1, &operand->reg1))
     {
-        printf("DEBUG: reg1 '%s' failed is_register() check\n", trimmed_reg1);
-
         print_line_error(filename, line_num, ERROR_MATRIX_INVALID_REGISTER);
         err_found = TRUE;
         return FALSE;
@@ -647,8 +610,6 @@ static BOOL is_matrix_reference(const char *str, Operand *operand, const char *f
     /* Validate second register */
     if (!is_register(trimmed_reg2, &operand->reg2))
     {
-        printf("DEBUG: reg2 '%s' failed is_register() check\n", trimmed_reg2);
-
         print_line_error(filename, line_num, ERROR_MATRIX_INVALID_REGISTER);
         err_found = TRUE;
         return FALSE;
@@ -658,9 +619,6 @@ static BOOL is_matrix_reference(const char *str, Operand *operand, const char *f
     strncpy(operand->symbol_name, label_part, MAX_LABEL_LENGTH);
     operand->symbol_name[MAX_LABEL_LENGTH] = '\0'; /* Null terminate the symbol name */
     operand->is_symbol = TRUE;
-
-    printf("DEBUG: EXITING is_matrix_reference() - SUCCESS\n");
-
     return TRUE;
 }
 
