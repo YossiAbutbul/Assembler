@@ -175,6 +175,7 @@ static void process_line_second_pass(const char *line, const char *filename, int
     char first_token[MAX_LINE_LENGTH + 1];
     char *rest;
     char buffer[MAX_LINE_LENGTH + 1];
+    const char *entry_line;
 
     /* Creates a copy of the line */
     strncpy(buffer, line, MAX_LINE_LENGTH);
@@ -191,7 +192,16 @@ static void process_line_second_pass(const char *line, const char *filename, int
 
     /* handle .entry directive */
     if (strcmp(first_token, ".entry") == 0)
-        handle_entry_directive_second_pass(rest, filename, line_num, context);
+    {
+        /* Skip past .entry token */
+        entry_line = rest;
+        while (*entry_line && !isspace((unsigned char)*entry_line))
+            entry_line++;
+        while (*entry_line && isspace((unsigned char)*entry_line))
+            entry_line++;
+
+        handle_entry_directive_second_pass(entry_line, filename, line_num, context);
+    }
 
     /* Skip .extern, .data, .string, .mat directives (already processed in first pass) */
     else if (strcmp(first_token, ".extern") == 0 ||
@@ -303,15 +313,6 @@ static void handle_entry_directive_second_pass(const char *line, const char *fil
     while (isspace((unsigned char)*ptr))
         ptr++;
 
-    /* Find and skip past the .entry directive */
-    if (strncmp(ptr, ".entry", 6) == 0)
-    {
-        ptr += 6;
-        /* Skip whitespace after .entry */
-        while (isspace((unsigned char)*ptr))
-            ptr++;
-    }
-
     /* Extract the label name */
     if (!get_next_token(ptr, label))
     {
@@ -323,6 +324,7 @@ static void handle_entry_directive_second_pass(const char *line, const char *fil
 
     /* Find the symbol in the symbol table */
     symbol = get_symbol(label);
+
     if (!symbol)
     {
         print_line_error(filename, line_num, ERROR_UNDEFINED_SYMBOL);
@@ -839,7 +841,6 @@ static BOOL validate_first_pass_data(void)
     if (expected_insts <= 0 && data_size <= 0)
         return FALSE; /* No instructions found in first pass */
 
-    /* todo: myabe insert another validation*/
     return TRUE;
 }
 

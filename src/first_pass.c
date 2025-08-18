@@ -328,9 +328,8 @@ static void process_line(const char *line, const char *filename, int line_num)
     {
         if (has_label)
         {
-            print_line_error(filename, line_num, ERROR_LABEL_ON_EXTERN);
-            err_found = TRUE;
-            return;
+            fprintf(stderr, "Warning in file %s at line %d: Label on .entry directive is ignored.\n",
+                    filename, line_num);
         }
         handle_entry_directive(rest, filename, line_num);
     }
@@ -338,9 +337,8 @@ static void process_line(const char *line, const char *filename, int line_num)
     {
         if (has_label)
         {
-            print_line_error(filename, line_num, ERROR_LABEL_ON_EXTERN);
-            err_found = TRUE;
-            return;
+            fprintf(stderr, "Warning in file %s at line %d: Label on .extern directive is ignored.\n",
+                    filename, line_num);
         }
         handle_extern_directive(rest, filename, line_num);
     }
@@ -618,7 +616,6 @@ static void handle_extern_directive(const char *line, const char *filename, int 
 
     /* Add external symbol to table */
     add_symbol(label, 0, SYMBOL_EXTERNAL);
-
     free(line_copy);
 }
 

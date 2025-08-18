@@ -54,36 +54,37 @@ static const char *error_messages[] = {
     /* 30 */ "Undefined symbol",                /* ERROR_UNDEFINED_SYMBOL */
     /* 31 */ "Entry not defined",               /* ERROR_ENTRY_NOT_DEFINED */
     /* 32 */ "Label cannot be used on .extern", /* ERROR_LABEL_ON_EXTERN */
-    /* 33 */ "External conflict",               /* ERROR_EXTERNAL_CONFLICT */
+    /* 33 */ "Label cannot be used on .entry",  /* ERROR_LABEL_ON_ENTRY */
+    /* 34 */ "External conflict",               /* ERROR_EXTERNAL_CONFLICT */
 
     /* === Macro Expansion Errors === */
-    /* 34 */ "Cannot use reserved word as macro name", /* ERROR_MACRO_RESERVED_WORD */
-    /* 35 */ "Extra text after macro name",            /* ERROR_MACRO_EXTRA_TEXT */
-    /* 36 */ "Missing 'mcroend' for macro",            /* ERROR_MACRO_MISSING_END */
-    /* 37 */ "Missing macro name after 'mcro'",        /* ERROR_MACRO_MISSING_NAME */
+    /* 35 */ "Cannot use reserved word as macro name", /* ERROR_MACRO_RESERVED_WORD */
+    /* 36 */ "Extra text after macro name",            /* ERROR_MACRO_EXTRA_TEXT */
+    /* 37 */ "Missing 'mcroend' for macro",            /* ERROR_MACRO_MISSING_END */
+    /* 38 */ "Missing macro name after 'mcro'",        /* ERROR_MACRO_MISSING_NAME */
 
     /* === Memory and System Errors === */
-    /* 38 */ "Memory allocation failed",     /* ERROR_MEMORY_ALLOCATION_FAILED */
-    /* 39 */ "Data image overflow",          /* ERROR_DATA_IMAGE_OVERFLOW */
-    /* 40 */ "Instruction image overflow",   /* ERROR_INSTRUCTION_IMAGE_OVERFLOW */
-    /* 41 */ "Memory address out of bounds", /* ERROR_ADDRESS_OUT_OF_BOUNDS */
+    /* 39 */ "Memory allocation failed",     /* ERROR_MEMORY_ALLOCATION_FAILED */
+    /* 40 */ "Data image overflow",          /* ERROR_DATA_IMAGE_OVERFLOW */
+    /* 41 */ "Instruction image overflow",   /* ERROR_INSTRUCTION_IMAGE_OVERFLOW */
+    /* 42 */ "Memory address out of bounds", /* ERROR_ADDRESS_OUT_OF_BOUNDS */
 
     /* === Data Directive Specific Errors === */
-    /* 42 */ ".data directive requires at least one value",    /* ERROR_DATA_NO_VALUES */
-    /* 43 */ ".data directive cannot end with comma",          /* ERROR_DATA_TRAILING_COMMA */
-    /* 44 */ ".data directive cannot start with comma",        /* ERROR_DATA_LEADING_COMMA */
-    /* 45 */ ".data directive cannot have consecutive commas", /* ERROR_DATA_DOUBLE_COMMA */
-    /* 46 */ ".data directive has empty value between commas", /* ERROR_DATA_EMPTY_VALUE */
+    /* 43 */ ".data directive requires at least one value",    /* ERROR_DATA_NO_VALUES */
+    /* 44 */ ".data directive cannot end with comma",          /* ERROR_DATA_TRAILING_COMMA */
+    /* 45 */ ".data directive cannot start with comma",        /* ERROR_DATA_LEADING_COMMA */
+    /* 46 */ ".data directive cannot have consecutive commas", /* ERROR_DATA_DOUBLE_COMMA */
+    /* 47 */ ".data directive has empty value between commas", /* ERROR_DATA_EMPTY_VALUE */
 
     /* === Entry/Extern Directive Specific Errors === */
-    /* 47 */ ".entry directive requires a symbol name",                    /* ERROR_ENTRY_MISSING_SYMBOL */
-    /* 48 */ ".extern directive requires a symbol name",                   /* ERROR_EXTERN_MISSING_SYMBOL */
-    /* 49 */ ".entry directive cannot have extra text after symbol name",  /* ERROR_ENTRY_EXTRA_TEXT */
-    /* 50 */ ".extern directive cannot have extra text after symbol name", /* ERROR_EXTERN_EXTRA_TEXT */
+    /* 48 */ ".entry directive requires a symbol name",                    /* ERROR_ENTRY_MISSING_SYMBOL */
+    /* 49 */ ".extern directive requires a symbol name",                   /* ERROR_EXTERN_MISSING_SYMBOL */
+    /* 50 */ ".entry directive cannot have extra text after symbol name",  /* ERROR_ENTRY_EXTRA_TEXT */
+    /* 51 */ ".extern directive cannot have extra text after symbol name", /* ERROR_EXTERN_EXTRA_TEXT */
 
     /* === General Errors === */
-    /* 51 */ "General error",                 /* ERROR_GENERAL */
-    /* 52 */ "Missing comma between operands" /* ERROR_MISSING_COMMA */
+    /* 52 */ "General error",                 /* ERROR_GENERAL */
+    /* 53 */ "Missing comma between operands" /* ERROR_MISSING_COMMA */
 };
 
 /**

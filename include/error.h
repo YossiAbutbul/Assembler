@@ -75,6 +75,7 @@ typedef enum
     ERROR_UNDEFINED_SYMBOL,
     ERROR_ENTRY_NOT_DEFINED,
     ERROR_LABEL_ON_EXTERN,
+    ERROR_LABEL_ON_ENTRY,
     ERROR_EXTERNAL_CONFLICT,
 
     /* === Macro Expansion Errors === */
