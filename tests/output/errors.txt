@@ -1,0 +1,238 @@
+=============== Test 1 ===============
+Assembling file: ./tests/test1.as
+Successfully assembled ./tests/test1.as
+
+=============== Test 2 ===============
+Assembling file: ./tests/test2.as
+Successfully assembled ./tests/test2.as
+
+=============== Test 3 ===============
+Assembling file: ./tests/test3.as
+Successfully assembled ./tests/test3.as
+
+=============== Test 4 ===============
+Assembling file: ./tests/test4.as
+Successfully assembled ./tests/test4.as
+
+=============== Test 5 ===============
+Assembling file: ./tests/test5.as
+Successfully assembled ./tests/test5.as
+
+=============== Test 6 ===============
+Assembling file: ./tests/test6.as
+Successfully assembled ./tests/test6.as
+
+=============== Test 7 ===============
+Assembling file: ./tests/test7.as
+Warning: File ./tests/test7.as is empty, no output files were created.
+
+=============== Test 8 ===============
+Assembling file: ./tests/test8.as
+Successfully assembled ./tests/test8.as
+
+=============== Test 9 ===============
+Assembling file: ./tests/test9.as
+Successfully assembled ./tests/test9.as
+
+=============== Test 10 ===============
+Assembling file: ./tests/test10.as
+Error in file ./tests/test10.as at line 1: Label must start with a letter.
+Error in file ./tests/test10.as at line 2: Label must start with a letter.
+Error in file ./tests/test10.as at line 3: Reserved word cannot be used as label.
+Error in file ./tests/test10.as at line 4: Reserved word cannot be used as label.
+Error: First pass error in file ./tests/test10.am.
+
+=============== Test 11 ===============
+./assembler ./tests/test11
+Assembling file: ./tests/test11.as
+Error in file ./tests/test11.as at line 2: Immediate value out of range (must be -512 to +511).
+Error in file ./tests/test11.as at line 3: Immediate value out of range (must be -512 to +511).
+Error in file ./tests/test11.as at line 4: Immediate value out of range (must be -512 to +511).
+Error in file ./tests/test11.as at line 5: Immediate value out of range (must be -512 to +511).
+Error: First pass error in file ./tests/test11.am.
+
+=============== Test 12 ===============
+Assembling file: ./tests/test12.as
+Error in file ./tests/test12.as at line 1: Invalid immediate value format (must be #number).
+Error in file ./tests/test12.as at line 2: Invalid register - only r0 through r7 are allowed.
+Error in file ./tests/test12.as at line 5: Matrix access missing register index - need label[register][register].
+Error in file ./tests/test12.as at line 6: Invalid register in matrix access - must be r0-r7.
+Error: First pass error in file ./tests/test12.am.
+
+=============== Test 13 ===============
+Assembling file: ./tests/test13.as
+Error in file ./tests/test13.as at line 1: Undefined symbol.
+Error: Second pass error in file ./tests/test13.am.
+
+=============== Test 14 ===============
+Assembling file: ./tests/test14.as
+Error in file ./tests/test14.as at line 1: Too few operands.
+Error in file ./tests/test14.as at line 2: Too many operands.
+Error in file ./tests/test14.as at line 3: Too few operands.
+Error in file ./tests/test14.as at line 4: Too many operands.
+Error in file ./tests/test14.as at line 5: Too many operands.
+Error: First pass error in file ./tests/test14.am.
+
+=============== Test 15 ===============
+Assembling file: ./tests/test15.as
+Error in file ./tests/test15.as at line 1: Invalid target operand addressing mode.
+Error in file ./tests/test15.as at line 2: Invalid source operand addressing mode.
+Error in file ./tests/test15.as at line 3: Invalid target operand addressing mode.
+Error in file ./tests/test15.as at line 4: Invalid target operand addressing mode.
+Error: First pass error in file ./tests/test15.am.
+
+=============== Test 16 ===============
+Assembling file: ./tests/test16.as
+Error in file ./tests/test16.as at line 1: Line exceeds maximum length of 80 characters.
+Error: First pass error in file ./tests/test16.am.
+
+=============== Test 17 ===============
+Assembling file: ./tests/test17.as
+Error in file ./tests/test17.as at line 2: Invalid matrix dimensions - rows and columns must be greater than 0.
+Error in file ./tests/test17.as at line 3: Invalid matrix dimensions - rows and columns must be greater than 0.
+Error in file ./tests/test17.as at line 4: Invalid matrix syntax.
+Error in file ./tests/test17.as at line 5: Too many values provided for matrix size.
+Error: First pass error in file ./tests/test17.am.
+
+=============== Test 18 ===============
+Assembling file: ./tests/test18.as
+Error in file ./tests/test18.as at line 2: String must be enclosed in double quotes.
+Error in file ./tests/test18.as at line 3: String missing closing quote.
+Error in file ./tests/test18.as at line 4: String contains invalid non-ASCII character.
+Error: First pass error in file ./tests/test18.am.
+
+=============== Test 19 ===============
+Assembling file: ./tests/test19.as
+Error in file ./tests/test19.as at line 2: Cannot use reserved word as macro name.
+
+=============== Test 20 ===============
+Assembling file: ./tests/test20.as
+Error in file ./tests/test20.as at line 2: Extra text after macro name.
+
+=============== Test 21 ===============
+Assembling file: ./tests/test21.as
+Error in file ./tests/test21.as at line 2: Missing 'mcroend' for macro.
+
+=============== Test 22 ===============
+Assembling file: ./tests/test22.as
+Error in file ./tests/test22.as at line 2: Cannot use reserved word as macro name.
+
+=============== Test 23 ===============
+Assembling file: ./tests/test23.as
+Error in file ./tests/test23.as at line 2: Missing macro name after 'mcro'.
+
+=============== Test 24 ===============
+Assembling file: ./tests/test24.as
+Successfully assembled ./tests/test24.as
+
+=============== Test 25 ===============
+Assembling file: ./tests/test25.as
+Successfully assembled ./tests/test25.as
+
+=============== Test 26 ===============
+Assembling file: ./tests/test26.as
+Warning: File ./tests/test26.as is empty, no output files were created.
+
+=============== Test 27 ===============
+Assembling file: ./tests/test27.as
+Error in file ./tests/test27.as at line 4: Immediate value out of range (must be -512 to +511).
+Error in file ./tests/test27.as at line 5: Immediate value out of range (must be -512 to +511).
+Error in file ./tests/test27.as at line 13: Invalid immediate value format (must be #number).
+Error in file ./tests/test27.as at line 14: Invalid immediate value format (must be #number).
+Error in file ./tests/test27.as at line 15: Invalid immediate value format (must be #number).
+Error in file ./tests/test27.as at line 16: Invalid immediate value format (must be #number).
+Error: First pass error in file ./tests/test27.am.
+
+=============== Test 28 ===============
+Assembling file: ./tests/test28.as
+Error in file ./tests/test28.as at line 11: Invalid register - only r0 through r7 are allowed.
+Error in file ./tests/test28.as at line 12: Invalid register - only r0 through r7 are allowed.
+Error in file ./tests/test28.as at line 13: Invalid register - only r0 through r7 are allowed.
+Error in file ./tests/test28.as at line 14: Invalid register - only r0 through r7 are allowed.
+Error in file ./tests/test28.as at line 15: Invalid register - only r0 through r7 are allowed.
+Error: First pass error in file ./tests/test28.am.
+
+=============== Test 29 ===============
+Assembling file: ./tests/test29.as
+Error in file ./tests/test29.as at line 6: String contains invalid non-ASCII character.
+Error in file ./tests/test29.as at line 9: String must be enclosed in double quotes.
+Error in file ./tests/test29.as at line 10: String missing closing quote.
+Error in file ./tests/test29.as at line 11: String must be enclosed in double quotes.
+Error: First pass error in file ./tests/test29.am.
+
+=============== Test 30 ===============
+Assembling file: ./tests/test30.as
+Error in file ./tests/test30.as at line 5: Too many values provided for matrix size.
+Error in file ./tests/test30.as at line 8: Invalid matrix dimensions - rows and columns must be greater than 0.
+Error in file ./tests/test30.as at line 9: Invalid matrix dimensions - rows and columns must be greater than 0.
+Error in file ./tests/test30.as at line 10: Invalid matrix syntax.
+Error in file ./tests/test30.as at line 11: Missing whitespace between instruction / directive and operands.
+Error: First pass error in file ./tests/test30.am.
+
+=============== Test 31 ===============
+Assembling file: ./tests/test31.as
+Error in file ./tests/test31.as at line 5: Matrix access missing register index - need label[register][register].
+Error in file ./tests/test31.as at line 6: Invalid register in matrix access - must be r0-r7.
+Error in file ./tests/test31.as at line 7: Immediate values not allowed in matrix indices.
+Error: First pass error in file ./tests/test31.am.
+
+=============== Test 32 ===============
+Assembling file: ./tests/test32.as
+Error in file ./tests/test32.as at line 2: .data directive requires at least one value.
+Error in file ./tests/test32.as at line 3: .data directive cannot end with comma.
+Error in file ./tests/test32.as at line 4: .data directive cannot start with comma.
+Error in file ./tests/test32.as at line 5: .data directive cannot have consecutive commas.
+Error in file ./tests/test32.as at line 6: Missing comma between operands.
+Error in file ./tests/test32.as at line 8: Immediate value out of range (must be -512 to +511).
+Error in file ./tests/test32.as at line 8: Immediate value out of range (must be -512 to +511).
+Error in file ./tests/test32.as at line 9: String must be enclosed in double quotes.
+Error in file ./tests/test32.as at line 12: .entry directive requires a symbol name.
+Error in file ./tests/test32.as at line 13: .extern directive requires a symbol name.
+Error in file ./tests/test32.as at line 14: .entry directive cannot have extra text after symbol name.
+Error in file ./tests/test32.as at line 15: Invalid label.
+Warning in file ./tests/test32.as at line 17: Label on .entry directive is ignored.
+Warning in file ./tests/test32.as at line 18: Label on .extern directive is ignored.
+Error: First pass error in file ./tests/test32.am.
+
+=============== Test 33 ===============
+Assembling file: ./tests/test33.as
+Error in file ./tests/test33.as at line 5: .data directive requires at least one value.
+Error in file ./tests/test33.as at line 6: .data directive cannot end with comma.
+Error in file ./tests/test33.as at line 7: .data directive cannot start with comma.
+Error in file ./tests/test33.as at line 8: .data directive cannot have consecutive commas.
+Error in file ./tests/test33.as at line 9: .data directive cannot have consecutive commas.
+Error in file ./tests/test33.as at line 10: Missing comma between operands.
+Error in file ./tests/test33.as at line 11: Immediate value out of range (must be -512 to +511).
+Error in file ./tests/test33.as at line 11: Immediate value out of range (must be -512 to +511).
+Error in file ./tests/test33.as at line 12: Line exceeds maximum length of 80 characters.
+Error in file ./tests/test33.as at line 18: String must be enclosed in double quotes.
+Error in file ./tests/test33.as at line 19: String missing closing quote.
+Error in file ./tests/test33.as at line 23: .entry directive requires a symbol name.
+Error in file ./tests/test33.as at line 24: .extern directive requires a symbol name.
+Error in file ./tests/test33.as at line 25: .entry directive cannot have extra text after symbol name.
+Error in file ./tests/test33.as at line 26: Invalid label.
+Warning in file ./tests/test33.as at line 30: Label on .entry directive is ignored.
+Warning in file ./tests/test33.as at line 31: Label on .extern directive is ignored.
+Error in file ./tests/test33.as at line 35: Invalid register - only r0 through r7 are allowed.
+Error in file ./tests/test33.as at line 36: Invalid register - only r0 through r7 are allowed.
+Error in file ./tests/test33.as at line 37: Invalid register - only r0 through r7 are allowed.
+Error in file ./tests/test33.as at line 38: Invalid register - only r0 through r7 are allowed.
+Error in file ./tests/test33.as at line 39: Invalid register - only r0 through r7 are allowed.
+Error in file ./tests/test33.as at line 42: Unknown instruction.
+Error in file ./tests/test33.as at line 43: Too few operands.
+Error in file ./tests/test33.as at line 44: Too many operands.
+Error in file ./tests/test33.as at line 45: Too many operands.
+Error in file ./tests/test33.as at line 48: Invalid target operand addressing mode.
+Error in file ./tests/test33.as at line 49: Invalid source operand addressing mode.
+Error in file ./tests/test33.as at line 50: Invalid target operand addressing mode.
+Error in file ./tests/test33.as at line 53: Invalid immediate value format (must be #number).
+Error in file ./tests/test33.as at line 54: Invalid immediate value format (must be #number).
+Error in file ./tests/test33.as at line 55: Invalid immediate value format (must be #number).
+Error in file ./tests/test33.as at line 56: Immediate value out of range (must be -512 to +511).
+Error in file ./tests/test33.as at line 57: Immediate value out of range (must be -512 to +511).
+Error in file ./tests/test33.as at line 60: Immediate values not allowed in matrix indices.
+Error in file ./tests/test33.as at line 61: Invalid register in matrix access - must be r0-r7.
+Error in file ./tests/test33.as at line 62: Invalid register in matrix access - must be r0-r7.
+Error: First pass error in file ./tests/test33.am.
+
+
