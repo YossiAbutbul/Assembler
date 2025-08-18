@@ -68,9 +68,22 @@ static const char *error_messages[] = {
     /* 40 */ "Instruction image overflow",   /* ERROR_INSTRUCTION_IMAGE_OVERFLOW */
     /* 41 */ "Memory address out of bounds", /* ERROR_ADDRESS_OUT_OF_BOUNDS */
 
+    /* === Data Directive Specific Errors === */
+    /* 42 */ ".data directive requires at least one value",    /* ERROR_DATA_NO_VALUES */
+    /* 43 */ ".data directive cannot end with comma",          /* ERROR_DATA_TRAILING_COMMA */
+    /* 44 */ ".data directive cannot start with comma",        /* ERROR_DATA_LEADING_COMMA */
+    /* 45 */ ".data directive cannot have consecutive commas", /* ERROR_DATA_DOUBLE_COMMA */
+    /* 46 */ ".data directive has empty value between commas", /* ERROR_DATA_EMPTY_VALUE */
+
+    /* === Entry/Extern Directive Specific Errors === */
+    /* 47 */ ".entry directive requires a symbol name",                    /* ERROR_ENTRY_MISSING_SYMBOL */
+    /* 48 */ ".extern directive requires a symbol name",                   /* ERROR_EXTERN_MISSING_SYMBOL */
+    /* 49 */ ".entry directive cannot have extra text after symbol name",  /* ERROR_ENTRY_EXTRA_TEXT */
+    /* 50 */ ".extern directive cannot have extra text after symbol name", /* ERROR_EXTERN_EXTRA_TEXT */
+
     /* === General Errors === */
-    /* 42 */ "General error",                 /* ERROR_GENERAL */
-    /* 43 */ "Missing comma between operands" /* ERROR_MISSING_COMMA */
+    /* 51 */ "General error",                 /* ERROR_GENERAL */
+    /* 52 */ "Missing comma between operands" /* ERROR_MISSING_COMMA */
 };
 
 /**

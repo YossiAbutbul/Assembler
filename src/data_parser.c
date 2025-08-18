@@ -105,7 +105,7 @@ void parse_data_values(const char *line, const char *filename, int line_num)
     /* Check if line is empty after directive */
     if (*line == '\0')
     {
-        print_line_error(filename, line_num, ERROR_SYNTAX);
+        print_line_error(filename, line_num, ERROR_DATA_NO_VALUES);
         err_found = TRUE;
         return;
     }
@@ -113,7 +113,7 @@ void parse_data_values(const char *line, const char *filename, int line_num)
     /* Check for leading comma */
     if (*line == ',')
     {
-        print_line_error(filename, line_num, ERROR_SYNTAX);
+        print_line_error(filename, line_num, ERROR_DATA_LEADING_COMMA);
         err_found = TRUE;
         return;
     }
@@ -124,7 +124,7 @@ void parse_data_values(const char *line, const char *filename, int line_num)
         p--;
     if (*p == ',')
     {
-        print_line_error(filename, line_num, ERROR_SYNTAX);
+        print_line_error(filename, line_num, ERROR_DATA_TRAILING_COMMA);
         err_found = TRUE;
         return;
     }
@@ -136,7 +136,7 @@ void parse_data_values(const char *line, const char *filename, int line_num)
         {
             if (found_comma)
             {
-                print_line_error(filename, line_num, ERROR_SYNTAX);
+                print_line_error(filename, line_num, ERROR_DATA_DOUBLE_COMMA);
                 err_found = TRUE;
                 return;
             }
@@ -189,7 +189,7 @@ void parse_data_values(const char *line, const char *filename, int line_num)
         /* Check if the token is empty after trimming */
         if (*token == '\0')
         {
-            print_line_error(filename, line_num, ERROR_SYNTAX);
+            print_line_error(filename, line_num, ERROR_DATA_EMPTY_VALUE);
             err_found = TRUE;
             free(copy);
             return;

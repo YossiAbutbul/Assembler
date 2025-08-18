@@ -347,6 +347,13 @@ static BOOL parse_operand(const char *operand_str, Operand *operand, const char 
         }
     }
 
+    if (trimmed[0] == 'R' && strlen(trimmed) == 2 && trimmed[1] >= '0' && trimmed[1] <= '9')
+    {
+        print_line_error(filename, line_num, ERROR_INVALID_REGISTER);
+        err_found = TRUE;
+        return FALSE;
+    }
+
     /* Check for register addressing - including invalid register formats */
     if (trimmed[0] == 'r')
     {

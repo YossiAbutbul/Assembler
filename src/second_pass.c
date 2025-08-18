@@ -315,7 +315,7 @@ static void handle_entry_directive_second_pass(const char *line, const char *fil
     /* Extract the label name */
     if (!get_next_token(ptr, label))
     {
-        print_line_error(filename, line_num, ERROR_SYNTAX);
+        print_line_error(filename, line_num, ERROR_ENTRY_MISSING_SYMBOL);
         err_found = TRUE;
         context->has_errors = TRUE;
         return;

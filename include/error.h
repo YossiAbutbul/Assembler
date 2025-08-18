@@ -89,6 +89,19 @@ typedef enum
     ERROR_INSTRUCTION_IMAGE_OVERFLOW,
     ERROR_ADDRESS_OUT_OF_BOUNDS,
 
+    /* === Data Directive Specific Errors === */
+    ERROR_DATA_NO_VALUES,
+    ERROR_DATA_TRAILING_COMMA,
+    ERROR_DATA_LEADING_COMMA,
+    ERROR_DATA_DOUBLE_COMMA,
+    ERROR_DATA_EMPTY_VALUE,
+
+    /* === Entry/Extern Directive Specific Errors === */
+    ERROR_ENTRY_MISSING_SYMBOL,
+    ERROR_EXTERN_MISSING_SYMBOL,
+    ERROR_ENTRY_EXTRA_TEXT,
+    ERROR_EXTERN_EXTRA_TEXT,
+
     /* === General Errors === */
     ERROR_GENERAL,
     ERROR_MISSING_COMMA

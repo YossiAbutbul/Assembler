@@ -6,6 +6,7 @@ DATA4:  .data 1,,2               ; Double comma (should error)
 DATA5:  .data 1 2 3              ; Missing commas (should error)
 DATA6:  .data -512,511           ; Boundary values
 DATA7:  .data -513,512           ; Out of range (should error)
+STR1:   .string missing opening quotes"
 
 ; Test .entry/.extern edge cases
 .entry                           ; Missing symbol (should error)

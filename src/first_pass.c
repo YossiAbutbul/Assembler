@@ -577,7 +577,7 @@ static void handle_extern_directive(const char *line, const char *filename, int 
     /* Extract the label name */
     if (!get_next_token(ptr, label))
     {
-        print_line_error(filename, line_num, ERROR_SYNTAX);
+        print_line_error(filename, line_num, ERROR_EXTERN_MISSING_SYMBOL);
         err_found = TRUE;
         free(line_copy);
         return;
@@ -610,7 +610,7 @@ static void handle_extern_directive(const char *line, const char *filename, int 
     /* Check for extra text after the label */
     if (get_next_token(ptr, extra_token))
     {
-        print_line_error(filename, line_num, ERROR_SYNTAX);
+        print_line_error(filename, line_num, ERROR_EXTERN_EXTRA_TEXT);
         err_found = TRUE;
         free(line_copy);
         return;
@@ -679,7 +679,7 @@ static void handle_entry_directive(const char *line, const char *filename, int l
     /* Extract the label name */
     if (!get_next_token(ptr, label))
     {
-        print_line_error(filename, line_num, ERROR_SYNTAX);
+        print_line_error(filename, line_num, ERROR_ENTRY_MISSING_SYMBOL);
         err_found = TRUE;
         free(line_copy);
         return;
@@ -703,7 +703,7 @@ static void handle_entry_directive(const char *line, const char *filename, int l
     /* Check for extra text after the label */
     if (get_next_token(ptr, extra_token))
     {
-        print_line_error(filename, line_num, ERROR_SYNTAX);
+        print_line_error(filename, line_num, ERROR_ENTRY_EXTRA_TEXT);
         err_found = TRUE;
         free(line_copy);
         return;
