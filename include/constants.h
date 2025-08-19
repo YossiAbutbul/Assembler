@@ -15,19 +15,19 @@ typedef enum
 
 /* === Global Variables: === */
 #define MIN_ARGC 2                      /* Minimum number of arguments for the assembler */
-#define MAX_LINE_LENGTH 81              /* Adds room for null-terminator */
-#define MAX_LABEL_LENGTH 31             /* Maximum length for labels */
+#define MAX_LINE_LENGTH 81              /* Adds room for null-terminator (80 + \0) */
+#define MAX_LABEL_LENGTH 31             /* Maximum length for labels (30 + \0) */
 #define MAX_FILE_NAME_LENGTH 290        /* Maximum length for file names */
 #define BASE_IC_ADDRESS 100             /* Initial value for the instruction counter */
 #define MAX_DATA_IMAGE_SIZE 1000        /* Generous limit for image size */
 #define MAX_INSTRUCTION_IMAGE_SIZE 1000 /* Generous limit for instruction image */
-#define MAX_SYMBOL_NAME_LENGTH 31       /* max 30 chars + /0 */
+#define MAX_SYMBOL_NAME_LENGTH 31       /* max 30 chars + \0 */
 #define MAX_REG_STR_LEN 25              /* Enough for register name + excessive whitespace */
-#define MAX_MEMORY_ADDRESS 255          /* Maximum memory address (0-255) */
-#define MIN_WORD_VALUE -512             /* Minimum 10-bit two's complement value */
-#define MAX_WORD_VALUE 511              /* Maximum 10-bit two's complement value */
-#define WORD_SIZE_BITS 10               /* Machine word size in bits */
-#define BASE4_WORD_LENGTH 5             /* Base-4 encoding length (a,b,c,d,a) */
-#define MAX_REGISTER_NUMBER 7           /* Registers r0-r7 */
+
+/* === Architecture Constants === */
+#define MAX_MEMORY_ADDRESS 255 /* Maximum memory address (0-255) */
+#define MIN_WORD_VALUE -512    /* Minimum 10-bit two's complement value */
+#define MAX_WORD_VALUE 511     /* Maximum 10-bit two's complement value */
+#define MAX_REGISTER_NUMBER 7  /* Registers r0-r7 */
 
 #endif

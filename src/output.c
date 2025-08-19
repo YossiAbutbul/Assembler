@@ -259,7 +259,7 @@ BOOL generate_externals_file(const char *filename, const AssemblyContext *contex
 void decimal_to_base4(int value, char *output)
 {
     const char digits[] = "abcd";
-    char temp[BASE4_WORD_LENGTH + 1];
+    char temp[6];
     int i = 0, j;
 
     if (!output)
@@ -287,16 +287,16 @@ void decimal_to_base4(int value, char *output)
     }
 
     /* Pad with 'a' to make exactly 5 chars */
-    while (i < BASE4_WORD_LENGTH)
+    while (i < 5)
         temp[i++] = 'a';
 
     temp[i] = '\0';
 
     /* Reverse string to get correct order (msb first) */
-    for (j = 0; j < BASE4_WORD_LENGTH; j++)
+    for (j = 0; j < 5; j++)
         output[j] = temp[4 - j];
 
-    output[BASE4_WORD_LENGTH] = '\0';
+    output[5] = '\0';
 }
 
 /**
@@ -398,7 +398,7 @@ int base4_to_decimal(const char *base4_str)
     int i;
 
     /* Check for invalid format - outside valid 10-bit range */
-    if (!base4_str || strlen(base4_str) != BASE4_WORD_LENGTH)
+    if (!base4_str || strlen(base4_str) != 5)
         return -9999;
 
     /* Convert from right to left (least significant digit first) */
@@ -463,7 +463,7 @@ BOOL is_valid_base4_string(const char *base4_str)
     if (!base4_str || strlen(base4_str) != 5)
         return FALSE;
 
-    for (i = 0; i < BASE4_WORD_LENGTH; i++)
+    for (i = 0; i < 5; i++)
     {
         if (base4_str[i] != 'a' && base4_str[i] != 'b' &&
             base4_str[i] != 'c' && base4_str[i] != 'd')

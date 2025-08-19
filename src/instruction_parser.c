@@ -418,7 +418,7 @@ static BOOL is_register(const char *str, int *reg_num)
     if (!str || strlen(str) != 2) /* 2 is the len og register (e.g. r2) */
         return FALSE;
 
-    if (str[0] == 'r' && str[1] >= '0' && str[1] <= '7')
+    if (str[0] == 'r' && str[1] >= '0' && str[1] <= ('0' + MAX_REGISTER_NUMBER))
     {
         /* Converts it from its ASCII value to its integer value */
         *reg_num = str[1] - '0';

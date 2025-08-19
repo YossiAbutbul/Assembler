@@ -110,7 +110,7 @@ BOOL first_pass(FILE *am_file, const char *filename)
     {
         print_line_error(filename, 0, ERROR_ADDRESS_OUT_OF_BOUNDS);
         err_found = TRUE;
-        return;
+        return FALSE;
     }
 
     /* Update data symbols with the current IC */
@@ -501,11 +501,11 @@ static void encode_immediate_operands(const Instruction *instruction, Instructio
         /* Convert negative values to 10-bit two's complement representation */
         if (value < 0)
         {
-            value = (1 << WORD_SIZE_BITS) + value; /* 2^WORD_SIZE_BITS */
+            value = (1 << 10) + value; /* 2^10 */
         }
 
         /* Ensure value is within 10-bit range (0 to 1023) */
-        value = value & (1 << WORD_SIZE_BITS); /* Mask to WORD_SIZE_BITS */
+        value = value & (1 << 10); /* Mask to 10-Bits */
 
         inst_data->immediate_word[inst_data->immediate_count] = value;
         inst_data->immediate_count++;
