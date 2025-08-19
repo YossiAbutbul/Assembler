@@ -549,4 +549,4 @@ project/
 
 ## License
 
-This project is developed as part of the MMN14 assignment for the Systems Programming Laboratory course.
+This project is developed as part of the MMN-14 assignment for the Systems Programming Laboratory course.
