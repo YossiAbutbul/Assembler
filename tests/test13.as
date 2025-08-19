@@ -1,2 +1,2 @@
-START:  mov invalid_symbol, r3   ; (Undefined symbol error)
+START:  mov invalidsymbol, r3   ; (Undefined symbol error)
         stop

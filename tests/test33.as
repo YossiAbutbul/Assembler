@@ -12,7 +12,7 @@ DATA7:  .data -513,512           ; ERROR_DATA_OUT_OF_RANGE (2 errors)
 DATA8:  .data 1,   ,5            ; ERROR_DATA_EMPTY_VALUE (spaces between commas)
 
 ; === Valid data for comparison ===
-DATA_OK: .data -512,511          ; Should be OK
+DATAOK: .data -512,511          ; Should be OK
 
 ; === String Error Tests ===
 STR1:   .string missing quotes   ; ERROR_STRING_MISSING_QUOTES
@@ -24,7 +24,7 @@ STR3:   .string "valid string"   ; Should be OK
 .extern                          ; ERROR_EXTERN_MISSING_SYMBOL  
 .entry MAIN EXTRA                ; ERROR_ENTRY_EXTRA_TEXT
 .entry 123INVALID                ; ERROR_INVALID_LABEL
-.extern VALID_SYMBOL             ; Should be OK
+.extern VALIDSYMBOL             ; Should be OK
 
 ; === Label on Entry/Extern Tests ===
 LABEL1: .entry MAIN              ; ERROR_LABEL_ON_EXTERN (or similar)

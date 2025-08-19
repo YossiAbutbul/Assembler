@@ -1,6 +1,6 @@
 ; Test boundary values for 10-bit range
-MIN_VAL: .data -512          ; Minimum valid value
-MAX_VAL: .data 511           ; Maximum valid value
+MINVAL: .data -512          ; Minimum valid value
+MAXVAL: .data 511           ; Maximum valid value
 ZERO:    .data 0             ; Zero value
 
 START:   mov #-512, r1       ; Minimum immediate

@@ -106,4 +106,19 @@ BOOL is_instruction(const char *word);
  */
 void remove_comments(char *line);
 
+/* === Validate Files Names === */
+/**
+ * @brief Validates a filename for proper format and length.
+ *
+ * Checks that the filename:
+ * - Is not NULL or empty
+ * - Doesn't exceed maximum length limits
+ * - Doesn't contain invalid characters (spaces, tabs)
+ * - Doesn't already have .as extension
+ *
+ * @param filename The filename to validate.
+ * @return TRUE if valid, FALSE otherwise.
+ */
+BOOL validate_filename(const char *filename);
+
 #endif

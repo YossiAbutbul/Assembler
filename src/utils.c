@@ -138,7 +138,7 @@ BOOL extract_label(const char *line, char *label_out)
     }
 
     /* Copy the label until we hit a ':' or whitespace */
-    /* Also validate that it contains only alphanumeric characters */
+    /* Also validate that it contains only alphanumeric characters (no underscores) */
     while (line[i] && !isspace((unsigned char)line[i]) && line[i] != ':' && j < MAX_LABEL_LENGTH)
     {
         if (!isalnum((unsigned char)line[i]))
@@ -194,7 +194,7 @@ char *skip_label(const char *line)
 /**
  * @brief Check if a label is valid according to assembler rules:
  * - Must start with a letter.
- * - Contain only alphanumeric characters.
+ * - Contain only alphanumeric characters (NO underscores).
  * - Not exceed MAX_LABEL_LENGTH (30 characters).
  * - Not be a reserved word.
  *
@@ -219,7 +219,7 @@ BOOL is_valid_label(const char *label)
     if (len > MAX_LABEL_LENGTH)
         return FALSE;
 
-    /* Check if the label contains only alphanumeric characters and underscores */
+    /* Check if the label contains only alphanumeric characters (no underscores) */
     for (i = 0; i < len; i++)
     {
         if (!isalnum((unsigned char)label[i]))
@@ -368,4 +368,60 @@ void remove_comments(char *line)
     comment_pos = strchr(line, ';');
     if (comment_pos != NULL)
         *comment_pos = '\0'; /* Truncate the string at the comment */
+}
+
+/**
+ * @brief Validates a filename for proper format and length.
+ *
+ * Checks that the filename:
+ * - Is not NULL or empty
+ * - Doesn't exceed maximum length limits
+ * - Doesn't contain invalid characters (spaces, tabs)
+ * - Doesn't already have .as extension
+ *
+ * @param filename The filename to validate.
+ * @return TRUE if valid, FALSE otherwise.
+ */
+BOOL validate_filename(const char *filename)
+{
+    size_t len;
+
+    if (!filename)
+    {
+        printf("ERROR: Null filanme provide\n");
+        return FALSE;
+    }
+
+    len = strlen(filename);
+
+    /* Check for empty filename */
+    if (len == 0)
+    {
+        printf("ERROR: Empty filename provided\n");
+        return FALSE;
+    }
+
+    /* Check length limits - rederve space for ".as\0 "*/
+    if (len > MAX_FILE_NAME_LENGTH - 4)
+    {
+        printf("ERROR: Filename '%s' is too long (max %d characters)\n",
+               filename, MAX_FILE_NAME_LENGTH - 4);
+        return FALSE;
+    }
+
+    /* Check for invalid characters */
+    if (strchr(filename, ' ') || strchr(filename, '\t'))
+    {
+        printf("ERROR: Filename '%s' contains invalid characters (spaces or tabs)\n", filename);
+        return FALSE;
+    }
+
+    /* Check if filename already has .as extension */
+    if (len >= 3 && strcmp(filename + len - 3, ".as") == 0)
+    {
+        printf("ERROR: Please provide filename without .as extension (got '%s')\n", filename);
+        return FALSE;
+    }
+
+    return TRUE;
 }

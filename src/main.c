@@ -46,20 +46,30 @@ int main(int argc, char *argv[])
     if (argc < MIN_ARGC)
     {
         printf("Usage: %s file1 [file2 ...]\n", argv[0]);
+        printf("NOTE: Provide filenames without .as extension\n");
         return EXIT_GENERAL_ERROR;
     }
 
     /* Process each input file */
     for (i = 1; i < argc; i++)
     {
-        printf("====== Assembling file: %s.as ======\n", argv[i]);
-        result = assemble(argv[i]);
-        if (result == EXIT_FILE_EMPTY)
+        if (!validate_filename(argv[i]))
         {
-            /* Empty file - don't print "Successfully assembled" */
+            has_errors = TRUE;
+
+            /* Continue with next file if availble */
+            if (i < argc - 1)
+                printf("Skipping to next file...\n\n");
             continue;
         }
+        printf("====== Assembling file: %s.as ======\n", argv[i]);
+        result = assemble(argv[i]);
 
+        if (result == EXIT_FILE_EMPTY)
+        {
+            /* Empty file, don't print "Successfully assembled" */
+            continue;
+        }
         else if (result != EXIT_SUCCESS_CODE)
         {
             has_errors = TRUE;
@@ -75,7 +85,6 @@ int main(int argc, char *argv[])
         if (i < argc - 1)
             printf("\n");
     }
-
     /* Return success if all files succeeded, error if any failed */
     return has_errors ? EXIT_GENERAL_ERROR : EXIT_SUCCESS_CODE;
 }
