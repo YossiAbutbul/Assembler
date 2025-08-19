@@ -1,0 +1,497 @@
+# Assembler Project
+
+A comprehensive two-pass assembler written in ANSI C90 for a custom 10-bit architecture. This assembler translates assembly language source files into machine code, supporting various data types, instruction formats, and addressing modes.
+
+## Table of Contents
+- [Overview](#overview)
+- [Features](#features)
+- [Architecture Specifications](#architecture-specifications)
+- [Instruction Set](#instruction-set)
+- [Addressing Modes](#addressing-modes)
+- [Data Directives](#data-directives)
+- [Symbol Management](#symbol-management)
+- [Output Files](#output-files)
+- [Error Handling](#error-handling)
+- [Data Structures](#data-structures)
+- [Build Instructions](#build-instructions)
+- [Usage](#usage)
+- [Examples](#examples)
+- [File Structure](#file-structure)
+
+## Overview
+
+The MMN14 assembler implements a complete two-pass assembly process:
+- **First Pass**: Symbol table construction, syntax validation, and memory allocation
+- **Second Pass**: Code generation, symbol resolution, and output file creation
+
+The assembler processes assembly source files (`.as`) and generates object files (`.ob`), entry files (`.ent`), and external reference files (`.ext`) as needed.
+
+## Features
+
+### Core Functionality
+- ✅ **Two-pass assembly algorithm**
+- ✅ **10-bit word architecture** (-512 to +511 range)
+- ✅ **Base-4 encoding** for output files (a,b,c,d format)
+- ✅ **Macro preprocessing** with `mcro`/`mcroend` support
+- ✅ **Comprehensive error detection** and reporting
+- ✅ **Memory management** with overflow protection
+- ✅ **ANSI C90 compliance**
+
+### Supported Features
+- **Labels**: Up to 30 characters, must start with a letter (no underscore and non ASCII chars)
+- **Comments**: Line comments starting with `;`
+- **Registers**: r0 through r7
+- **Matrix operations**: 2D matrix addressing with `[register][register]`
+- **String literals**: ASCII string storage with null termination
+- **Entry/External symbols**: Cross-file symbol linking
+- **Immediate values**: 10-bit signed integers
+
+## Architecture Specifications
+
+| Component | Specification |
+|-----------|---------------|
+| **Word Size** | 10 bits |
+| **Value Range** | -512 to +511 (two's complement) |
+| **Memory Addresses** | 0-255 (assembler uses 100-255) |
+| **Registers** | r0, r1, r2, r3, r4, r5, r6, r7 |
+| **Base Address** | IC starts at 100 |
+| **Max Line Length** | 80 characters |
+| **Max Label Length** | 30 characters |
+
+## Instruction Set
+
+The assembler supports 16 instructions organized by operand count:
+
+### Two-Operand Instructions (Opcodes 0-4)
+| Opcode | Instruction | Description | Source Modes | Target Modes |
+|--------|-------------|-------------|--------------|--------------|
+| 0 | `mov` | Move data | 0,1,2,3 | 1,2,3 |
+| 1 | `cmp` | Compare | 0,1,2,3 | 0,1,2,3 |
+| 2 | `add` | Add | 0,1,2,3 | 1,2,3 |
+| 3 | `sub` | Subtract | 0,1,2,3 | 1,2,3 |
+| 4 | `lea` | Load effective address | 1,2 | 1,2,3 |
+
+### One-Operand Instructions (Opcodes 5-13)
+| Opcode | Instruction | Description | Target Modes |
+|--------|-------------|-------------|--------------|
+| 5 | `clr` | Clear | 1,2,3 |
+| 6 | `not` | Logical NOT | 1,2,3 |
+| 7 | `inc` | Increment | 1,2,3 |
+| 8 | `dec` | Decrement | 1,2,3 |
+| 9 | `jmp` | Jump | 1,2,3 |
+| 10 | `bne` | Branch if not equal | 1,2,3 |
+| 11 | `jsr` | Jump to subroutine | 1,2,3 |
+| 12 | `red` | Read input | 1,2,3 |
+| 13 | `prn` | Print | 0,1,2,3 |
+
+### No-Operand Instructions (Opcodes 14-15)
+| Opcode | Instruction | Description |
+|--------|-------------|-------------|
+| 14 | `rts` | Return from subroutine |
+| 15 | `stop` | Stop execution |
+
+## Addressing Modes
+
+| Mode | Name | Format | Description | Example |
+|------|------|--------|-------------|---------|
+| 0 | **Immediate** | `#value` | Constant value | `#42`, `#-10` |
+| 1 | **Direct** | `label` | Memory address | `LOOP`, `DATA` |
+| 2 | **Matrix** | `label[reg][reg]` | 2D array access | `MAT[r1][r2]` |
+| 3 | **Register** | `register` | Register content | `r0`, `r7` |
+
+## Data Directives
+
+### `.data` - Integer Data
+```assembly
+NUMBERS: .data 10, -5, 0, 42
+```
+- Stores comma-separated integer values
+- Each value occupies one word
+- Range: -512 to +511
+
+### `.string` - String Literals
+```assembly
+MESSAGE: .string "Hello World"
+```
+- Stores ASCII characters as individual words
+- Automatically null-terminated
+- Must be enclosed in double quotes
+
+### `.mat` - Matrix Data
+```assembly
+MATRIX: .mat [3][2] 1,2,3,4,5,6
+```
+- Defines 2D matrices with dimensions [rows][cols]
+- Values stored row-major order
+- Missing values default to zero
+- Dimensions stored as first two words
+
+### `.entry` - Export Symbols
+```assembly
+.entry MAIN
+.entry RESULT
+```
+- Marks symbols for external visibility
+- Creates `.ent` output file
+- Symbol must be defined in current file
+
+### `.extern` - Import Symbols
+```assembly
+.extern PRINTF
+.extern SCANF
+```
+- Declares external symbols
+- Creates `.ext` output file for references
+- Symbols defined in other files
+
+## Symbol Management
+
+### Symbol Table Structure
+```c
+typedef struct Symbol {
+    char name[MAX_SYMBOL_NAME_LENGTH];
+    int address;
+    SymbolType type;        // SYMBOL_CODE, SYMBOL_DATA, SYMBOL_EXTERN
+    struct Symbol *next;
+} Symbol;
+```
+
+### Symbol Types
+- **CODE**: Instructions and code labels
+- **DATA**: Data segment symbols (.data, .string, .mat)
+- **EXTERN**: External symbol declarations
+
+## Output Files
+
+### Object File (`.ob`)
+```
+bbc dd
+bcba abcba
+bcbb cabbc
+...
+```
+- First line: instruction_count data_count (base-4)
+- Following lines: address machine_code (base-4)
+
+### Entries File (`.ent`)
+```
+LENGTH caab
+LOOP bccd 
+...
+```
+- Symbol name followed by address (base-4)
+- Generated only if entry symbols exist
+
+### Externals File (`.ext`)
+```
+L3 bdca
+W bcda
+...
+```
+- External symbol references with addresses (base-4)
+- Generated only if external references exist
+
+## Error Handling
+
+### Comprehensive Error Detection
+The assembler provides detailed error reporting for all stages of assembly processing. Each error includes the filename, line number, and specific error description.
+
+### Exit Codes
+The assembler uses specific exit codes to indicate different types of failures:
+
+| Exit Code | Description |
+|-----------|-------------|
+| `EXIT_SUCCESS_CODE` | Successful assembly |
+| `EXIT_FILE_NOT_FOUND` | Input file not found |
+| `EXIT_MACRO_SYNTAX_ERROR` | Macro processing error |
+| `EXIT_FIRST_PASS_ERROR` | First pass assembly error |
+| `EXIT_SECOND_PASS_ERROR` | Second pass assembly error |
+| `EXIT_WRITE_ERROR` | Output file generation error |
+| `EXIT_FILE_EMPTY` | Empty input file |
+
+### Complete Error Types and Messages
+
+#### Label and Syntax Errors
+| Error Type | Message |
+|------------|---------|
+| `ERROR_INVALID_LABEL` | "Invalid label" |
+| `ERROR_LABEL_SYNTAX` | "Label must start with a letter" |
+| `ERROR_DUPLICATE_LABEL` | "Duplicate label" |
+| `ERROR_RESERVED_WORD` | "Reserved word cannot be used as label" |
+| `ERROR_SYNTAX` | "Syntax error" |
+| `ERROR_LINE_TOO_LONG` | "Line exceeds maximum length of 80 characters" |
+| `ERROR_MISSING_WHITESPACE` | "Missing whitespace between instruction / directive and operands" |
+
+#### Instruction and Directive Errors
+| Error Type | Message |
+|------------|---------|
+| `ERROR_UNKNOWN_INSTRUCTION` | "Unknown instruction" |
+| `ERROR_INVALID_DIRECTIVE` | "Invalid directive" |
+| `ERROR_TOO_MANY_OPERANDS` | "Too many operands" |
+| `ERROR_TOO_FEW_OPERANDS` | "Too few operands" |
+| `ERROR_INVALID_OPERAND` | "Invalid operand" |
+
+#### Immediate Value and Register Errors
+| Error Type | Message |
+|------------|---------|
+| `ERROR_INVALID_IMMEDIATE_VALUE` | "Invalid immediate value format (must be #number)" |
+| `ERROR_DATA_OUT_OF_RANGE` | "Immediate value out of range (must be -512 to +511)" |
+| `ERROR_INVALID_REGISTER` | "Invalid register - only r0 through r7 are allowed" |
+| `ERROR_INVALID_ADDRESSING_MODE` | "Invalid addressing mode combination for instruction" |
+| `ERROR_INVALID_SOURCE_ADDRESSING` | "Invalid source operand addressing mode" |
+| `ERROR_INVALID_TARGET_ADDRESSING` | "Invalid target operand addressing mode" |
+
+#### Matrix Access Errors
+| Error Type | Message |
+|------------|---------|
+| `ERROR_INVALID_MATRIX` | "Invalid matrix syntax" |
+| `ERROR_INVALID_MATRIX_ACCESS` | "Invalid matrix access - must be label[register][register]" |
+| `ERROR_MATRIX_MISSING_REGISTER` | "Matrix access missing register index - need label[register][register]" |
+| `ERROR_MATRIX_INVALID_REGISTER` | "Invalid register in matrix access - must be r0-r7" |
+| `ERROR_MATRIX_REGISTER_TOO_LONG` | "Matrix register field too long - excessive whitespace" |
+| `ERROR_MATRIX_IMMEDIATE_NOT_ALLOWED` | "Immediate values not allowed in matrix indices" |
+| `ERROR_INVALID_MATRIX_DIMENSIONS` | "Invalid matrix dimensions - rows and columns must be greater than 0" |
+| `ERROR_MATRIX_TOO_MANY_VALUES` | "Too many values provided for matrix size" |
+
+#### String Processing Errors
+| Error Type | Message |
+|------------|---------|
+| `ERROR_STRING_TOO_LONG` | "String exceeds maximum length" |
+| `ERROR_STRING_MISSING_QUOTES` | "String must be enclosed in double quotes" |
+| `ERROR_STRING_UNCLOSED` | "String missing closing quote" |
+| `ERROR_STRING_INVALID_CHARACTER` | "String contains invalid non-ASCII character" |
+
+#### Symbol and Entry Errors
+| Error Type | Message |
+|------------|---------|
+| `ERROR_UNDEFINED_SYMBOL` | "Undefined symbol" |
+| `ERROR_ENTRY_NOT_DEFINED` | "Entry symbol not defined in current file" |
+| `ERROR_LABEL_ON_EXTERN` | "Label cannot be used with extern directive" |
+| `ERROR_LABEL_ON_ENTRY` | "Label cannot be used with entry directive" |
+| `ERROR_EXTERNAL_CONFLICT` | "Symbol conflicts with external declaration" |
+
+#### Macro Expansion Errors
+| Error Type | Message |
+|------------|---------|
+| `ERROR_MACRO_RESERVED_WORD` | "Cannot use reserved word as macro name" |
+| `ERROR_MACRO_EXTRA_TEXT` | "Extra text after macro name" |
+| `ERROR_MACRO_MISSING_END` | "Missing 'mcroend' for macro" |
+| `ERROR_MACRO_MISSING_NAME` | "Missing macro name after 'mcro'" |
+| `ERROR_MACRO_LABEL_CONFLICT` | "Macro name conflicts with existing label" |
+
+#### Memory and System Errors
+| Error Type | Message |
+|------------|---------|
+| `ERROR_MEMORY_ALLOCATION_FAILED` | "Memory allocation failed" |
+| `ERROR_DATA_IMAGE_OVERFLOW` | "Data image size exceeded" |
+| `ERROR_INSTRUCTION_IMAGE_OVERFLOW` | "Instruction image size exceeded" |
+| `ERROR_ADDRESS_OUT_OF_BOUNDS` | "Memory address out of bounds" |
+
+#### Data Directive Specific Errors
+| Error Type | Message |
+|------------|---------|
+| `ERROR_DATA_NO_VALUES` | ".data directive requires at least one value" |
+| `ERROR_DATA_TRAILING_COMMA` | ".data directive cannot end with comma" |
+| `ERROR_DATA_LEADING_COMMA` | ".data directive cannot start with comma" |
+| `ERROR_DATA_DOUBLE_COMMA` | ".data directive cannot have consecutive commas" |
+| `ERROR_DATA_EMPTY_VALUE` | ".data directive has empty value between commas" |
+
+#### Entry/Extern Directive Specific Errors
+| Error Type | Message |
+|------------|---------|
+| `ERROR_ENTRY_MISSING_SYMBOL` | ".entry directive requires a symbol name" |
+| `ERROR_EXTERN_MISSING_SYMBOL` | ".extern directive requires a symbol name" |
+| `ERROR_ENTRY_EXTRA_TEXT` | ".entry directive cannot have extra text after symbol name" |
+| `ERROR_EXTERN_EXTRA_TEXT` | ".extern directive cannot have extra text after symbol name" |
+
+#### General Errors
+| Error Type | Message |
+|------------|---------|
+| `ERROR_GENERAL` | "General error" |
+| `ERROR_MISSING_COMMA` | "Missing comma between operands" |
+
+### Error Reporting Format
+All errors follow a consistent format for easy identification and debugging:
+```
+Error in file filename.as at line XX: Specific error message.
+```
+
+#### Example Error Messages
+```bash
+Error in file test.as at line 15: Invalid register - only r0 through r7 are allowed.
+Error in file example.as at line 3: Matrix access missing register index - need label[register][register].
+Error in file data.as at line 8: .data directive cannot end with comma.
+Error in file macro.as at line 2: Cannot use reserved word as macro name.
+```
+
+## Data Structures
+
+### Core Structures
+
+#### AssemblyContext
+```c
+typedef struct {
+    InstructionData instruction_image[MAX_INSTRUCTION_IMAGE_SIZE];
+    int data_image[MAX_DATA_IMAGE_SIZE];
+    Symbol *symbol_table;
+    ExternalRef *external_list;
+    EntrySymbol *entry_list;
+    int instruction_count;
+    int data_count;
+    BOOL has_errors;
+} AssemblyContext;
+```
+
+#### Instruction Representation
+```c
+typedef struct {
+    int opcode;
+    InstructionType type;
+    Operand source;
+    Operand target;
+    int word_count;
+    BOOL has_source;
+    BOOL has_target;
+} Instruction;
+```
+
+#### Operand Structure
+```c
+typedef struct {
+    AddressingMode mode;
+    int value;
+    int reg1, reg2;
+    char symbol_name[MAX_LABEL_LENGTH + 1];
+    BOOL is_symbol;
+} Operand;
+```
+
+## Build Instructions
+
+### Requirements
+- ANSI C90 compatible compiler
+- GNU Make
+- POSIX-compliant system
+
+### Compilation
+```bash
+make clean      # Clean previous builds
+make           # Build the assembler
+```
+
+### Compiler Flags
+```bash
+CFLAGS = -g -m32 -std=c90 -pedantic -Wall -ansi
+```
+
+## Usage
+
+### Basic Usage
+```bash
+./assembler filename1 [filename2 ...]
+```
+
+### Input Files
+- Source files: `filename.as`
+- Processed files: `filename.am` (after macro expansion)
+
+### Output Files
+- Object file: `filename.ob` (always generated)
+- Entries file: `filename.ent` (if entries exist)
+- Externals file: `filename.ext` (if externals exist)
+
+### Example Commands
+```bash
+./assembler test1 test2 test3    # Process multiple files
+./assembler example              # Process example.as
+```
+
+## Examples
+
+### Complete Assembly Program
+```assembly
+; Complex program example
+.entry MAIN
+.entry RESULT
+.extern PRINTFUNC
+
+; Data section
+ARRAY:      .mat [3][3] 1,2,3,4,5,6,7,8,9
+COUNTER:    .data 0
+RESULT:     .data 0
+MESSAGE:    .string "Processing complete"
+
+; Main program
+MAIN:       mov #0, r1           ; Initialize counter
+            mov #3, r2           ; Array size
+
+LOOP:       cmp r1, r2           ; Check if done
+            bne CONTINUE         ; Continue if not done
+            jmp DONE             ; Exit if done
+
+CONTINUE:   mov ARRAY[r0][r0], r0 ; Get diagonal element
+            add r3, RESULT       ; Add to result
+            inc r1               ; Increment counter
+            jmp LOOP             ; Continue loop
+
+DONE:       jsr PRINTFUNC        ; Call external function
+            lea MESSAGE, r4      ; Load message address
+            prn #42              ; Print test value
+            stop                 ; End program
+```
+
+### Macro Usage
+```assembly
+mcro SWAP
+    mov r1, r3
+    mov r2, r1
+    mov r3, r2
+mcroend
+
+MAIN:   SWAP    ; Expands to the three mov instructions
+        stop
+```
+
+## File Structure
+
+```
+project/
+├── src/                     # Source files
+│   ├── main.c              # Main entry point
+│   ├── assembler.c         # Core assembler logic
+│   ├── preprocessor.c      # Macro processing
+│   ├── first_pass.c        # First pass implementation
+│   ├── second_pass.c       # Second pass implementation
+│   ├── instruction_parser.c # Instruction parsing
+│   ├── data_parser.c       # Data directive parsing
+│   ├── symbol_table.c      # Symbol management
+│   ├── output.c            # Output file generation
+│   ├── error.c             # Error handling
+│   ├── utils.c             # Utility functions
+│   └── data_image.c        # Data storage management
+├── include/                 # Header files
+│   ├── assembler.h
+│   ├── constants.h
+│   ├── assembler_types.h
+│   └── [other headers]
+├── tests/                   # Test files
+│   ├── test1.as
+│   ├── test2.as
+│   └── [other tests]
+├── build/                   # Build directory
+└── makefile                # Build configuration
+```
+
+---
+
+## License
+
+This project is developed as part of the MMN14 assignment for the Systems Programming Laboratory course.
+
+## Contributing
+
+This is an academic project. Please refer to course guidelines for collaboration policies.
+
+---
+
+**Note**: This assembler is designed for educational purposes and implements a custom instruction set architecture as specified in the MMN14 course requirements.
