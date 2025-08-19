@@ -94,7 +94,7 @@ BOOL parse_instruction(const char *line, const char *filename, int line_num, Ins
     instruction_name[sizeof(instruction_name) - 1] = '\0';
     instruction->opcode = get_instruction_opcode(instruction_name);
 
-    /* Checks wether there is no such opcode */
+    /* Checks whether there is no such opcode */
     if (instruction->opcode == -1)
     {
         print_line_error(filename, line_num, ERROR_UNKNOWN_INSTRUCTION);
@@ -148,13 +148,15 @@ BOOL parse_instruction(const char *line, const char *filename, int line_num, Ins
             return FALSE;
         }
     }
+
     free(line_copy);
+    line_copy = NULL; /* Set to NULL to prevent accidental reuse */
 
     /* Validate operand count based on instruction type */
     switch (instruction->type)
     {
     case INST_NO_OPERANDS:
-        /* Checks if there is too many operands */
+        /* Checks if there are too many operands */
         if (token_count != 0)
         {
             print_line_error(filename, line_num, ERROR_TOO_MANY_OPERANDS);
@@ -165,6 +167,7 @@ BOOL parse_instruction(const char *line, const char *filename, int line_num, Ins
         instruction->has_source = FALSE;
         instruction->has_target = FALSE;
         break;
+
     case INST_ONE_OPERAND:
         if (token_count != 1)
         {
@@ -203,8 +206,11 @@ BOOL parse_instruction(const char *line, const char *filename, int line_num, Ins
         instruction->has_source = TRUE;
         instruction->has_target = TRUE;
         break;
+
     case INST_INVALID:
         print_line_error(filename, line_num, ERROR_UNKNOWN_INSTRUCTION);
+        err_found = TRUE;
+        return FALSE;
     }
 
     /* Validate addressing modes */
@@ -242,13 +248,13 @@ BOOL parse_instruction(const char *line, const char *filename, int line_num, Ins
         }
 
         err_found = TRUE;
-        return FALSE;
+        return FALSE; /* Memory already freed above */
     }
 
     /* Calculate total word count */
     instruction->word_count = get_instruction_word_count(instruction);
 
-    return TRUE;
+    return TRUE; /* Memory already freed above */
 }
 
 /**

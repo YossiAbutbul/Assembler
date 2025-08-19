@@ -122,8 +122,18 @@ static BOOL add_line_to_macro(const char *name, const char *line)
         stored_line[len] = '\0';
     }
 
-    macro_table[i].lines[macro_table[i].line_count++] = stored_line;
-    return TRUE;
+    /* Bonds checking before assigment */
+    if (macro_table[i].line_count < MAX_MACRO_LINES)
+    {
+        macro_table[i].lines[macro_table[i].line_count++] = stored_line;
+        return TRUE;
+    }
+    else
+    {
+        /* Free allocated memorty if can not store it */
+        free(stored_line);
+        return FALSE;
+    }
 }
 
 /**

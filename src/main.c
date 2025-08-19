@@ -52,12 +52,12 @@ int main(int argc, char *argv[])
     /* Process each input file */
     for (i = 1; i < argc; i++)
     {
-        printf("Assembling file: %s.as\n", argv[i]);
+        printf("====== Assembling file: %s.as ======\n", argv[i]);
         result = assemble(argv[i]);
         if (result == EXIT_FILE_EMPTY)
         {
             /* Empty file - don't print "Successfully assembled" */
-            /* Continue to the next file */
+            continue;
         }
 
         else if (result != EXIT_SUCCESS_CODE)

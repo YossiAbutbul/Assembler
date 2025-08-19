@@ -78,8 +78,14 @@ static Symbol *find_symbol(const char *name)
  */
 BOOL add_symbol(const char *name, int address, SymbolType type)
 {
-    Symbol *existing_symbol = find_symbol(name);
+    Symbol *existing_symbol;
     Symbol *new_symbol;
+
+    /* Check for empty inputs */
+    if (!name || strlen(name) == 0)
+        return FALSE;
+
+    existing_symbol = find_symbol(name);
 
     /* Check if symbol already exists */
     if (existing_symbol != NULL)

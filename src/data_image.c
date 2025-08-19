@@ -73,6 +73,13 @@ void init_data_image(void)
  */
 BOOL store_data(int value, const char *filename, int line_num)
 {
+    /* Check if filename exist */
+    if (!filename)
+    {
+        err_found = TRUE;
+        return FALSE;
+    }
+
     /* Initialize data image if not already done */
     if (data_image.data == NULL)
         init_data_image();
