@@ -1,21 +1,12 @@
-# Object files
-*.o
+# VSCode settings
+.vscode/
 
-# Output binaries
-build/
-
-# Preprocessed .am and output files
-*.am
-*.ob
-*.ext
-*.ent
+# Git folder (though Git ignores this automatically)
+.git/
 
 # Logs and temp
 *.log
 *.tmp
-
-# VSCode settings (optional if you're using it)
-.vscode/
 
 # Backup files
 *-

@@ -140,7 +140,7 @@ The assembler processes assembly source files (`.as`) and generates object files
 | **Value Range** | -512 to +511 (two's complement) |
 | **Memory Addresses** | 0-255 (assembler uses 100-255) |
 | **Registers** | r0, r1, r2, r3, r4, r5, r6, r7 |
-| **Base Address** | IC starts at 100 |
+| **Base Address** | IC starts at address 100 |
 | **Max Line Length** | 80 characters |
 | **Max Label Length** | 30 characters |
 
