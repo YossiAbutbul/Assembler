@@ -125,7 +125,7 @@ The assembler processes assembly source files (`.as`) and generates object files
 ### Supported Features
 - **Labels**: Up to 30 characters, must start with a letter (can't contain underscore and non-ASCII chars)
 - **Comments**: Line comments starting with `;`
-- **In-LineComments**: after assembly line ends, you can add ';' to in-line comment
+- **In-LineComments**: after assembly line ends, you can add `;` to in-line comment
 - **Registers**: r0 through r7
 - **Matrix operations**: 2D matrix addressing with `[register][register]`
 - **String literals**: ASCII string storage with null termination
