@@ -329,7 +329,7 @@ static BOOL parse_operand(const char *operand_str, Operand *operand, const char 
             {
                 /* Try to parse to see if it's a range error */
                 parsed_value = strtol(&trimmed[1], &endptr, 10);
-                if (*endptr == '\0' && (parsed_value < -512 || parsed_value > 511))
+                if (*endptr == '\0' && (parsed_value < MIN_WORD_VALUE || parsed_value > MAX_WORD_VALUE))
                 {
                     print_line_error(filename, line_num, ERROR_DATA_OUT_OF_RANGE);
                 }
@@ -465,7 +465,7 @@ static BOOL is_immediate(const char *str, int *value)
         return FALSE;
 
     /* Check if value is within valid 10-bit range (-512 to +511) */
-    if (parsed_value < -512 || parsed_value > 511)
+    if (parsed_value < MIN_WORD_VALUE || parsed_value > MAX_WORD_VALUE)
         return FALSE;
 
     /* Store the value */

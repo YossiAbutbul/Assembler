@@ -24,7 +24,7 @@ int DCF = 0;              /* Final Data counter */
 BOOL err_found = FALSE;   /* Flag to indicate if an error was found */
 
 static InstructionData instruction_table[MAX_INSTRUCTION_IMAGE_SIZE];
-static int instruction_count = 0; /*todo: rethink why i have both IC and instruction_count*/
+static int instruction_count = 0; /* array indexing */
 
 /* === Internal Helper Prototypes functions === */
 static void process_line(const char *line, const char *filename, int line_num);
@@ -104,6 +104,14 @@ BOOL first_pass(FILE *am_file, const char *filename)
     /* Step 18: Save final values of IC and DC */
     ICF = IC;
     DCF = DC;
+
+    /* Check total memory bounds */
+    if (ICF + DCF > MAX_MEMORY_ADDRESS + 1)
+    {
+        print_line_error(filename, 0, ERROR_ADDRESS_OUT_OF_BOUNDS);
+        err_found = TRUE;
+        return;
+    }
 
     /* Update data symbols with the current IC */
     update_data_symbols(ICF);
@@ -493,11 +501,11 @@ static void encode_immediate_operands(const Instruction *instruction, Instructio
         /* Convert negative values to 10-bit two's complement representation */
         if (value < 0)
         {
-            value = 1024 + value; /* 1024 = 2^10 for 10 bit two's complement */
+            value = (1 << WORD_SIZE_BITS) + value; /* 2^WORD_SIZE_BITS */
         }
 
         /* Ensure value is within 10-bit range (0 to 1023) */
-        value = value & 1023; /* 1023 = 0x3FF = (2^10 - 1) */
+        value = value & (1 << WORD_SIZE_BITS); /* Mask to WORD_SIZE_BITS */
 
         inst_data->immediate_word[inst_data->immediate_count] = value;
         inst_data->immediate_count++;

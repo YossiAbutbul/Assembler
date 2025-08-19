@@ -46,79 +46,24 @@ void init_data_image(void)
         free(data_image.data);
 
     /* Allocates initial capacity */
-    data_image.data = (int *)malloc(INITIAL_DATA_CAPACITY * sizeof(int));
+    data_image.data = (int *)malloc(MAX_DATA_IMAGE_SIZE * sizeof(int));
     if (data_image.data == NULL)
     {
-        /*toDo: update error handling*/
         fprintf(stdout, "Error: Failed to initialize data image\n");
         exit(EXIT_GENERAL_ERROR);
     }
 
     /* Reset counters */
     data_image.size = 0;
-    data_image.capacity = INITIAL_DATA_CAPACITY;
-}
-
-/**
- * @brief Expand the data image capacity when needed.
- *
- * This function doubles the capacity of the data image
- * when the current capacity is exceeded.
- * todo: rethink this function
- *
- * @param filename Pointer to filename (for error reporting).
- * @param line_num The current line number (for error reporting).
- * @return TRUE if expansion successful, FALSE otherwise.
- * @note This is an internal function.
- */
-static BOOL expand_data_image(const char *filename, int line_num)
-{
-    int new_capacity;
-    int *new_data;
-    int i;
-
-    /* Calculate new capacity */
-    new_capacity = data_image.capacity * DATA_GROWTH_FACTOR;
-
-    /* Check if new capacity exceeds maximum allowed */
-    if (new_capacity > MAX_DATA_IMAGE_SIZE)
-    {
-        new_capacity = MAX_DATA_IMAGE_SIZE;
-        if (data_image.size >= new_capacity)
-        {
-            print_line_error(filename, line_num, ERROR_DATA_IMAGE_OVERFLOW);
-            err_found = TRUE;
-            return FALSE;
-        }
-    }
-
-    /* Allocate new array */
-    new_data = (int *)malloc(new_capacity * sizeof(int));
-    if (new_data == NULL)
-    {
-        print_line_error(filename, line_num, ERROR_MEMORY_ALLOCATION_FAILED);
-        err_found = TRUE;
-        return FALSE;
-    }
-
-    /* Copy existing data */
-    for (i = 0; i < data_image.size; i++)
-        new_data[i] = data_image.data[i];
-
-    /* Replace old array */
-    free(data_image.data);
-    data_image.data = new_data;
-    data_image.capacity = new_capacity;
-
-    return TRUE;
+    data_image.capacity = MAX_DATA_IMAGE_SIZE;
 }
 
 /**
  * @brief Stores a value in the data image.
  *
- * This function adds an integer value to the data image, expanding
- * the capacity if necessary. It integrates properly with the DC counter
- * and provides comprehensive error checking.
+ * This function adds an integer value to the data image.
+ * It integrates with the DC counter and provides comprehensive
+ * error checking.
  *
  * @param value     The integer value to store.
  * @param filename  Pointer to the file name (for error reporting).
@@ -132,37 +77,27 @@ BOOL store_data(int value, const char *filename, int line_num)
     if (data_image.data == NULL)
         init_data_image();
 
-    /* Check if expanding the capacity is needed */
+    /* Check if we are exceeding the memory limit */
+    /* Note: this is not suppose to happen - the exact limit depends on th ICF */
+    if (data_image.size >= MAX_DATA_IMAGE_SIZE)
+    {
+        print_line_error(filename, line_num, ERROR_DATA_IMAGE_OVERFLOW);
+        err_found = TRUE;
+        return FALSE;
+    }
+
+    /* Check if we're exceeding the initial capacity */
     if (data_image.size >= data_image.capacity)
     {
-        if (!expand_data_image(filename, line_num))
-            return FALSE;
+        print_line_error(filename, line_num, ERROR_DATA_IMAGE_OVERFLOW);
+        err_found = TRUE;
+        return FALSE;
     }
 
     /* Store the value at the cureent DC position */
     data_image.data[data_image.size] = value;
     data_image.size++;
     return TRUE;
-}
-
-/**
- * @brief Retrieves a stored data value at a given index.
- *
- * This function provides safe access to data values stored in the data image.
- * It preformes bounds checking to ensure the index is within valid range.
- *
- * @param index Index in the data image array.
- * @return The stored value, or 0 if index is out of bounds. //Todo: re-think the 0 return.
- */
-int get_data_at(int index)
-{
-    /* Check bounds before accessing the data image array */
-    if (index >= 0 && index < data_image.size && data_image.data != NULL)
-        return data_image.data[index];
-
-    /* Return 0 (for now) for out of bounds access or uninitialized data */
-    /* ToDo: re-think the rtuening of '0' as value */
-    return 0;
 }
 
 /**

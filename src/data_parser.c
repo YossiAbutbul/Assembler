@@ -211,7 +211,7 @@ void parse_data_values(const char *line, const char *filename, int line_num)
         value = (int)temp_value;
 
         /* Validate range (-512 to +511) */
-        if (value < -512 || value > 511)
+        if (value < MIN_WORD_VALUE || value > MAX_WORD_VALUE)
         {
             print_line_error(filename, line_num, ERROR_DATA_OUT_OF_RANGE);
             err_found = TRUE;

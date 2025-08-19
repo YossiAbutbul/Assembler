@@ -31,17 +31,6 @@ void init_data_image(void);
 BOOL store_data(int value, const char *filename, int line_num);
 
 /**
- * @brief Retrieves a stored data value at a given index.
- *
- * This function provides safe access to data values stored in the data image.
- * It preformes bounds checking to ensure the index is within valid range.
- *
- * @param index Index in the data image array.
- * @return The stored value, or 0 if index is out of bounds. //Todo: re-think the 0 return.
- */
-int get_data_at(int index);
-
-/**
  * @brief Returns the current number of items in the data image.
  *
  * This function provides access to the current data counter (DC) value

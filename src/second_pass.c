@@ -680,7 +680,7 @@ static BOOL store_instruction_word(InstructionImage *image, int word, int addres
         return FALSE;
 
     /* Check memory address bounds */
-    if (address < 0 || address > 255)
+    if (address < 0 || address > MAX_MEMORY_ADDRESS)
     {
         return FALSE;
     }
