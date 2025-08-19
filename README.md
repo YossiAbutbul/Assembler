@@ -39,7 +39,7 @@ The assembler processes assembly source files (`.as`) and generates object files
 
 ### Supported Features
 - **Labels**: Up to 30 characters, must start with a letter (no underscore and non ASCII chars)
-- **Comments**: Line comments starting with `;`
+- **Comments and In-Line Comments**: Line comments starting with `;`
 - **Registers**: r0 through r7
 - **Matrix operations**: 2D matrix addressing with `[register][register]`
 - **String literals**: ASCII string storage with null termination
@@ -54,7 +54,7 @@ The assembler processes assembly source files (`.as`) and generates object files
 | **Value Range** | -512 to +511 (two's complement) |
 | **Memory Addresses** | 0-255 (assembler uses 100-255) |
 | **Registers** | r0, r1, r2, r3, r4, r5, r6, r7 |
-| **Base Address** | IC starts at 100 |
+| **Base Address** | IC starts at address 100 |
 | **Max Line Length** | 80 characters |
 | **Max Label Length** | 30 characters |
 
@@ -125,6 +125,7 @@ MATRIX: .mat [3][2] 1,2,3,4,5,6
 - Values stored row-major order
 - Missing values default to zero
 - Dimensions stored as first two words
+- If got more values the expected matrix dimention - returns invalid mat
 
 ### `.entry` - Export Symbols
 ```assembly
@@ -368,10 +369,7 @@ typedef struct {
 
 ## Build Instructions
 
-### Requirements
-- ANSI C90 compatible compiler
-- GNU Make
-- POSIX-compliant system
+###
 
 ### Compilation
 ```bash
