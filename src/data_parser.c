@@ -377,7 +377,7 @@ void parse_string_value(const char *line, const char *filename, int line_num)
 }
 
 /**
- * @brief Parses a ".mat" directive, extracts matrix dimensions and values,
+ * @brief Parses a ".mat" directive, extracts values,
  * and stores them into the data image.
  *
  * The matrix format must follow on of the patterns:

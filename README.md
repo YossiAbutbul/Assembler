@@ -1,8 +1,10 @@
 # Assembler Project
 
-A comprehensive two-pass assembler written in ANSI C90 for a custom 10-bit architecture. This assembler translates assembly language source files into machine code, supporting various data types, instruction formats, and addressing modes.
+A comprehensive two-stage assembler written in ANSI C90. This assembler translates assembly language source files into costume base-4 code, supporting various data types, instruction formats, and addressing modes.
 
 ## Table of Contents
+- [Getting Started](#getting-started)
+- [Usage](#usage)
 - [Overview](#overview)
 - [Features](#features)
 - [Architecture Specifications](#architecture-specifications)
@@ -14,33 +16,116 @@ A comprehensive two-pass assembler written in ANSI C90 for a custom 10-bit archi
 - [Error Handling](#error-handling)
 - [Data Structures](#data-structures)
 - [Build Instructions](#build-instructions)
-- [Usage](#usage)
 - [Examples](#examples)
 - [File Structure](#file-structure)
 
+## Getting Started
+
+### Prerequisites
+Before building the assembler, ensure you have:
+- **ANSI C90 compatible compiler** (GCC recommended)
+- **GNU Make** build system
+- **POSIX-compliant system** (Linux, macOS, or WSL on Windows)
+- **Git** for cloning the repository
+
+### Clone the Repository
+```bash
+# Clone the project from GitHub
+git clone https://github.com/YossiAbutbul/Assembler.git
+
+# Navigate to the project directory
+cd Assembler
+```
+
+### Quick Build
+```bash
+# Clean any previous builds
+make clean
+
+# Build the assembler
+make
+
+# The executable 'assembler' will be created in the project root
+```
+
+## Usage
+
+### Basic Command Syntax
+```bash
+./assembler filename1 [filename2 filename3 ...]
+```
+
+### File Processing Flow
+1. **Input**: Source files with `.as` extension
+2. **Preprocessing**: Creates `.am` files (after macro expansion)
+3. **Assembly**: Generates output files if successful
+
+### Output Files Generated
+- **Object file**: `filename.ob` (always created if assembly succeeds)
+- **Entries file**: `filename.ent` (created only if `.entry` symbols exist)
+- **Externals file**: `filename.ext` (created only if external references exist)
+
+### Command Examples
+```bash
+# Process a single file
+./assembler program
+
+# Process multiple files
+./assembler test1 test2 test3
+```
+
+### Return Codes
+- **0**: Success - all files assembled correctly
+- **1-10**: Various error codes (see Error Handling section)
+
 ## Overview
 
-The MMN14 assembler implements a complete two-pass assembly process:
-- **First Pass**: Symbol table construction, syntax validation, and memory allocation
-- **Second Pass**: Code generation, symbol resolution, and output file creation
+The MMN14 assembler implements a complete three-stage assembly process:
+
+### Assembly Stages
+
+#### 1. Preprocessing Stage
+The preprocessing stage handles macro expansion and prepares the source code for assembly:
+- **Macro Detection**: Identifies `mcro` and `mcroend` directives
+- **Macro Storage**: Stores macro definitions with their content
+- **Macro Expansion**: Replaces macro calls with their defined content
+- **File Generation**: Creates `.am` files (assembly after macro expansion)
+- **Error Detection**: Validates macro syntax
+
+#### 2. First Pass
+Symbol table construction, syntax validation, and memory allocation:
+- **Symbol Table Building**: Records all labels and their addresses
+- **Syntax Validation**: Checks instruction format and operand validity
+- **Memory Allocation**: Calculates instruction and data memory requirements
+- **Directive Processing**: Handles `.data`, `.string`, `.mat`, `.extern` directives
+- **Address Calculation**: Assigns memory addresses to instructions and data
+
+#### 3. Second Pass
+Code generation, symbol resolution, and output file creation:
+- **Symbol Resolution**: Resolves all symbol references using the symbol table
+- **Machine Code Generation**: Converts instructions to binary machine code
+- **Entry Processing**: Handles `.entry` directives and builds entry symbol list
+- **External References**: Tracks external symbol usage for linking
+- **Base-4 encoding**: Encode all machine code data image into costume base-4 coding (see below)
+- **Output Generation**: Creates final output files (if assemble successed) 
 
 The assembler processes assembly source files (`.as`) and generates object files (`.ob`), entry files (`.ent`), and external reference files (`.ext`) as needed.
 
 ## Features
 
 ### Core Functionality
-- ✅ **Two-pass assembly algorithm**
+- ✅ **Macro preprocessing** with `mcro`/`mcroend` support
+- ✅ **Two-stage assembly process** (first pass, second pass)
 - ✅ **10-bit word architecture** (-512 to +511 range)
 - ✅ **Base-4 encoding** for output files (a,b,c,d format)
-- ✅ **Macro preprocessing** with `mcro`/`mcroend` support
 - ✅ **Comprehensive error detection** and reporting
 - ✅ **Memory management** with overflow protection
 - ✅ **ANSI C90 compliance**
 
 ### Supported Features
-- **Labels**: Up to 30 characters, must start with a letter (no underscore and non-ASCII chars)
+- **Labels**: Up to 30 characters, must start with a letter (can't contain underscore and non-ASCII chars)
 - **Comments**: Line comments starting with `;`
-- **In-Line Comments**: After assembly line ends, you can add `;` to in line comment.
+- **In-LineComments**: after assembly line ends, you can add ';' to in-line comment
 - **Registers**: r0 through r7
 - **Matrix operations**: 2D matrix addressing with `[register][register]`
 - **String literals**: ASCII string storage with null termination
@@ -55,7 +140,7 @@ The assembler processes assembly source files (`.as`) and generates object files
 | **Value Range** | -512 to +511 (two's complement) |
 | **Memory Addresses** | 0-255 (assembler uses 100-255) |
 | **Registers** | r0, r1, r2, r3, r4, r5, r6, r7 |
-| **Base Address** | IC starts at address 100 |
+| **Base Address** | IC starts at 100 |
 | **Max Line Length** | 80 characters |
 | **Max Label Length** | 30 characters |
 
@@ -125,8 +210,6 @@ MATRIX: .mat [3][2] 1,2,3,4,5,6
 - Defines 2D matrices with dimensions [rows][cols]
 - Values stored row-major order
 - Missing values default to zero
-- Dimensions stored as first two words
-- If got more values the expected matrix dimention - returns invalid mat
 
 ### `.entry` - Export Symbols
 ```assembly
@@ -370,7 +453,10 @@ typedef struct {
 
 ## Build Instructions
 
-###
+### Requirements
+- ANSI C90 compatible compiler
+- GNU Make
+- POSIX-compliant system
 
 ### Compilation
 ```bash
@@ -381,28 +467,6 @@ make           # Build the assembler
 ### Compiler Flags
 ```bash
 CFLAGS = -g -m32 -std=c90 -pedantic -Wall -ansi
-```
-
-## Usage
-
-### Basic Usage
-```bash
-./assembler filename1 [filename2 ...]
-```
-
-### Input Files
-- Source files: `filename.as`
-- Processed files: `filename.am` (after macro expansion)
-
-### Output Files
-- Object file: `filename.ob` (always generated)
-- Entries file: `filename.ent` (if entries exist)
-- Externals file: `filename.ext` (if externals exist)
-
-### Example Commands
-```bash
-./assembler test1 test2 test3    # Process multiple files
-./assembler example              # Process example.as
 ```
 
 ## Examples
@@ -486,11 +550,3 @@ project/
 ## License
 
 This project is developed as part of the MMN14 assignment for the Systems Programming Laboratory course.
-
-## Contributing
-
-This is an academic project. Please refer to course guidelines for collaboration policies.
-
----
-
-**Note**: This assembler is designed for educational purposes and implements a custom instruction set architecture as specified in the MMN14 course requirements.

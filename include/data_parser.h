@@ -64,7 +64,6 @@ void parse_string_value(const char *line, const char *filename, int line_num);
  * - Matrix values are stored row by row (left to right, top to bottom).
  *
  * Each valid value and dimenion increamets the data counter 'DC'.
- * The dimensions themselves occupy two words in the data image.
  *
  * Errors are reported if:
  * - Missing or malformed bracket structure.
