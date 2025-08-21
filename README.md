@@ -316,7 +316,7 @@ Each 10-bit machine word is encoded as exactly 5 base-4 characters:
 ### Address Encoding
 Memory addresses are also encoded in base-4 format:
 - Instruction Counter (IC) addresses: 100-255
-- Data Counter (DC) addresses: calculated from final IC
+- Data addresses: Start after instructions (ICF + data_offset)
 - All addresses in output files use base-4 encoding
 
 ### Usage in Output Files
